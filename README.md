@@ -181,6 +181,7 @@ religion/
 ├── orchestrator/                 # ▸ CLAUDE MODERATOR + CODEX PANELISTS
 │   ├── debate_controller.py      #   MCP server, barriers, retries, persistence
 │   └── panelists/                #   8-member and 30-member example rosters
+├── scripts/smoke_codex_mcp.py    # opt-in authenticated create/reply MCP check
 ├── tests/                        # controller persistence and pagination tests
 ├── docs/CORPUS.md                # corpus & RAG-roadmap notes
 ├── docs/ORCHESTRATION.md         # controller architecture and limitations

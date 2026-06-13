@@ -107,8 +107,16 @@ Run:
 ```bash
 python3 -m unittest discover -s tests -v
 python3 -m py_compile orchestrator/debate_controller.py \
+  scripts/smoke_codex_mcp.py \
   skills/religion-council/scripts/retrieve.py \
   .claude/skills/religion-council/scripts/retrieve.py
+```
+
+CI uses the bundled fake Codex MCP server. Before a release or after changing Codex CLI versions,
+also run the authenticated, opt-in live check:
+
+```bash
+python3 scripts/smoke_codex_mcp.py
 ```
 
 ### Corpus & retrieval metadata
@@ -118,9 +126,13 @@ target the **stable `retrieve.py` output contract** so nothing upstream breaks:
 
 ```json
 { "text": "…", "tradition": "buddhism", "school": "漢傳", "work": "般若波羅蜜多心經",
-  "locator": "全經", "language": "zh-Hant", "version": "通行本", "category": "宗教經典" }
+  "locator": "全經", "language": "zh-Hant", "version": "通行本", "category": "宗教經典",
+  "label": "Text", "evidence_type": "quotation", "verbatim": true }
 ```
 `category` is either `宗教經典` (religious scripture) or `哲學思想著作` (philosophical work).
+Use `evidence_type: quotation` only for text enclosed as a direct quotation; use
+`source-bound-summary` for a close summary with a real work and locator. Do not infer `school`
+from an arbitrary parenthetical note; register an explicit marker in both retriever copies.
 
 ### Pull-request checklist
 
@@ -229,8 +241,15 @@ tools: Read, Bash
 ```bash
 python3 -m unittest discover -s tests -v
 python3 -m py_compile orchestrator/debate_controller.py \
+  scripts/smoke_codex_mcp.py \
   skills/religion-council/scripts/retrieve.py \
   .claude/skills/religion-council/scripts/retrieve.py
+```
+
+CI 使用內附的假 Codex MCP server。發版前或更換 Codex CLI 版本後,另跑已登入的真實測試:
+
+```bash
+python3 scripts/smoke_codex_mcp.py
 ```
 
 ### 語料與檢索 metadata
@@ -240,9 +259,13 @@ python3 -m py_compile orchestrator/debate_controller.py \
 
 ```json
 { "text": "…", "tradition": "buddhism", "school": "漢傳", "work": "般若波羅蜜多心經",
-  "locator": "全經", "language": "zh-Hant", "version": "通行本", "category": "宗教經典" }
+  "locator": "全經", "language": "zh-Hant", "version": "通行本", "category": "宗教經典",
+  "label": "Text", "evidence_type": "quotation", "verbatim": true }
 ```
 `category` 為 `宗教經典` 或 `哲學思想著作`。
+只有逐字引文才使用 `evidence_type: quotation`;附真實書名與出處的緊貼原文摘要使用
+`source-bound-summary`。不可把任意括號備註推斷為 `school`;新增教派標記時須同步兩份
+retriever。
 
 ### Pull-request 檢查清單
 

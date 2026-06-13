@@ -99,6 +99,20 @@ sensitive material.
 - `codex mcp-server` is marked Experimental in the current Codex CLI reference. Pin and retest
   Codex versions before production deployment.
 
+## Live MCP validation
+
+The automated suite uses `tests/fake_codex_mcp.py` so CI remains deterministic and does not
+consume an authenticated Codex session. Before a release or after upgrading Codex CLI, run one
+opt-in live create/reply check:
+
+```bash
+python3 scripts/smoke_codex_mcp.py
+```
+
+The script starts the configured `codex mcp-server`, creates one read-only conversation, calls
+`codex-reply` with the returned `threadId`, and fails unless the same thread is reused. Override
+the executable when needed with `CODEX_COMMAND="/path/to/codex mcp-server"`.
+
 ## Security boundary
 
 The controller is intentionally local and dependency-free. It does not expose an HTTP listener.
@@ -135,3 +149,13 @@ Claude 只負責主持、匿名 issue matrix 與最終綜合。
 目前 Codex MCP tool schema 沒有應用層 idempotency key;若 server 已建立 thread,但 response 在
 timeout 前未回到 controller,重試仍可能留下未登記的孤立 thread。因此現階段不能宣稱
 exact-once。`codex mcp-server` 目前亦標為 Experimental,正式部署前應固定版本並重新測試。
+
+自動測試使用 `tests/fake_codex_mcp.py`,避免 CI 依賴登入狀態或消耗 Codex session。發版前或
+升級 Codex CLI 後,應另跑一次真實 create/reply smoke test:
+
+```bash
+python3 scripts/smoke_codex_mcp.py
+```
+
+此腳本會建立一條 read-only Codex conversation,再以回傳的 `threadId` 呼叫 `codex-reply`,
+並驗證第二輪仍使用同一 thread。

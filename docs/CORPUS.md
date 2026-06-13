@@ -42,12 +42,16 @@ Everything the personas need from the corpus flows through one function,
 ```json
 { "text": "…snippet…", "tradition": "buddhism", "school": "漢傳",
   "work": "般若波羅蜜多心經", "locator": "全經", "language": "zh-Hant",
-  "version": "通行本", "category": "宗教經典" }
+  "version": "通行本", "category": "宗教經典", "label": "Text",
+  "evidence_type": "quotation", "verbatim": true }
 ```
 
 Phase 0 parses the cited bullets in the selected `references/` file and applies deterministic
-lexical ranking. The **shape is already fixed.** As long as future phases honor it, `SKILL.md`
-and all 34 voices keep working unchanged. This is the seam the whole
+lexical ranking. Parenthetical locator notes are not treated as denominations unless they contain
+an explicit, recognized school marker. Every parsed bullet is source-bound `[Text]`; the additive
+`evidence_type` and `verbatim` fields distinguish a direct quotation from a close, cited summary.
+The core retrieval keys are stable. As long as future phases honor them, `SKILL.md` and all 34
+voices keep working unchanged. This is the seam the whole
 [roadmap](../README.md#roadmap) turns on.
 
 ### RAG ingestion notes (for Phases 2–3)
@@ -104,11 +108,14 @@ persona 對語料的需求全部走同一個函式 `retrieve.retrieve(tradition,
 ```json
 { "text": "…片段…", "tradition": "buddhism", "school": "漢傳",
   "work": "般若波羅蜜多心經", "locator": "全經", "language": "zh-Hant",
-  "version": "通行本", "category": "宗教經典" }
+  "version": "通行本", "category": "宗教經典", "label": "Text",
+  "evidence_type": "quotation", "verbatim": true }
 ```
 
-第 0 階段會解析所選 `references/` 檔中的附出處條目,並作可重現的詞彙排序;**回傳形狀已固定**。
-只要未來階段守住它,`SKILL.md` 與 34 個聲音都不必改。這正是整個
+第 0 階段會解析所選 `references/` 檔中的附出處條目,並作可重現的詞彙排序。括號內的出處備註
+只有在含明確、已登錄的教派標記時才會成為 `school`;所有解析條目均為有來源約束的 `[Text]`,
+再以附加欄位 `evidence_type` 與 `verbatim` 區分逐字引文和附出處摘要。核心檢索欄位保持穩定;
+只要未來階段守住它們,`SKILL.md` 與 34 個聲音都不必改。這正是整個
 [發展藍圖](../README.md#發展藍圖)的樞紐。
 
 ### RAG 收錄實務(第 2–3 階段用)

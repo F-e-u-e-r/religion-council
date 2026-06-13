@@ -142,6 +142,13 @@ large roster in the moderator prompt.
 Run records are written atomically under `.religion-council/runs/<run-id>/state.json` and are
 ignored by Git. Each Codex panelist runs read-only with approval policy `never`.
 
+Before relying on Mode 3 after installing or upgrading Codex CLI, run one authenticated live
+create/reply check:
+
+```bash
+python3 scripts/smoke_codex_mcp.py
+```
+
 ### Direct Codex MCP, without the controller
 
 Claude Code can also consume the raw Codex server:
@@ -286,6 +293,12 @@ claude
 > issue matrix,再用相同 threadId 跑第二輪,最後綜合。
 
 通用 30 人 panel 可使用 `orchestrator/panelists/thirty-member-example.json`。
+
+安裝或升級 Codex CLI 後,先跑一次已登入的真實 create/reply 測試:
+
+```bash
+python3 scripts/smoke_codex_mcp.py
+```
 
 也可以直接加入原始 Codex MCP:
 
