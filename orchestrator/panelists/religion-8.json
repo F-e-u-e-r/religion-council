@@ -1,0 +1,53 @@
+{
+  "name": "Religion Council - eight broad traditions",
+  "panelists": [
+    {
+      "id": "christianity",
+      "role": "Christianity, with internal denominational diversity noted",
+      "priorities": ["grace and love", "creation and redemption", "scriptural grounding"],
+      "reference": "skills/religion-council/references/01-基督宗教.md"
+    },
+    {
+      "id": "islam",
+      "role": "Islam, with Sunni and Shia diversity noted",
+      "priorities": ["tawhid", "revelation and right guidance", "justice and accountability"],
+      "reference": "skills/religion-council/references/02-伊斯蘭教.md"
+    },
+    {
+      "id": "hinduism",
+      "role": "Hindu traditions, with school and devotional diversity noted",
+      "priorities": ["dharma", "karma and liberation", "multiple paths of practice"],
+      "reference": "skills/religion-council/references/03-印度教.md"
+    },
+    {
+      "id": "buddhism",
+      "role": "Buddhist traditions, with Theravada, Mahayana, and Vajrayana diversity noted",
+      "priorities": ["suffering and its cessation", "dependent origination", "wisdom and compassion"],
+      "reference": "skills/religion-council/references/04-佛教.md"
+    },
+    {
+      "id": "taoism",
+      "role": "Taoist and Daoist perspectives, distinguishing philosophy and religion",
+      "priorities": ["the Dao and naturalness", "non-coercive action", "balance and transformation"],
+      "reference": "skills/religion-council/references/05-道教.md"
+    },
+    {
+      "id": "legalism",
+      "role": "Chinese Legalism as political philosophy rather than religion",
+      "priorities": ["institutional effectiveness", "law, method, and authority", "realistic incentives"],
+      "reference": "skills/religion-council/references/06-法家.md"
+    },
+    {
+      "id": "confucianism",
+      "role": "Confucianism as an ethical and intellectual tradition",
+      "priorities": ["humaneness and rightness", "ritual and relationships", "cultivation and public responsibility"],
+      "reference": "skills/religion-council/references/07-儒家.md"
+    },
+    {
+      "id": "mohism",
+      "role": "Mohism as a Pre-Qin philosophical school",
+      "priorities": ["impartial care", "opposition to aggression", "practical benefit and merit"],
+      "reference": "skills/religion-council/references/08-墨家.md"
+    }
+  ]
+}

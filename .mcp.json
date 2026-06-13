@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "religion-council-controller": {
+      "type": "stdio",
+      "command": "bash",
+      "args": [
+        "-lc",
+        "exec python3 \"$CLAUDE_PROJECT_DIR/orchestrator/debate_controller.py\" serve"
+      ],
+      "env": {}
+    }
+  }
+}
