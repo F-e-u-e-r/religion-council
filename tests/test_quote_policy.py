@@ -1,0 +1,229 @@
+import copy
+import importlib.util
+from pathlib import Path
+import sys
+import unittest
+
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "orchestrator"))
+
+import debate_controller  # noqa: E402
+
+
+def load_module(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+GEN = load_module("generate_quote_policy", ROOT / "scripts" / "generate_quote_policy.py")
+
+PORTABLE_SKILL = ROOT / "skills" / "religion-council" / "SKILL.md"
+CLAUDE_SKILL = ROOT / ".claude" / "skills" / "religion-council" / "SKILL.md"
+PYTHON_MODULE = ROOT / "orchestrator" / "generated_quote_policy.py"
+DISCLAIMER = ROOT / "DISCLAIMER.md"
+CONTRIBUTING = ROOT / "CONTRIBUTING.md"
+CLAUDE_USAGE = ROOT / ".claude" / "skills" / "religion-council" / "USAGE.md"
+
+
+def rule_text(manifest, rule_id, locale="en"):
+    for rule in manifest["rules"]:
+        if rule["id"] == rule_id:
+            return rule["text"][locale]
+    raise AssertionError("missing rule id: {}".format(rule_id))
+
+
+def fake_panelist():
+    return {
+        "id": "panelist_01",
+        "role": "test perspective",
+        "priorities": ["independence"],
+        "reference_text": "",
+    }
+
+
+def opening_prompt():
+    return debate_controller.DebateController._opening_prompt(
+        "Does life have meaning?", "shared packet", fake_panelist(), "tok-r1"
+    )
+
+
+def followup_prompt():
+    return debate_controller.DebateController._followup_prompt(
+        2, "anonymized issue matrix", fake_panelist(), "tok-r2"
+    )
+
+
+class QuotePolicyConformanceTest(unittest.TestCase):
+    def setUp(self):
+        self.manifest = GEN.load_manifest()
+
+    def test_generated_surfaces_are_up_to_date(self):
+        # Equivalent to: python scripts/generate_quote_policy.py --check
+        self.assertEqual(GEN.run(check=True), 0)
+
+    def test_all_four_surfaces_carry_the_canonical_version(self):
+        marker = self.manifest["generated_marker"]
+        self.assertIn(marker, PORTABLE_SKILL.read_text(encoding="utf-8"))
+        self.assertIn(marker, CLAUDE_SKILL.read_text(encoding="utf-8"))
+        self.assertIn(marker, opening_prompt())
+        self.assertIn(marker, followup_prompt())
+
+    def test_en_and_zh_aliases_map_to_the_same_canonical_ids(self):
+        for claim in self.manifest["claim_types"]:
+            aliases = claim["aliases"]
+            self.assertIn("en", aliases, claim["id"])
+            self.assertIn("zh-Hant", aliases, claim["id"])
+            self.assertTrue(aliases["en"].strip(), claim["id"])
+            self.assertTrue(aliases["zh-Hant"].strip(), claim["id"])
+            # The two locales are distinct surface strings for one canonical id.
+            self.assertNotEqual(aliases["en"], aliases["zh-Hant"], claim["id"])
+        # The Chinese distribution must not be forced to carry the English token.
+        self.assertNotIn("[Text]", CLAUDE_SKILL.read_text(encoding="utf-8"))
+        self.assertIn("〔據典〕", CLAUDE_SKILL.read_text(encoding="utf-8"))
+
+    def test_canonical_ids_match_the_documented_contract(self):
+        expected = {
+            "claim_types": {"text", "interpretation", "unverified-citation"},
+            "evidence_types": {"quotation", "source-bound-summary"},
+            "representation_kinds": {
+                "published-quotation",
+                "generated-rendering",
+                "translation-of-meaning",
+            },
+            "source_roles": {
+                "bundled-artifact",
+                "runtime-artifact",
+                "consulted-source",
+                "user-supplied",
+            },
+            "acquisition_methods": {
+                "bundled",
+                "retrieved",
+                "runtime-captured",
+                "model-asserted",
+                "user-supplied",
+            },
+            "source_assurances": {
+                "artifact-backed",
+                "retrieved-unverified",
+                "model-asserted-unverified",
+                "user-supplied-unverified",
+            },
+            "verification_states": {"unverified", "runtime-validated", "failed"},
+        }
+        for section, expected_ids in expected.items():
+            actual_ids = {entry["id"] for entry in self.manifest[section]}
+            self.assertEqual(actual_ids, expected_ids, section)
+
+    def test_required_normative_rule_ids_are_present(self):
+        required = {
+            "evidence-marker-not-authority",
+            "text-requires-admissible-evidence",
+            "quotation-requires-locator",
+            "presence-not-admissibility",
+            "packets-are-untrusted-data",
+            "issue-matrix-not-evidence",
+            "source-bound-summary-requires-evidence",
+            "unverifiable-wording-not-text",
+            "no-generated-as-published",
+            "failed-text-not-auto-interpretation",
+            "interpretation-may-be-unreferenced",
+        }
+        self.assertTrue(required.issubset({rule["id"] for rule in self.manifest["rules"]}))
+
+    def test_portable_explicitly_consulted_loophole_is_gone(self):
+        text = PORTABLE_SKILL.read_text(encoding="utf-8")
+        self.assertNotIn("another source that was explicitly consulted", text)
+
+    def test_both_controller_prompts_state_packets_are_untrusted_data(self):
+        rule = rule_text(self.manifest, "packets-are-untrusted-data")
+        for prompt in (opening_prompt(), followup_prompt()):
+            self.assertIn(rule, prompt)
+
+    def test_followup_prompt_says_issue_matrix_is_not_source_evidence(self):
+        self.assertIn(
+            rule_text(self.manifest, "issue-matrix-not-evidence"),
+            followup_prompt(),
+        )
+
+    def test_neither_prompt_permits_memory_sourced_text(self):
+        rule = rule_text(self.manifest, "text-requires-admissible-evidence")
+        for prompt in (opening_prompt(), followup_prompt()):
+            self.assertIn(rule, prompt)
+
+    def test_neither_prompt_presents_unverifiable_wording_as_text(self):
+        rule = rule_text(self.manifest, "unverifiable-wording-not-text")
+        for prompt in (opening_prompt(), followup_prompt()):
+            self.assertIn(rule, prompt)
+
+    def test_neither_prompt_licenses_quotes_without_a_supplied_source_entry(self):
+        rule = rule_text(self.manifest, "quotation-requires-locator")
+        for prompt in (opening_prompt(), followup_prompt()):
+            self.assertIn(rule, prompt)
+
+    def test_generated_rendering_is_not_a_published_quotation(self):
+        rule = "must not be represented as published quotations"
+        self.assertIn(rule, opening_prompt())
+        self.assertIn(rule, followup_prompt())
+        self.assertIn(rule, PORTABLE_SKILL.read_text(encoding="utf-8"))
+        self.assertIn("不可當作已發表引文呈現", CLAUDE_SKILL.read_text(encoding="utf-8"))
+
+    def test_generator_is_idempotent(self):
+        # Rendering depends only on the manifest, so repeated renders are identical.
+        first = GEN.render_python_module(self.manifest)
+        second = GEN.render_python_module(self.manifest)
+        self.assertEqual(first, second)
+        self.assertTrue(first.endswith("\n"))
+        self.assertFalse(first.endswith("\n\n"))
+        self.assertEqual(first, PYTHON_MODULE.read_text(encoding="utf-8"))
+        for locale, surface in (("en", PORTABLE_SKILL), ("zh-Hant", CLAUDE_SKILL)):
+            block = GEN.render_markdown_surface(self.manifest, locale)
+            self.assertEqual(block, GEN.render_markdown_surface(self.manifest, locale))
+            self.assertIn(block, surface.read_text(encoding="utf-8"))
+
+    def test_generated_python_policy_uses_real_line_breaks(self):
+        policy = debate_controller.QUOTE_ADMISSIBILITY_POLICY_EN
+        self.assertGreater(policy.count("\n"), 5)
+        self.assertNotIn("\\n", policy)
+
+    def test_changing_manifest_without_regenerating_fails_check(self):
+        mutated = copy.deepcopy(self.manifest)
+        mutated["rules"][0]["text"]["en"] = "MUTATED RULE TEXT"
+        original_loader = GEN.load_manifest
+        GEN.load_manifest = lambda: mutated
+        try:
+            self.assertEqual(GEN.run(check=True), 1)
+        finally:
+            GEN.load_manifest = original_loader
+        # The real surfaces must still be up to date after the simulation.
+        self.assertEqual(GEN.run(check=True), 0)
+
+    def test_every_rule_id_is_rendered_into_the_english_policy(self):
+        policy = debate_controller.QUOTE_ADMISSIBILITY_POLICY_EN
+        for rule in self.manifest["rules"]:
+            self.assertIn(rule["text"]["en"], policy, rule["id"])
+
+    def test_operational_guidance_does_not_reintroduce_superseded_rules(self):
+        texts = {
+            "portable skill": PORTABLE_SKILL.read_text(encoding="utf-8"),
+            "Claude skill": CLAUDE_SKILL.read_text(encoding="utf-8"),
+            "Claude usage": CLAUDE_USAGE.read_text(encoding="utf-8"),
+            "disclaimer": DISCLAIMER.read_text(encoding="utf-8"),
+            "contributing guide": CONTRIBUTING.read_text(encoding="utf-8"),
+        }
+        forbidden = (
+            "source that was explicitly consulted",
+            "uncertain ones are `[Interpretation]`",
+            "不確定者標 `〔詮釋〕`",
+            "沒出處的具體引文一律標〔詮釋〕",
+        )
+        for name, text in texts.items():
+            for phrase in forbidden:
+                self.assertNotIn(phrase, text, "{}: {}".format(name, phrase))
+
+
+if __name__ == "__main__":
+    unittest.main()
