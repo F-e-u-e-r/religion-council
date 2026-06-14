@@ -26,7 +26,7 @@ from generated_quote_policy import QUOTE_ADMISSIBILITY_POLICY_EN
 
 
 PROTOCOL_VERSION = "2025-06-18"
-CONTROLLER_VERSION = "0.1"
+CONTROLLER_VERSION = "0.2.0"
 PANELIST_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 
 
