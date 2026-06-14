@@ -26,9 +26,11 @@ Every contribution and every generated turn must follow these:
    synthesis, modern application, or a reconstructed reply — stated as not the source's exact
    wording.
 2. **Never invent locators.** No fabricated chapter, verse, sūtra, hadith, section, or page
-   numbers. When a locator is uncertain, paraphrase without one and flag the uncertainty.
-3. **Quote only what's actually there.** Use wording present in the loaded `references/` or a
-   source that was explicitly consulted.
+   numbers. When a locator is uncertain, retry with admissible evidence; otherwise remove the
+   source-bound claim or retain it only as a non-supporting `[Unverified citation]`.
+3. **Quote only artifact-bound wording.** A quotation must be deterministically tied to an
+   admissible supplied source entry and locator. Model memory or a claim that a source was
+   consulted is never sufficient.
 4. **The Qur'an in Chinese (or any non-Arabic) is a *rendering of meaning*,** not the original;
    it must be labeled as such (e.g. 馬堅譯). Do not present a generated translation as a
    published quotation.
@@ -86,8 +88,10 @@ licensed source material may be added to this repository. See the license scope 
 
 1. **逐句標示。** 〔據典〕指直接引用或緊扣原典的轉述(須附真實書名+出處);〔詮釋〕指推論、
    綜合、當代應用或重建的回應——並聲明非經文原話。
-2. **絕不杜撰出處。** 不捏造章、節、經、聖訓、段落或頁碼。出處不確定時,寧可不附而標明存疑。
-3. **只引用真實存在的文句。** 使用 `references/` 中或明確查證過之來源的用語。
+2. **絕不杜撰出處。** 不捏造章、節、經、聖訓、段落或頁碼。出處不確定時,先以可採證據重試;
+   否則移除該附出處主張,或只以不構成支持的〔未驗證引用〕保留。
+3. **只引用有文件繫定的文句。** 引文必須透過可採的已提供來源條目,確定地繫於文件與定位;
+   模型記憶或聲稱曾查閱某來源永不足夠。
 4. **《古蘭經》中文(或任何非阿拉伯文)為「釋義」**,非原文,須明確標示(如馬堅譯);不可把
    生成的翻譯當成已出版引文呈現。
 5. **不替別的傳統下定義。** 批評前先以對方信徒能認可的語彙複述其立場。

@@ -139,7 +139,7 @@ from an arbitrary parenthetical note; register an explicit marker in both retrie
 - [ ] Persona added to **both** `references/` folders; the only differences are the SKILL.md cite + `延伸語料` block.
 - [ ] Sub-agent file has valid frontmatter (`name`, `description`, `tools: Read, Bash`).
 - [ ] Registered in `council-moderator.md`, `USAGE.md`, and SKILL.md routing.
-- [ ] Every `[Text]` line has a real work **and** locator; uncertain ones are `[Interpretation]`.
+- [ ] Every `[Text]` line has a real work **and** locator; failed source-bound claims are removed or retained only as non-supporting `[Unverified citation]`, never relabelled as `[Interpretation]`.
 - [ ] Sources are public-domain or openly licensed; no copyrighted modern translations.
 - [ ] Qur'an passages are labeled as renderings (e.g. 馬堅譯), not the Arabic original.
 - [ ] Tested in a **fresh** Claude Code session (sub-agents load at session start).
@@ -272,7 +272,7 @@ retriever。
 - [ ] persona 已加進**兩個** `references/` 資料夾;差異僅限 SKILL.md 引用方式與 `延伸語料` 區塊。
 - [ ] sub-agent frontmatter 正確(`name`、`description`、`tools: Read, Bash`)。
 - [ ] 已登錄於 `council-moderator.md`、`USAGE.md` 與 SKILL.md 路由。
-- [ ] 每條 `〔據典〕` 都有真實書名**與**出處;不確定者標 `〔詮釋〕`。
+- [ ] 每條 `〔據典〕` 都有真實書名**與**出處;失敗的附出處主張須移除,或僅以不構成支持的 `〔未驗證引用〕` 保留,不可改標 `〔詮釋〕`。
 - [ ] 來源為公有領域或開放授權;不含受版權保護的現代譯本。
 - [ ] 《古蘭經》引文標為釋義(如馬堅譯),非阿拉伯原文。
 - [ ] 已在**全新** Claude Code session 測試(sub-agent 於啟動時載入)。
