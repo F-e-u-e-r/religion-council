@@ -27,7 +27,7 @@
       }
     },
     {
-      "id": "unverified_citation",
+      "id": "unverified-citation",
       "aliases": { "en": "[Unverified citation]", "zh-Hant": "〔未驗證引用〕" },
       "description": {
         "en": "A citation-style claim whose evidence could not be confirmed. Retained only as non-supporting; never relabelled as interpretation.",
@@ -44,7 +44,7 @@
       }
     },
     {
-      "id": "source_bound_summary",
+      "id": "source-bound-summary",
       "description": {
         "en": "A close paraphrase tied to supplied evidence and a locator.",
         "zh-Hant": "緊扣所提供證據與定位的貼近改寫。"
@@ -53,21 +53,21 @@
   ],
   "representation_kinds": [
     {
-      "id": "published_quotation",
+      "id": "published-quotation",
       "description": {
         "en": "Wording as published in an artifact.",
         "zh-Hant": "依文件原樣發表的用語。"
       }
     },
     {
-      "id": "generated_rendering",
+      "id": "generated-rendering",
       "description": {
         "en": "A newly generated translation or rendering. Must not be presented as a published quotation.",
         "zh-Hant": "新生成的翻譯或轉述。不可當作已發表的引文呈現。"
       }
     },
     {
-      "id": "translation_of_meaning",
+      "id": "translation-of-meaning",
       "description": {
         "en": "A rendering of meaning (e.g. a Chinese rendering of the Qur'an), marked as a rendering, not the original.",
         "zh-Hant": "釋義式轉述(如古蘭經中文釋義),須標為釋義而非原文。"
@@ -76,28 +76,28 @@
   ],
   "source_roles": [
     {
-      "id": "bundled_artifact",
+      "id": "bundled-artifact",
       "description": {
         "en": "Material shipped in the curated references or returned by the retrieval seam.",
         "zh-Hant": "隨附於精選 references 或由檢索介面回傳的材料。"
       }
     },
     {
-      "id": "runtime_artifact",
+      "id": "runtime-artifact",
       "description": {
         "en": "An artifact captured during a run. Reserved; the runtime capture path is PR2+.",
         "zh-Hant": "執行期擷取的文件。保留;執行期擷取路徑屬 PR2+。"
       }
     },
     {
-      "id": "consulted_source",
+      "id": "consulted-source",
       "description": {
         "en": "A source the model claims to have consulted or recalls, with no artifact behind it. Not admissible for [Text] on its own.",
         "zh-Hant": "模型聲稱查閱過或記得、但背後沒有文件的來源。單憑它不足以支持〔據典〕。"
       }
     },
     {
-      "id": "user_supplied",
+      "id": "user-supplied",
       "description": {
         "en": "Material supplied by the user; independently unverified for authorship, edition, authority, and publication status.",
         "zh-Hant": "使用者提供的材料;其作者、版本、權威性與發表狀態未經獨立查證。"
@@ -107,19 +107,19 @@
   "acquisition_methods": [
     { "id": "bundled", "description": { "en": "Shipped in the repository.", "zh-Hant": "隨倉庫一同提供。" } },
     { "id": "retrieved", "description": { "en": "Returned by the retrieval seam.", "zh-Hant": "由檢索介面回傳。" } },
-    { "id": "runtime_captured", "description": { "en": "Captured during a run (PR2+).", "zh-Hant": "執行期擷取(PR2+)。" } },
-    { "id": "model_asserted", "description": { "en": "Asserted from model memory; no artifact.", "zh-Hant": "由模型記憶提出;無文件。" } },
-    { "id": "user_supplied", "description": { "en": "Supplied by the user in a packet.", "zh-Hant": "由使用者在 packet 中提供。" } }
+    { "id": "runtime-captured", "description": { "en": "Captured during a run (PR2+).", "zh-Hant": "執行期擷取(PR2+)。" } },
+    { "id": "model-asserted", "description": { "en": "Asserted from model memory; no artifact.", "zh-Hant": "由模型記憶提出;無文件。" } },
+    { "id": "user-supplied", "description": { "en": "Supplied by the user in a packet.", "zh-Hant": "由使用者在 packet 中提供。" } }
   ],
   "source_assurances": [
-    { "id": "artifact_backed", "description": { "en": "Backed by an available artifact and locator.", "zh-Hant": "有可取得的文件與定位作後盾。" } },
-    { "id": "retrieved_unverified", "description": { "en": "Retrieved, but not independently verified.", "zh-Hant": "已檢索,但未經獨立查證。" } },
-    { "id": "model_asserted_unverified", "description": { "en": "Asserted from memory; inadmissible for [Text] alone.", "zh-Hant": "由記憶提出;單憑此不可作〔據典〕。" } },
-    { "id": "user_supplied_unverified", "description": { "en": "User-supplied; traceable to the packet but not independently established.", "zh-Hant": "使用者提供;可追溯至 packet,但未經獨立確立。" } }
+    { "id": "artifact-backed", "description": { "en": "Backed by an available artifact and locator.", "zh-Hant": "有可取得的文件與定位作後盾。" } },
+    { "id": "retrieved-unverified", "description": { "en": "Retrieved, but not independently verified.", "zh-Hant": "已檢索,但未經獨立查證。" } },
+    { "id": "model-asserted-unverified", "description": { "en": "Asserted from memory; inadmissible for [Text] alone.", "zh-Hant": "由記憶提出;單憑此不可作〔據典〕。" } },
+    { "id": "user-supplied-unverified", "description": { "en": "User-supplied; traceable to the packet but not independently established.", "zh-Hant": "使用者提供;可追溯至 packet,但未經獨立確立。" } }
   ],
   "verification_states": [
     { "id": "unverified", "description": { "en": "PR1 default: instruction-enforced, not runtime-validated.", "zh-Hant": "PR1 預設:以指示約束,未在執行期驗證。" } },
-    { "id": "runtime_validated", "description": { "en": "Reserved for P3–P4 runtime validation.", "zh-Hant": "保留給 P3–P4 的執行期驗證。" } },
+    { "id": "runtime-validated", "description": { "en": "Reserved for P3–P4 runtime validation.", "zh-Hant": "保留給 P3–P4 的執行期驗證。" } },
     { "id": "failed", "description": { "en": "Verification attempted and not satisfied.", "zh-Hant": "已嘗試驗證但未通過。" } }
   ],
   "rules": [
@@ -140,8 +140,8 @@
     {
       "id": "quotation-requires-locator",
       "text": {
-        "en": "Quotations require wording deterministically tied to an available artifact and a locator; approximate recall is not a quotation.",
-        "zh-Hant": "引文須有確定繫於可取得文件與定位的用語;憑印象的近似回憶不算引文。"
+        "en": "Quotations require wording deterministically tied to an available artifact through an admissible supplied source entry and a locator; approximate recall is not a quotation.",
+        "zh-Hant": "引文須透過可採的已提供來源條目,把用語確定地繫於可取得文件與定位;憑印象的近似回憶不算引文。"
       }
     },
     {
@@ -173,6 +173,13 @@
       }
     },
     {
+      "id": "unverifiable-wording-not-text",
+      "text": {
+        "en": "Unverifiable wording must not be presented as [Text].",
+        "zh-Hant": "無法驗證的用語不可呈現為〔據典〕。"
+      }
+    },
+    {
       "id": "no-generated-as-published",
       "text": {
         "en": "Generated translations or renderings must not be represented as published quotations; mark them as renderings.",
@@ -196,7 +203,7 @@
   ],
   "mode_assurance": [
     {
-      "id": "hybrid_controller",
+      "id": "hybrid-controller",
       "label": { "en": "Hybrid controller (Claude moderator + Codex panelists)", "zh-Hant": "混合控制器(Claude 主持 + Codex 議員)" },
       "pr1": "instruction-enforced",
       "planned": "P4 runtime-enforced / fail-closed",
@@ -206,7 +213,7 @@
       }
     },
     {
-      "id": "claude_only",
+      "id": "claude-only",
       "label": { "en": "Claude-only", "zh-Hant": "純 Claude" },
       "pr1": "instruction-enforced",
       "planned": "instruction-enforced",
