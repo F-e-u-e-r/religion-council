@@ -32,6 +32,12 @@ Version **v0.1** supports three execution modes:
 3. **Claude moderator + Codex panelists** — a deterministic Python MCP controller manages
    persistent Codex threads, barriers, retries, and audit records.
 
+All three modes share one quote-admissibility policy (`quote-admissibility/v1`), but the
+enforcement is currently **instruction-level only**: the hybrid controller is **not
+fail-closed** — it does not parse labels, verify citations, validate spans, or reject
+non-conforming output. See the [assurance matrix](docs/ORCHESTRATION.md#quote-admissibility-assurance)
+and [ADR 0001](docs/adr/0001-quote-admissibility-policy.md).
+
 ## Why it's different
 
 - **Grounding discipline comes first.** `[Text]` vs `[Interpretation]` labels on every

@@ -113,6 +113,29 @@ The script starts the configured `codex mcp-server`, creates one read-only conve
 `codex-reply` with the returned `threadId`, and fails unless the same thread is reused. Override
 the executable when needed with `CODEX_COMMAND="/path/to/codex mcp-server"`.
 
+## Quote-admissibility assurance
+
+All three execution modes share one quote-admissibility policy
+(`quote-admissibility/v1`; see [ADR 0001](adr/0001-quote-admissibility-policy.md) and
+[`policies/quote-admissibility.v1.json`](../policies/quote-admissibility.v1.json)). The
+*guarantee* behind that shared policy is uneven:
+
+| Mode | PR1 enforcement | Planned |
+|---|---|---|
+| Hybrid controller (Claude moderator + Codex panelists) | instruction-enforced | P4 runtime-enforced / fail-closed |
+| Claude-only (35 agents) | instruction-enforced | instruction-enforced |
+| Portable (Codex / any agent) | instruction-enforced | instruction-enforced |
+
+PR1 **aligns the instructions and reduces exposure; it does not add runtime
+enforcement.** It does not parse labels, verify citations, validate spans, or reject
+non-conforming panelist output. The hybrid controller is therefore **not fail-closed**;
+fail-closed enforcement is deferred to P3–P4.
+
+User-supplied packets are treated by default as `acquisition_method = user-supplied`
+and `source_assurance = user-supplied-unverified`: their wording may be traceable to
+the supplied packet, but authorship, edition, authority, and publication status are not
+independently established.
+
 ## Security boundary
 
 The controller is intentionally local and dependency-free. It does not expose an HTTP listener.
@@ -159,3 +182,24 @@ python3 scripts/smoke_codex_mcp.py
 
 此腳本會建立一條 read-only Codex conversation,再以回傳的 `threadId` 呼叫 `codex-reply`,
 並驗證第二輪仍使用同一 thread。
+
+### 引用可採性的保證(各模式不對等)
+
+三種模式共用同一份引用可採性政策(`quote-admissibility/v1`;見
+[ADR 0001](adr/0001-quote-admissibility-policy.md) 與
+[`policies/quote-admissibility.v1.json`](../policies/quote-admissibility.v1.json)),
+但其**保證強度並不對等**:
+
+| 模式 | PR1 強制方式 | 規劃 |
+|---|---|---|
+| 混合控制器(Claude 主持 + Codex 議員) | 以指示約束 | P4 執行期強制 / fail-closed |
+| 純 Claude(35 agents) | 以指示約束 | 以指示約束 |
+| 可攜(Codex / 任意 agent) | 以指示約束 | 以指示約束 |
+
+PR1 **只是對齊指示、降低暴露面,並未加入執行期強制**:不解析標記、不驗證引用、不檢查
+span、不拒絕不合規的議員輸出。因此混合控制器**並非 fail-closed**;fail-closed 強制延後至
+P3–P4。
+
+使用者提供的 packet 預設視為 `acquisition_method = user-supplied` 與
+`source_assurance = user-supplied-unverified`:其用語可追溯至所提供的 packet,但作者、版本、
+權威性與發表狀態未經獨立確立。

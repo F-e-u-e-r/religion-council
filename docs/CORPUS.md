@@ -54,6 +54,40 @@ The core retrieval keys are stable. As long as future phases honor them, `SKILL.
 voices keep working unchanged. This is the seam the whole
 [roadmap](../README.md#roadmap) turns on.
 
+### Retrieval field contract
+
+Every record returned by `retrieve.retrieve(...)` carries the fields below. PR1 does
+**not** change the return shape; it only classifies each field so future phases know
+what they may rely on. The two `retrieve.py` copies stay byte-identical (enforced by
+the parity test in `tests/test_retrieve.py`).
+
+| Field | Classification | Notes |
+|---|---|---|
+| `text` | contractual | The snippet. Personas speak from this. |
+| `tradition` | contractual | Canonical tradition key. |
+| `school` | contractual | Branch/school, or the tradition default. |
+| `work` | contractual | Cited work title. |
+| `locator` | contractual | Chapter/verse/section locator (or a fallback note). |
+| `language` | contractual | Language of the snippet. |
+| `version` | contractual | Edition/version tag of the source. |
+| `category` | contractual | `宗教經典` vs `哲學思想著作`. |
+| `label` | contractual | Evidence-usage marker; currently always `Text`. |
+| `evidence_type` | optional contractual | Additive: `quotation` vs `source-bound-summary`. |
+| `verbatim` | optional contractual | Additive: `true` only for a verbatim quotation. |
+| `topic` | optional contractual | Parsed `〔topic〕` tag; supplementary. |
+| `source_file` | implementation metadata | Absolute path; may change. Do not depend on it. |
+| `source_line` | implementation metadata | Parse position; used for stable tie-breaking only. |
+
+**Contractual** fields are the stable seam every persona and future retriever must
+keep. **Optional contractual** fields are additive and stable but supplementary — safe
+to use, not load-bearing for the persona contract. **Implementation metadata** is
+internal to the Phase 0 file parser and may change without notice; downstream code must
+not depend on it.
+
+`label` is an evidence-usage marker (see [ADR 0001](adr/0001-quote-admissibility-policy.md)),
+not an authority or quality score, and a present-in-record value does not by itself
+make wording quote-admissible.
+
 ### RAG ingestion notes (for Phases 2–3)
 
 1. **Pin a version/translation first.** The same text in different translations diverges
@@ -117,6 +151,36 @@ persona 對語料的需求全部走同一個函式 `retrieve.retrieve(tradition,
 再以附加欄位 `evidence_type` 與 `verbatim` 區分逐字引文和附出處摘要。核心檢索欄位保持穩定;
 只要未來階段守住它們,`SKILL.md` 與 34 個聲音都不必改。這正是整個
 [發展藍圖](../README.md#發展藍圖)的樞紐。
+
+### 檢索欄位契約
+
+`retrieve.retrieve(...)` 回傳的每筆紀錄都帶有下列欄位。PR1 **不**更動回傳形狀,只為每個
+欄位分類,讓後續階段知道哪些可依賴。兩份 `retrieve.py` 保持位元組相同(由
+`tests/test_retrieve.py` 的 parity test 保證)。
+
+| 欄位 | 分類 | 說明 |
+|---|---|---|
+| `text` | 契約 | 片段本體,persona 據此發言。 |
+| `tradition` | 契約 | 傳統的正規鍵。 |
+| `school` | 契約 | 派別/學派,或傳統預設值。 |
+| `work` | 契約 | 所引典籍名稱。 |
+| `locator` | 契約 | 章節/出處定位(或退而求其次的備註)。 |
+| `language` | 契約 | 片段語言。 |
+| `version` | 契約 | 來源版本標記。 |
+| `category` | 契約 | `宗教經典` 與 `哲學思想著作` 之分。 |
+| `label` | 契約 | 證據使用標記;目前恆為 `Text`。 |
+| `evidence_type` | 可選契約 | 附加:`quotation` 與 `source-bound-summary`。 |
+| `verbatim` | 可選契約 | 附加:僅逐字引文為 `true`。 |
+| `topic` | 可選契約 | 解析得到的 `〔主題〕` 標籤,屬補充。 |
+| `source_file` | 實作 metadata | 絕對路徑,可能變動,不應依賴。 |
+| `source_line` | 實作 metadata | 解析位置,僅用於穩定排序。 |
+
+**契約**欄位是每個 persona 與未來檢索器都必須守住的穩定介面;**可選契約**欄位為附加且穩定的
+補充欄位,可用但非 persona 契約的承重點;**實作 metadata** 屬第 0 階段檔案解析器的內部細節,
+可能隨時變動,下游不得依賴。
+
+`label` 是證據使用標記(見 [ADR 0001](adr/0001-quote-admissibility-policy.md)),不是權威
+或品質分數;欄位中有值本身並不使該用語成為可引用。
 
 ### RAG 收錄實務(第 2–3 階段用)
 
