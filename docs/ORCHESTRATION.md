@@ -131,6 +131,26 @@ enforcement.** It does not parse labels, verify citations, validate spans, or re
 non-conforming panelist output. The hybrid controller is therefore **not fail-closed**;
 fail-closed enforcement is deferred to B3.
 
+## Debate pressure and consensus
+
+The controller keeps its existing repeatable-round protocol, but panelist prompts apply a
+claim-level adversarial contract:
+
+- Round 1 states one non-negotiable thesis and one incompatible rival proposition without
+  attributing an invented position to another panelist.
+- Follow-up rounds target one actual claim ID, require a verdict, premise-level critique,
+  counterexample, pointed cross-question, decisive crux, and `upheld / narrowed /
+  withdrawn` status.
+- A one-sided response is a rebuttal, not a completed debate. The moderator may use another
+  existing follow-up round to return the unanswered question to the original claimant.
+- Similar recommendations supported by different reasons are **practical overlap**.
+  **Consensus** requires every relevant panelist to explicitly accept the same proposition.
+- The final response omits chain-of-thought, tool and token logs, agent completion records,
+  and transport/fallback details.
+
+This raises argumentative pressure without licensing personal attacks, strawmen, fabricated
+opponents, or relaxed citation discipline.
+
 User-supplied packets whose bytes are actually provided default to
 `acquisition_origin = user-supplied`, `source_assurance = artifact-backed` (the provided
 bytes are a real, locatable artifact), and `verification_state = unverified`: their wording
@@ -201,6 +221,20 @@ python3 scripts/smoke_codex_mcp.py
 B0 **只是對齊指示、降低暴露面,並未加入執行期強制**:不解析標記、不驗證引用、不檢查
 span、不拒絕不合規的議員輸出。因此混合控制器**並非 fail-closed**;fail-closed 強制延後至
 B3。
+
+### 辯論壓力與共識判準
+
+Controller 維持現有「可重複 follow-up round」協定,但 panelist prompt 加入 claim-level
+對抗契約:
+
+- 首輪提出一個不可退讓命題與一個不相容對立命題;不得把自行預想的立場冒充為其他議員主張。
+- 後續輪鎖定一個真實 claim ID,要求 verdict、前提層反駁、反例、尖銳追問、decisive crux 與
+  `upheld / narrowed / withdrawn` 狀態。
+- 單方回應只稱 rebuttal,不稱完成的 debate;主持人可用現有下一輪把未答問題送回原主張者。
+- 建議相近但理據不同只算**實踐重疊**;只有所有相關議員明確接受同一命題才算**共識**。
+- 最終回答不顯示 chain-of-thought、tool/token log、agent 完成紀錄或 transport/fallback 細節。
+
+這提高的是論證壓力,並不授權人身攻擊、稻草人、虛構對手或放寬引用紀律。
 
 使用者提供且實際附上 bytes 的 packet 預設為 `acquisition_origin = user-supplied`、
 `source_assurance = artifact-backed`(所附 bytes 即真實、可定位的 artifact)與
