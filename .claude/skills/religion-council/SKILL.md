@@ -32,10 +32,10 @@ description: 多傳統哲學議會。召集宗教/思想流派 persona(基督宗
 
 以下機器生成的引用可採性政策為準據,本節其餘條目為可讀的內聯版本:
 
-<!-- BEGIN GENERATED: quote-admissibility/v1 -->
-<!-- Generated from policies/quote-admissibility.v1.json by scripts/generate_quote_policy.py. Do not edit by hand. -->
+<!-- BEGIN GENERATED: quote-admissibility/v2 -->
+<!-- Generated from policies/quote-admissibility.v2.json by scripts/generate_quote_policy.py. Do not edit by hand. -->
 
-**引用可採性政策(`quote-admissibility/v1`,以指示約束,尚未在執行期驗證)**
+**引用可採性政策(`quote-admissibility/v2`,以指示約束,尚未在執行期驗證)**
 
 主張標記: 〔據典〕 — 繫於證據的主張。只表示用語繫於可採證據,不代表它具權威。; 〔詮釋〕 — 獨立撰寫的推論、綜合或重構。可以沒有出處參照。; 〔未驗證引用〕 — 無法確認其證據的引用式主張。僅作為「不構成支持」保留;不可改標為詮釋。
 
@@ -50,7 +50,7 @@ description: 多傳統哲學議會。召集宗教/思想流派 persona(基督宗
 9. 生成的翻譯或轉述不可當作已發表引文呈現;須標為轉述/釋義。
 10. 失敗的〔據典〕主張須先重試,再移除或僅以「不構成支持」的未驗證引用保留;不可自動改標為〔詮釋〕。
 11. 真正獨立撰寫的〔詮釋〕可以沒有出處參照;只須誠實標明為詮釋。
-<!-- END GENERATED: quote-admissibility/v1 -->
+<!-- END GENERATED: quote-admissibility/v2 -->
 
 1. **發言分兩種,必須標清楚**:
    - 〔據典〕直接引用或緊扣原典——必附**出處**(書名 + 章節,如《論語·里仁》《薄伽梵歌》2:47《古蘭經》51:56)。

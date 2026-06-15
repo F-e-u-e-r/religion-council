@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate the quote-admissibility policy text for every council surface.
 
-One canonical manifest (``policies/quote-admissibility.v1.json``) is the single
+One canonical manifest (``policies/quote-admissibility.v2.json``) is the single
 source of truth. This generator renders that manifest into the four surfaces that
 must state the policy:
 
@@ -27,14 +27,14 @@ import sys
 
 
 ROOT = Path(__file__).resolve().parent.parent
-MANIFEST_PATH = ROOT / "policies" / "quote-admissibility.v1.json"
+MANIFEST_PATH = ROOT / "policies" / "quote-admissibility.v2.json"
 
 PORTABLE_SKILL = ROOT / "skills" / "religion-council" / "SKILL.md"
 CLAUDE_SKILL = ROOT / ".claude" / "skills" / "religion-council" / "SKILL.md"
 GENERATED_MODULE = ROOT / "orchestrator" / "generated_quote_policy.py"
 
 GENERATED_BY = (
-    "policies/quote-admissibility.v1.json by scripts/generate_quote_policy.py"
+    "policies/quote-admissibility.v2.json by scripts/generate_quote_policy.py"
 )
 
 

@@ -74,10 +74,10 @@ Keep participants on the same layer during each exchange. Split broad prompts in
 
 Separate textual support from interpretation. The canonical, machine-generated quote-admissibility policy is authoritative; the bullets below are the readable inline form.
 
-<!-- BEGIN GENERATED: quote-admissibility/v1 -->
-<!-- Generated from policies/quote-admissibility.v1.json by scripts/generate_quote_policy.py. Do not edit by hand. -->
+<!-- BEGIN GENERATED: quote-admissibility/v2 -->
+<!-- Generated from policies/quote-admissibility.v2.json by scripts/generate_quote_policy.py. Do not edit by hand. -->
 
-**Quote-admissibility policy (`quote-admissibility/v1`, instruction-enforced; not runtime-validated)**
+**Quote-admissibility policy (`quote-admissibility/v2`, instruction-enforced; not runtime-validated)**
 
 Claim markers: [Text] — An evidence-bound claim. Asserts the wording is tied to admissible evidence, not that it is authoritative.; [Interpretation] — An independently authored inference, synthesis, or reconstruction. May exist without an evidence reference.; [Unverified citation] — A citation-style claim whose evidence could not be confirmed. Retained only as non-supporting; never relabelled as interpretation.
 
@@ -92,7 +92,7 @@ Claim markers: [Text] — An evidence-bound claim. Asserts the wording is tied t
 9. Generated translations or renderings must not be represented as published quotations; mark them as renderings.
 10. A failed [Text] claim is retried, then removed or retained only as a non-supporting unverified citation claim; it is not automatically relabelled as [Interpretation].
 11. Genuine, independently authored [Interpretation] may exist without an evidence reference; it must only be marked honestly as interpretation.
-<!-- END GENERATED: quote-admissibility/v1 -->
+<!-- END GENERATED: quote-admissibility/v2 -->
 
 - Use **[Text]** or the user's language equivalent for a direct quotation or a close, source-bound paraphrase. Include work and locator.
 - Use **[Interpretation]** for an inference, synthesis, modern application, or reconstructed response. State that it is not the source's exact wording.

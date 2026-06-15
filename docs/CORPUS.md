@@ -13,7 +13,7 @@
 
 | Layer | Path | Role |
 |---|---|---|
-| **Runtime snippets** | `references/<tradition>.md` | The hand-picked, cited quotations the personas actually speak from today (Phase 0). |
+| **Runtime snippets** | `references/<tradition>.md` | The hand-picked, cited quotations the personas actually speak from today (A0). |
 | **Corpus seed** | `01-基督宗教/ … 08-墨家/` | Per-tradition `典籍清單.md` (canon list + RAG version notes) and `思想概要.md` (thought summary) — planning material for the fuller corpus. |
 | **Retrieval seam** | `skills/religion-council/scripts/retrieve.py` | The stable contract between the corpus and the personas. |
 
@@ -46,7 +46,7 @@ Everything the personas need from the corpus flows through one function,
   "evidence_type": "quotation", "verbatim": true }
 ```
 
-Phase 0 parses the cited bullets in the selected `references/` file and applies deterministic
+A0 parses the cited bullets in the selected `references/` file and applies deterministic
 lexical ranking. Parenthetical locator notes are not treated as denominations unless they contain
 an explicit, recognized school marker. Every parsed bullet is source-bound `[Text]`; the additive
 `evidence_type` and `verbatim` fields distinguish a direct quotation from a close, cited summary.
@@ -54,11 +54,34 @@ The core retrieval keys are stable. As long as future phases honor them, `SKILL.
 voices keep working unchanged. This is the seam the whole
 [roadmap](../README.md#roadmap) turns on.
 
+### The retrieval envelope and contract version
+
+`retrieve.retrieve(...)` keeps returning the bare list above for every existing caller.
+The B1 retrieval-to-evidence adapter instead consumes a **versioned envelope** from
+`retrieve_envelope(tradition, query, k)`:
+
+```json
+{ "contract_version": "religion-council/retrieval/v1", "records": [ … ] }
+```
+
+Shape negotiation trusts **only** `contract_version` (`RETRIEVAL_CONTRACT_VERSION`); the
+per-record `version` field is the *source edition* (e.g. `通行本`), not the API contract.
+Each record's `text` **is** the canonical bytes the B1 adapter content-addresses into an
+immutable snapshot — `artifact_id = sha256(UTF-8(NFC(text)))`, newlines normalized to LF,
+spans as byte offsets — so identity is backend-independent and needs no `source_file`
+(which vanishes under A3); A2/A3 may add `artifact_ref` + `content_hash` + a `span`
+(`byte_offset` + `byte_length`, since an `artifact_ref` unit can be larger than the quote
+and the same wording can recur) for the edition-backed tier (see
+[ADR 0003](adr/0003-retrieval-evidence-adapter.md)).
+Byte-identical parity of the two `retrieve.py` copies is an **A0–A1 invariant**: at A2 the
+project copy forks to an index/RAG backend while the portable copy stays file-based, and
+parity is replaced by a shared contract-conformance suite over the envelope. See
+[ADR 0003](adr/0003-retrieval-evidence-adapter.md).
+
 ### Retrieval field contract
 
-Every record returned by `retrieve.retrieve(...)` carries the fields below. PR1 does
-**not** change the return shape; it only classifies each field so future phases know
-what they may rely on. The two `retrieve.py` copies stay byte-identical (enforced by
+Every record returned by `retrieve.retrieve(...)` carries the fields below. Classifying
+them does **not** change the return shape; it only records what future phases may rely on. The two `retrieve.py` copies stay byte-identical (enforced by
 the parity test in `tests/test_retrieve.py`).
 
 | Field | Classification | Notes |
@@ -81,14 +104,17 @@ the parity test in `tests/test_retrieve.py`).
 **Contractual** fields are the stable seam every persona and future retriever must
 keep. **Optional contractual** fields are additive and stable but supplementary — safe
 to use, not load-bearing for the persona contract. **Implementation metadata** is
-internal to the Phase 0 file parser and may change without notice; downstream code must
-not depend on it.
+internal to the A0 file parser and may change without notice; downstream code must
+not depend on it. In particular, `source_file` / `source_line` are ingest hints only and
+never persistent identity: the B1 adapter mints stable Artifact/Span identity from
+immutable, content-addressed snapshots, not from live line numbers (see
+[ADR 0003](adr/0003-retrieval-evidence-adapter.md)).
 
 `label` is an evidence-usage marker (see [ADR 0001](adr/0001-quote-admissibility-policy.md)),
 not an authority or quality score, and a present-in-record value does not by itself
 make wording quote-admissible.
 
-### RAG ingestion notes (for Phases 2–3)
+### RAG ingestion notes (for A2–A3)
 
 1. **Pin a version/translation first.** The same text in different translations diverges
    wildly; mixing them wrecks retrieval quality.
@@ -104,6 +130,12 @@ make wording quote-admissible.
    aren't ingested twice.
 6. **Tag the category.** Separate `宗教經典` from `哲學思想著作` so they can be filtered later.
 
+**Rights gate (tiered).** A1 (curated excerpts) requires per-snippet provenance,
+edition/translator, and a rights note. A2 (full-text storage + redistribution) requires an
+operational rights review — rights basis, jurisdiction notes, `redistributable = true`, and
+a review date — before any text unit enters the distributable corpus; material that has not
+cleared full redistribution stays in a restricted/private store.
+
 ---
 
 ## 繁體中文
@@ -112,7 +144,7 @@ make wording quote-admissible.
 
 | 層 | 路徑 | 角色 |
 |---|---|---|
-| **執行期片段** | `references/<傳統>.md` | persona 今日實際引用的精選、附出處引文(第 0 階段)。 |
+| **執行期片段** | `references/<傳統>.md` | persona 今日實際引用的精選、附出處引文(A0)。 |
 | **語料種子** | `01-基督宗教/ … 08-墨家/` | 各傳統的 `典籍清單.md`(核心典籍+RAG 版本備註)與 `思想概要.md`(思想摘要)——擴充語料的規劃材料。 |
 | **檢索介面** | `skills/religion-council/scripts/retrieve.py` | 語料與 persona 之間的穩定契約。 |
 
@@ -146,15 +178,35 @@ persona 對語料的需求全部走同一個函式 `retrieve.retrieve(tradition,
   "evidence_type": "quotation", "verbatim": true }
 ```
 
-第 0 階段會解析所選 `references/` 檔中的附出處條目,並作可重現的詞彙排序。括號內的出處備註
+A0 階段會解析所選 `references/` 檔中的附出處條目,並作可重現的詞彙排序。括號內的出處備註
 只有在含明確、已登錄的教派標記時才會成為 `school`;所有解析條目均為有來源約束的 `[Text]`,
 再以附加欄位 `evidence_type` 與 `verbatim` 區分逐字引文和附出處摘要。核心檢索欄位保持穩定;
 只要未來階段守住它們,`SKILL.md` 與 34 個聲音都不必改。這正是整個
 [發展藍圖](../README.md#發展藍圖)的樞紐。
 
+### 檢索 envelope 與 contract version
+
+`retrieve.retrieve(...)` 對既有呼叫者仍回傳上面的純 list。B1 的檢索→證據 adapter 改為消費
+`retrieve_envelope(tradition, query, k)` 回傳的**版本化 envelope**:
+
+```json
+{ "contract_version": "religion-council/retrieval/v1", "records": [ … ] }
+```
+
+shape negotiation 只信 `contract_version`(`RETRIEVAL_CONTRACT_VERSION`);每筆紀錄的
+`version` 欄位是**來源版本/edition**(如 `通行本`),不是 API 契約。每筆紀錄的 `text` 即 B1
+adapter content-address 成不可變 snapshot 的 canonical bytes(`artifact_id =
+sha256(UTF-8(NFC(text)))`,換行正規化為 LF,span 為 byte offset),故 identity 與後端無關、不需
+`source_file`(A3 下不存在);A2/A3 可另帶 `artifact_ref` + `content_hash` + `span`
+(`byte_offset` + `byte_length`,因 `artifact_ref` 單元可大於引文且相同文字可能重複出現)供 edition-backed
+層(見 [ADR 0003](adr/0003-retrieval-evidence-adapter.md))。兩份 `retrieve.py` 的位元組
+parity 是 **A0–A1 invariant**:A2 時專案端分叉為 index/RAG 後端、可攜端維持檔案式,parity 由
+envelope 的共用 contract-conformance suite 取代。見
+[ADR 0003](adr/0003-retrieval-evidence-adapter.md)。
+
 ### 檢索欄位契約
 
-`retrieve.retrieve(...)` 回傳的每筆紀錄都帶有下列欄位。PR1 **不**更動回傳形狀,只為每個
+`retrieve.retrieve(...)` 回傳的每筆紀錄都帶有下列欄位。此分類**不**更動回傳形狀,只為每個
 欄位分類,讓後續階段知道哪些可依賴。兩份 `retrieve.py` 保持位元組相同(由
 `tests/test_retrieve.py` 的 parity test 保證)。
 
@@ -176,13 +228,15 @@ persona 對語料的需求全部走同一個函式 `retrieve.retrieve(tradition,
 | `source_line` | 實作 metadata | 解析位置,僅用於穩定排序。 |
 
 **契約**欄位是每個 persona 與未來檢索器都必須守住的穩定介面;**可選契約**欄位為附加且穩定的
-補充欄位,可用但非 persona 契約的承重點;**實作 metadata** 屬第 0 階段檔案解析器的內部細節,
-可能隨時變動,下游不得依賴。
+補充欄位,可用但非 persona 契約的承重點;**實作 metadata** 屬 A0 階段檔案解析器的內部細節,
+可能隨時變動,下游不得依賴。尤其 `source_file` / `source_line` 只是 ingest hint,絕非永久
+identity:B1 adapter 由不可變、content-addressed 的 snapshot 鑄造穩定 Artifact/Span identity,
+而非依賴 live 行號(見 [ADR 0003](adr/0003-retrieval-evidence-adapter.md))。
 
 `label` 是證據使用標記(見 [ADR 0001](adr/0001-quote-admissibility-policy.md)),不是權威
 或品質分數;欄位中有值本身並不使該用語成為可引用。
 
-### RAG 收錄實務(第 2–3 階段用)
+### RAG 收錄實務(A2–A3 用)
 
 1. **先固定版本/譯本。** 同一典籍不同譯本用語差異極大,混用會嚴重影響檢索品質。
 2. **善用既有結構切分。** 聖經(書/章/節)、古蘭經(章/節)天然適合 chunk;佛典、道藏、諸子需
@@ -193,3 +247,8 @@ persona 對語料的需求全部走同一個函式 `retrieve.retrieve(tradition,
    的欄位。
 5. **跨傳統去重。** 如《周易》在多傳統共用,需處理重複收錄。
 6. **分類標籤。** 區分「宗教經典」與「哲學思想著作」,方便日後過濾與分眾檢索。
+
+**Rights gate(分層)。** A1(精選 excerpt)要求每片段具 provenance、edition/譯者與 rights note;
+A2(全文儲存與再分發)在任何 text unit 進入可分發 corpus 前,需 operational rights review——
+rights basis、jurisdiction notes、`redistributable = true` 與 review date;未通過完整再分發審查者,
+僅能留在 restricted/private store。

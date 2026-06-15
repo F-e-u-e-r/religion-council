@@ -24,10 +24,25 @@ class RetrieveTest(unittest.TestCase):
         self.module = load_retriever(self.portable_path)
 
     def test_retriever_distributions_are_byte_identical(self):
+        # Byte parity is an A0-A1 invariant. At A2 the project-integrated copy
+        # forks to an index/RAG backend while the portable copy stays file-based,
+        # and this parity check is replaced by a shared contract-conformance suite
+        # over retrieve_envelope()'s contract_version. See ADR 0002 / docs/CORPUS.md.
         self.assertEqual(
             self.portable_path.read_bytes(),
             self.claude_path.read_bytes(),
         )
+
+    def test_retrieve_envelope_wraps_records_with_contract_version(self):
+        envelope = self.module.retrieve_envelope("buddhism", "空", 1)
+        self.assertEqual(
+            envelope["contract_version"], self.module.RETRIEVAL_CONTRACT_VERSION
+        )
+        self.assertEqual(envelope["contract_version"], "religion-council/retrieval/v1")
+        # The envelope is additive: records is exactly the legacy retrieve() list,
+        # so existing callers of retrieve() are unaffected.
+        self.assertEqual(envelope["records"], self.module.retrieve("buddhism", "空", 1))
+        self.assertIsInstance(envelope["records"], list)
 
     def test_all_traditions_return_contract_records(self):
         required = {
