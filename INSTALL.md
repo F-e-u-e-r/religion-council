@@ -14,7 +14,7 @@ Religion Council supports three execution modes:
 | **2. Codex** | Codex | Native Codex subagents when explicitly requested | Portable Codex skill and direct Codex use. |
 | **3. Claude + Codex** | Claude | Persistent Codex MCP threads | Deterministic fan-out, round barriers, retries, and persisted audit records. |
 
-Phase 0 and the controller require no third-party Python packages. Mode 3 uses the currently
+A0 and the controller require no third-party Python packages. Mode 3 uses the currently
 experimental `codex mcp-server` surface, so production use should retain timeout, retry, and
 failure handling.
 
@@ -193,7 +193,7 @@ Religion Council 支援三種執行方式:
 | **2. Codex** | Codex | 明確要求時使用 Codex 原生 subagent | 可攜 Codex skill 與直接使用 Codex。 |
 | **3. Claude + Codex** | Claude | 持久化 Codex MCP thread | 固定併發、輪次 barrier、重試與完整紀錄。 |
 
-第 0 階段與 controller 都不需要第三方 Python 套件。模式 3 使用目前仍標為 Experimental 的
+A0 階段與 controller 都不需要第三方 Python 套件。模式 3 使用目前仍標為 Experimental 的
 `codex mcp-server`,正式使用時必須保留 timeout、retry 與失敗處理。
 
 ## 前置需求

@@ -1,14 +1,14 @@
 """Generated quote-admissibility policy. Do not edit by hand.
 
-Generated from policies/quote-admissibility.v1.json by scripts/generate_quote_policy.py.
+Generated from policies/quote-admissibility.v2.json by scripts/generate_quote_policy.py.
 """
 
 POLICY_ID = 'quote-admissibility'
-POLICY_VERSION = 'v1'
-GENERATED_MARKER = 'quote-admissibility/v1'
+POLICY_VERSION = 'v2'
+GENERATED_MARKER = 'quote-admissibility/v2'
 
 QUOTE_ADMISSIBILITY_POLICY_EN = (
-    'Quote-admissibility policy quote-admissibility/v1 (instruction-enforced; not runtime-validated).\n'
+    'Quote-admissibility policy quote-admissibility/v2 (instruction-enforced; not runtime-validated).\n'
     'Claim markers: [Text] — An evidence-bound claim. Asserts the wording is tied to admissible evidence, not that it is authoritative.; [Interpretation] — An independently authored inference, synthesis, or reconstruction. May exist without an evidence reference.; [Unverified citation] — A citation-style claim whose evidence could not be confirmed. Retained only as non-supporting; never relabelled as interpretation.\n'
     '\n'
     '1. [Text] is an evidence-usage marker, not a general authority or quality score; it asserts only that the claim is tied to admissible evidence.\n'

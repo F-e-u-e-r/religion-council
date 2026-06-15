@@ -2,7 +2,8 @@
   "policy_id": "quote-admissibility",
   "policy_version": "v1",
   "generated_marker": "quote-admissibility/v1",
-  "status": "instruction-enforced",
+  "superseded_by": "quote-admissibility/v2",
+  "status": "superseded",
   "runtime_enforced": false,
   "locales": ["en", "zh-Hant"],
   "summary": {

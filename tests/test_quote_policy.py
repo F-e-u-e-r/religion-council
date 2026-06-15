@@ -89,34 +89,87 @@ class QuotePolicyConformanceTest(unittest.TestCase):
             "claim_types": {"text", "interpretation", "unverified-citation"},
             "evidence_types": {"quotation", "source-bound-summary"},
             "representation_kinds": {
-                "published-quotation",
+                "original-text",
+                "published-translation",
                 "generated-rendering",
-                "translation-of-meaning",
             },
-            "source_roles": {
-                "bundled-artifact",
-                "runtime-artifact",
-                "consulted-source",
-                "user-supplied",
+            "rendering_modes": {
+                "direct-translation",
+                "meaning-rendering",
+                "unknown",
             },
-            "acquisition_methods": {
+            "evidentiary_roles": {
+                "primary-source",
+                "secondary-source",
+                "unknown",
+            },
+            "artifact_kinds": {
+                "source-text",
+                "secondary-literature",
+                "reference-summary",
+                "debate-transcript",
+                "issue-matrix",
+                "unknown",
+            },
+            "acquisition_origins": {
                 "bundled",
-                "retrieved",
+                "user-supplied",
                 "runtime-captured",
                 "model-asserted",
-                "user-supplied",
+                "generated-in-session",
+            },
+            "retrieval_paths": {
+                "retrieved-via-seam",
+                "not-retrieved",
+                "unknown",
             },
             "source_assurances": {
                 "artifact-backed",
-                "retrieved-unverified",
-                "model-asserted-unverified",
-                "user-supplied-unverified",
+                "asserted-only",
+                "unknown",
+            },
+            "span_assurance_tiers": {
+                "curated-snapshot-span-verified",
+                "edition-backed-span-verified",
             },
             "verification_states": {"unverified", "runtime-validated", "failed"},
         }
         for section, expected_ids in expected.items():
             actual_ids = {entry["id"] for entry in self.manifest[section]}
             self.assertEqual(actual_ids, expected_ids, section)
+
+    def test_no_evidence_representation_cell_is_categorically_forbidden(self):
+        matrix = self.manifest["evidence_representation_compatibility"]
+        self.assertTrue(all(cell["allowed"] for cell in matrix))
+
+    def test_generated_rendering_quote_needs_marker_and_not_published(self):
+        # A generated rendering may be quoted verbatim with attribution; the rule is a
+        # presentation constraint (no impersonation of a published quotation), not a ban.
+        matrix = self.manifest["evidence_representation_compatibility"]
+        cell = next(
+            c
+            for c in matrix
+            if c["evidence_type"] == "quotation"
+            and c["representation_kind"] == "generated-rendering"
+        )
+        self.assertTrue(cell["allowed"])
+        self.assertIn("generated-rendering-marker", cell["requires"])
+        self.assertIn("published", cell["presentation_constraint"])
+        self.assertEqual(cell["policy_rule"], "no-generated-as-published")
+        self.assertIn(
+            cell["policy_rule"], {rule["id"] for rule in self.manifest["rules"]}
+        )
+
+    def test_every_allowed_quotation_cell_requires_span_verification(self):
+        matrix = self.manifest["evidence_representation_compatibility"]
+        quotation_cells = [
+            cell
+            for cell in matrix
+            if cell["evidence_type"] == "quotation" and cell["allowed"]
+        ]
+        self.assertTrue(quotation_cells)
+        for cell in quotation_cells:
+            self.assertIn("span-verification", cell["requires"], cell)
 
     def test_required_normative_rule_ids_are_present(self):
         required = {

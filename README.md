@@ -8,7 +8,7 @@
 ![code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)
 ![content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)
 ![runs on: Codex · Claude Code · any agent](https://img.shields.io/badge/runs%20on-Codex%20·%20Claude%20Code%20·%20any%20agent-green.svg)
-![version: v0.2.0](https://img.shields.io/badge/version-v0.2.0-orange.svg)
+![version: v0.2.1](https://img.shields.io/badge/version-v0.2.1-orange.svg)
 
 **English** · [繁體中文](#繁體中文)
 
@@ -25,14 +25,14 @@ argue from **its own texts**. Every claim is tagged as either a **[Text]** quota
 (with a real locator) or an **[Interpretation]**, and the moderator surfaces the
 genuine tensions instead of forcing agreement.
 
-Version **v0.2.0** supports three execution modes:
+Version **v0.2.1** supports three execution modes:
 
 1. **Claude Code only** — 35 specialized Claude agents (1 moderator + 34 voices).
 2. **Codex only** — a portable Codex skill, with native Codex subagents when requested.
 3. **Claude moderator + Codex panelists** — a deterministic Python MCP controller manages
    persistent Codex threads, barriers, retries, and audit records.
 
-All three modes share one quote-admissibility policy (`quote-admissibility/v1`), but the
+All three modes share one quote-admissibility policy (`quote-admissibility/v2`), but the
 enforcement is currently **instruction-level only**: the hybrid controller is **not
 fail-closed** — it does not parse labels, verify citations, validate spans, or reject
 non-conforming output. See the [assurance matrix](docs/ORCHESTRATION.md#quote-admissibility-assurance)
@@ -167,7 +167,7 @@ religion/
 ├── DISCLAIMER.md                 # sourcing rules + religious-sensitivity statement
 ├── LICENSE                       # MIT — skill logic, agents, scripts, config
 ├── LICENSE-CONTENT               # CC BY 4.0 — references & corpus
-├── VERSION                       # current release: v0.2.0
+├── VERSION                       # current release: v0.2.1
 ├── .mcp.json                     # Claude → deterministic Codex controller
 │
 ├── skills/religion-council/      # ▸ PORTABLE skill (Codex & any agent)
@@ -200,21 +200,63 @@ religion/
 
 ## Roadmap
 
-The whole plan pivots on **one seam — `retrieve.py`'s output contract.** Keep that fixed and
-the personas never need to change.
+The project develops along **two low-coupling axes** that meet at one versioned seam.
+Architecture stages are **A0–A3** (corpus & retrieval) and **B0–B3** (citation
+admissibility & enforcement). PR numbers are delivery history, not stage names. Normative
+detail: **[ADR 0002](docs/adr/0002-roadmap-stage-nomenclature.md)** (nomenclature +
+enforcement ladder) and **[ADR 0003](docs/adr/0003-retrieval-evidence-adapter.md)**
+(the retrieval→evidence adapter).
 
-| Phase | What | Retrieval |
+**Axis A — corpus & retrieval.** Pivots on one seam: the retrieval envelope contract.
+Keep it stable and the 34 personas never change as the backend grows from files to a
+vector service.
+
+| Stage | What | Retrieval |
 |---|---|---|
-| **0 — Curated council** *(today)* | Voices quote hand-picked snippets in `references/`. Works fully offline, in any agent. | `retrieve.py` parses and lexically ranks cited reference entries. |
-| **0.5 — Deterministic hybrid panel** *(v0.1)* | Claude moderates persistent Codex MCP panelists through a local controller with barriers, retries, and JSON records. | Still file-based; no embeddings required. |
-| **1 — Deeper corpus** | Expand `references/` and fill out `01–08/典籍清單.md` + `思想概要.md` with more curated, public-domain / openly-licensed excerpts + metadata. | Still file-based. |
-| **2 — Full 典籍 + local index** | Store complete public-domain / open scriptures in-repo, chunked by book/chapter/verse; build an embedding index; rewrite `retrieve.retrieve()` as real similarity search. | Local vector search — **same output contract**, so `SKILL.md` and all 34 voices are untouched. |
-| **3 — RAG server** | Move the index behind a retrieval service (vector DB + embeddings); `retrieve.py` becomes a thin client. Optionally expose the council itself as an API/app. | Networked retrieval — still the same contract. |
+| **A0 — Curated council** *(today)* | Voices quote hand-picked, cited snippets in `references/`. Offline, any agent. | File parse + lexical ranking. |
+| **A1 — Deeper corpus** | Expand `references/` and `01–08/典籍清單.md` + `思想概要.md` with more public-domain / openly-licensed excerpts + provenance. | Still file-based. |
+| **A2 — Full 典籍 + local index** | Store complete open scriptures in-repo, chunked; benchmark lexical / cross-lingual / dense / hybrid; build the chosen index. | Local index — same envelope contract. |
+| **A3 — RAG server** | Index behind a retrieval service; `retrieve.py` becomes a thin client. Optionally expose the council as an API/app. | Networked — same contract. |
 
-**Suggested split for the roadmap:** keep the **portable `skills/` distribution snippet-based
-and dependency-free** (it's the demo anyone can run anywhere), and grow the
-**`.claude/` project side into the full RAG system**. They share `references/` today and
-diverge in purpose as the corpus scales.
+*(The v0.1 deterministic hybrid panel — Claude moderating persistent Codex panelists — is
+delivery history, not an Axis-A stage: it did not change retrieval.)*
+
+**Axis B — citation admissibility & enforcement.** Pivots on the structured claim /
+quote-admissibility policy, escalating from prompt-only to a fail-closed boundary.
+
+| Stage | What | Enforcement |
+|---|---|---|
+| **B0 — Unified policy** *(done, v0.2.0)* | One policy source → four surfaces; memory alone never supports `[Text]`; packets are untrusted data. | Instruction-enforced; **not** fail-closed. |
+| **B1 — Structured claims + evidence seam** | Panelists emit a versioned claim protocol; `RetrievalEvidenceAdapterV1` mints stable Artifact/Span identity. Initial verification is always `unverified`. | Schema rejection only. |
+| **B2 — Claim-level validation** | Each `[Text]` claim becomes `runtime-validated` or `failed`; a failed `[Text]` support edge is removed (a non-supporting `[Unverified citation]` may remain); the council still completes. | Claim-level runtime validation. |
+| **B3 — Fail-closed boundary** | Unknown claim types and evidence/renderer bypasses are default-denied before the renderer. | Hybrid runtime-enforced / fail-closed. |
+
+The **enforcement ladder** keeps three rejections distinct: **B1** rejects malformed
+structure (retry/repair) · **B2** removes a failed `[Text]` support edge (may keep a
+non-supporting `[Unverified citation]`) and continues · **B3** default-denies at the
+response boundary. Claude-only and portable modes stay instruction-enforced. *Planned for
+B1/B2, not in this PR:* every response will show its enforcement mode and every `[Text]`
+claim its assurance tier, so a snapshot-verified quote is never mistaken for an
+edition-backed one.
+
+**Where the axes meet.** Axis A's retrieval envelope is converted by the B1 adapter into
+immutable, content-addressed Artifact/Span identity — so A can swap retrieval backends
+without rewriting personas, and B can raise enforcement without first building a vector DB:
+
+```text
+retrieve_envelope() → RetrievalEvidenceAdapterV1 → Artifact + Span → ClaimEvidenceEdge → validator → renderer
+```
+
+**Distribution split.** The portable **`skills/`** stays snippet-based, file-based,
+instruction-enforced — the demo anyone can clone and run. The project-integrated
+**`.claude/` + `orchestrator/` + retrieval service** grows the full corpus, structured
+protocol, validator, and hybrid fail-closed enforcement. Both share the core policy, not
+dependencies or enforcement guarantees. Byte-parity of the two `retrieve.py` copies is an
+A0–A1 invariant; A2 forks them and replaces parity with a shared contract-conformance suite.
+
+**Rights gate (tiered).** A1 requires excerpt-level provenance + a rights note per snippet;
+A2 requires full operational redistribution clearance (`redistributable = true`,
+jurisdiction notes, review record) before any full text enters the distributable corpus.
 
 ## Sourcing, ethics & limits
 
@@ -264,7 +306,7 @@ Quoted primary scriptures are public-domain source texts in their original langu
 標注為**〔據典〕**(引文+真實出處)或**〔詮釋〕**;主持人負責把真正的張力點攤開,而非強行
 調和。
 
-目前 **v0.2.0** 支援三種執行方式:
+目前 **v0.2.1** 支援三種執行方式:
 
 1. **純 Claude Code**——附 35 個專屬 agent(1 位主持人 + 34 個聲音)。
 2. **純 Codex**——可攜 Codex skill;明確要求時可用 Codex 原生 subagent。
@@ -334,18 +376,53 @@ persona 與引用紀律不必更動。
 
 ## 發展藍圖
 
-整套計畫的樞紐只有一個:**`retrieve.py` 的輸出契約**。守住它,persona 就永遠不必改。
+整個專案沿**兩條低耦合的軸線**發展,並在一個版本化的接縫處交會。架構階段只用
+**A0–A3**(語料與檢索)與 **B0–B3**(引用可採性與強制力);PR 編號只是交付歷史,不是階段名稱。
+規範細節見 **[ADR 0002](docs/adr/0002-roadmap-stage-nomenclature.md)**(階段命名 + 強制力梯度)
+與 **[ADR 0003](docs/adr/0003-retrieval-evidence-adapter.md)**(檢索→證據 adapter)。
+
+**軸線 A — 語料與檢索。** 樞紐是一條接縫:檢索 envelope 契約。守住它,後端由檔案逐步升級為
+向量服務時,34 個 persona 都不必改。
 
 | 階段 | 內容 | 檢索 |
 |---|---|---|
-| **0 — 精選議會**(現在) | 各成員引用 `references/` 中手選片段,離線、任何 agent 皆可跑。 | `retrieve.py` 解析並以詞彙比對排序附出處片段。 |
-| **0.5 — 可重現混合 panel**(v0.1) | Claude 主持持久 Codex MCP 議員;controller 管理 barrier、retry 與 JSON 紀錄。 | 仍為檔案式,不需要 embedding。 |
-| **1 — 加厚語料** | 擴充 `references/`,把 `01–08/典籍清單.md`、`思想概要.md` 補上更多公有領域/開放授權的精選片段與 metadata。 | 仍為檔案式。 |
-| **2 — 完整典籍 + 本地索引** | 把公有領域/開放典籍全文入庫(按書/章/節切分),建嵌入索引,改寫 `retrieve.retrieve()` 為真正相似度檢索。 | 本地向量檢索——**契約不變**,故 `SKILL.md` 與 34 個聲音原封不動。 |
-| **3 — RAG server** | 把索引移到檢索服務(向量庫+嵌入),`retrieve.py` 變薄客戶端;亦可把議會本身做成 API/應用。 | 網路檢索——仍是同一契約。 |
+| **A0 — 精選議會**(現在) | 各成員引用 `references/` 中手選、附出處片段,離線、任何 agent 皆可跑。 | 檔案解析 + 詞彙排序。 |
+| **A1 — 加厚語料** | 擴充 `references/` 與 `01–08/典籍清單.md`、`思想概要.md`,補上更多公有領域/開放授權精選片段與 provenance。 | 仍為檔案式。 |
+| **A2 — 完整典籍 + 本地索引** | 把開放典籍全文入庫並切分;benchmark lexical / cross-lingual / dense / hybrid;再建所選索引。 | 本地索引——envelope 契約不變。 |
+| **A3 — RAG server** | 索引移到檢索服務,`retrieve.py` 變薄客戶端;亦可把議會做成 API/應用。 | 網路檢索——仍是同一契約。 |
 
-**藍圖建議:** 讓可攜的 `skills/` 發行版**維持片段式、零依賴**(它是人人皆可跑的 demo),
-把 **`.claude/` 專案端養成完整 RAG 系統**。兩者今日共用 `references/`,隨語料規模擴大而分工。
+*(v0.1 的可重現混合 panel——Claude 主持持久 Codex 議員——是交付歷史,不是 Axis-A 階段:它沒有改動檢索。)*
+
+**軸線 B — 引用可採性與強制力。** 樞紐是結構化 claim / quote-admissibility 政策,由純 prompt
+指示逐步升級為 fail-closed 邊界。
+
+| 階段 | 內容 | 強制力 |
+|---|---|---|
+| **B0 — 統一政策**(已完成,v0.2.0) | 同一政策來源 → 四個 surface;僅憑記憶永不支持〔據典〕;packet 視為不可信資料。 | instruction-enforced;**尚未** fail-closed。 |
+| **B1 — 結構化 claim + 證據接縫** | Panelist 輸出具版本的 claim protocol;`RetrievalEvidenceAdapterV1` 鑄造穩定 Artifact/Span identity。initial verification 恆為 `unverified`。 | 僅 schema 拒絕。 |
+| **B2 — claim 層驗證** | 每個〔據典〕變為 `runtime-validated` 或 `failed`;移除失敗〔據典〕的 support edge(政策允許時保留 non-supporting〔未驗證引用〕),議會仍可完成。 | claim 層執行期驗證。 |
+| **B3 — fail-closed 邊界** | 未知 claim type 與 evidence/renderer 繞道在進入 renderer 前一律預設拒絕。 | 混合模式 runtime-enforced / fail-closed。 |
+
+**強制力梯度**把三種「拒絕」分清楚:**B1** 拒絕格式不良的結構(retry/repair)·**B2** 移除失敗
+〔據典〕的 support edge(可保留 non-supporting〔未驗證引用〕)後續行·**B3** 在 response 邊界預設拒絕。
+純 Claude 與可攜模式維持 instruction-enforced。*規劃於 B1/B2,本 PR 未實作:*每次輸出將顯示自身的
+強制模式、每個〔據典〕顯示自身的 assurance tier,讓 snapshot 驗證的引文不會被誤認為 edition-backed 引文。
+
+**兩軸交會處。** 軸線 A 的檢索 envelope 由 B1 adapter 轉換為不可變、content-addressed 的
+Artifact/Span identity——因此 A 可更換檢索後端而不重寫 persona,B 可提升強制力而不必先建向量庫:
+
+```text
+retrieve_envelope() → RetrievalEvidenceAdapterV1 → Artifact + Span → ClaimEvidenceEdge → validator → renderer
+```
+
+**發行分工。** 可攜的 **`skills/`** 維持片段式、檔案式、instruction-enforced——人人 clone 後即可跑
+的 demo。專案整合版 **`.claude/` + `orchestrator/` + 檢索服務**則養成完整語料、結構化 protocol、
+validator 與混合 fail-closed 強制力。兩者共用核心政策,但不共用依賴或強制力保證。兩份
+`retrieve.py` 的位元組 parity 是 A0–A1 invariant;A2 分叉時改以共用的 contract-conformance suite 取代。
+
+**Rights gate(分層)。** A1 要求每個片段具 excerpt 層 provenance + rights note;A2 要求完整的
+operational redistribution clearance(`redistributable = true`、jurisdiction notes、review record),
+全文方可進入可分發 corpus。
 
 ## 來源、倫理與限度
 

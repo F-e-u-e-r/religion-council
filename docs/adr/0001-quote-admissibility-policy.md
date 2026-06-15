@@ -6,6 +6,10 @@
   introduced or implied by this ADR.
 - Supersedes: the portable skill's "another source that was explicitly consulted"
   allowance.
+- Superseded-by: [ADR 0002](0002-roadmap-stage-nomenclature.md) partially supersedes this
+  ADR **for roadmap-stage terminology only** (decisions 9–10 named stages "P0" and
+  "P3–P4"; stages are now A0–A3 / B0–B3). The substantive quote-admissibility policy below
+  is unchanged and remains in force.
 
 ## Context
 

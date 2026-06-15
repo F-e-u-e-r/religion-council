@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """File-based retrieval for the curated Religion Council references.
 
-This Phase 0 retriever parses cited bullets from a tradition reference file,
+This A0 retriever parses cited bullets from a tradition reference file,
 ranks them lexically, and returns the stable metadata records expected by
 future local-vector and service-backed implementations.
 """
@@ -12,6 +12,11 @@ from pathlib import Path
 import re
 import sys
 
+
+# Envelope-level contract version for retrieve_envelope(). This is the API/shape
+# contract that the B1 evidence adapter negotiates on, distinct from each record's
+# "version" field (which is the source edition, e.g. "通行本").
+RETRIEVAL_CONTRACT_VERSION = "religion-council/retrieval/v1"
 
 TRADITIONS = {
     "christianity": {
@@ -168,6 +173,25 @@ def retrieve(tradition, query, k=5):
         key=lambda record: (-score(query, record), record["source_line"]),
     )
     return ranked[:k]
+
+
+def retrieve_envelope(tradition, query, k=5):
+    """Versioned envelope around retrieve() for the B1 evidence adapter.
+
+    The retrieval-to-evidence adapter and any future networked retrieval service
+    consume this envelope and trust only its contract_version for shape
+    negotiation. The bare retrieve() list return is unchanged for legacy callers.
+
+    Each record's "text" is the canonical bytes the adapter content-addresses into
+    an immutable snapshot, so artifact identity needs no source_file and survives the
+    A3 network backend. The canonical form is sha256(UTF-8(NFC(text))) with newlines
+    normalized to LF and spans as byte offsets, so every backend hashes identically
+    (see docs/adr/0003-retrieval-evidence-adapter.md).
+    """
+    return {
+        "contract_version": RETRIEVAL_CONTRACT_VERSION,
+        "records": retrieve(tradition, query, k),
+    }
 
 
 def main():

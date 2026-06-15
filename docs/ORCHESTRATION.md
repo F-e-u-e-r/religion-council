@@ -116,25 +116,27 @@ the executable when needed with `CODEX_COMMAND="/path/to/codex mcp-server"`.
 ## Quote-admissibility assurance
 
 All three execution modes share one quote-admissibility policy
-(`quote-admissibility/v1`; see [ADR 0001](adr/0001-quote-admissibility-policy.md) and
-[`policies/quote-admissibility.v1.json`](../policies/quote-admissibility.v1.json)). The
+(`quote-admissibility/v2`; see [ADR 0001](adr/0001-quote-admissibility-policy.md) and
+[`policies/quote-admissibility.v2.json`](../policies/quote-admissibility.v2.json)). The
 *guarantee* behind that shared policy is uneven:
 
-| Mode | PR1 enforcement | Planned |
+| Mode | B0 enforcement | Planned |
 |---|---|---|
-| Hybrid controller (Claude moderator + Codex panelists) | instruction-enforced | P4 runtime-enforced / fail-closed |
+| Hybrid controller (Claude moderator + Codex panelists) | instruction-enforced | B3 runtime-enforced / fail-closed |
 | Claude-only (35 agents) | instruction-enforced | instruction-enforced |
 | Portable (Codex / any agent) | instruction-enforced | instruction-enforced |
 
-PR1 **aligns the instructions and reduces exposure; it does not add runtime
+B0 **aligns the instructions and reduces exposure; it does not add runtime
 enforcement.** It does not parse labels, verify citations, validate spans, or reject
 non-conforming panelist output. The hybrid controller is therefore **not fail-closed**;
-fail-closed enforcement is deferred to P3–P4.
+fail-closed enforcement is deferred to B3.
 
-User-supplied packets are treated by default as `acquisition_method = user-supplied`
-and `source_assurance = user-supplied-unverified`: their wording may be traceable to
-the supplied packet, but authorship, edition, authority, and publication status are not
-independently established.
+User-supplied packets whose bytes are actually provided default to
+`acquisition_origin = user-supplied`, `source_assurance = artifact-backed` (the provided
+bytes are a real, locatable artifact), and `verification_state = unverified`: their wording
+is traceable to the supplied packet, but authorship, edition, authority, and publication
+status are not independently established. (A user *claim* of a source with no retrievable
+content is `source_assurance = asserted-only` instead.)
 
 ## Security boundary
 
@@ -185,21 +187,22 @@ python3 scripts/smoke_codex_mcp.py
 
 ### 引用可採性的保證(各模式不對等)
 
-三種模式共用同一份引用可採性政策(`quote-admissibility/v1`;見
+三種模式共用同一份引用可採性政策(`quote-admissibility/v2`;見
 [ADR 0001](adr/0001-quote-admissibility-policy.md) 與
-[`policies/quote-admissibility.v1.json`](../policies/quote-admissibility.v1.json)),
+[`policies/quote-admissibility.v2.json`](../policies/quote-admissibility.v2.json)),
 但其**保證強度並不對等**:
 
-| 模式 | PR1 強制方式 | 規劃 |
+| 模式 | B0 強制方式 | 規劃 |
 |---|---|---|
-| 混合控制器(Claude 主持 + Codex 議員) | 以指示約束 | P4 執行期強制 / fail-closed |
+| 混合控制器(Claude 主持 + Codex 議員) | 以指示約束 | B3 執行期強制 / fail-closed |
 | 純 Claude(35 agents) | 以指示約束 | 以指示約束 |
 | 可攜(Codex / 任意 agent) | 以指示約束 | 以指示約束 |
 
-PR1 **只是對齊指示、降低暴露面,並未加入執行期強制**:不解析標記、不驗證引用、不檢查
+B0 **只是對齊指示、降低暴露面,並未加入執行期強制**:不解析標記、不驗證引用、不檢查
 span、不拒絕不合規的議員輸出。因此混合控制器**並非 fail-closed**;fail-closed 強制延後至
-P3–P4。
+B3。
 
-使用者提供的 packet 預設視為 `acquisition_method = user-supplied` 與
-`source_assurance = user-supplied-unverified`:其用語可追溯至所提供的 packet,但作者、版本、
-權威性與發表狀態未經獨立確立。
+使用者提供且實際附上 bytes 的 packet 預設為 `acquisition_origin = user-supplied`、
+`source_assurance = artifact-backed`(所附 bytes 即真實、可定位的 artifact)與
+`verification_state = unverified`:其用語可追溯至所提供的 packet,但作者、版本、權威性與發表狀態
+未經獨立確立。(若使用者僅**聲稱**有某來源卻未附可取得內容,則為 `source_assurance = asserted-only`。)
