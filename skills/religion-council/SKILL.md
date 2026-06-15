@@ -111,12 +111,13 @@ If bundled material is insufficient for a requested exact quote, omit the quote 
 Use this sequence:
 
 1. **Set the question**: state the selected layer, participants, and any necessary scope distinction.
-2. **Opening positions**: give each participant a concise thesis and one grounded source where available.
-3. **Cross-responses**: identify 1-2 genuine tensions. Restate one side in terms it would recognize, then let another side respond.
-4. **Synthesis**: separate shared concerns, apparent similarities, and irreducible differences.
-5. **Return to the user**: connect the comparison to the user's question without declaring a winner unless the user supplied an explicit evaluation criterion.
+2. **Opening positions**: give each participant a concise, non-negotiable thesis, one incompatible rival proposition, and one grounded source where available. Do not begin by manufacturing common ground.
+3. **Cross-responses**: identify 1-2 direct claim collisions. Restate one side in terms it would recognize, then require the other side to give a verdict, attack a specific premise, supply a counterexample, and ask a pointed question.
+4. **Cross-examination**: for a full debate, return the unanswered question to the original side. A one-sided response is a rebuttal, not a completed debate.
+5. **Synthesis**: separate explicit consensus, practical overlap, apparent similarities, and irreducible differences.
+6. **Return to the user**: connect the comparison to the user's question without declaring a winner unless the user supplied an explicit evaluation criterion.
 
-Do not force consensus. Similar vocabulary does not prove equivalent doctrine. Distinguish shared practical advice from incompatible metaphysical or theological commitments.
+Do not force consensus. Label something **consensus** only when every relevant participant explicitly accepts the same proposition. Similar recommendations supported by different reasons are **practical overlap**, not consensus. Similar vocabulary does not prove equivalent doctrine. Distinguish shared practical advice from incompatible metaphysical or theological commitments.
 
 ## Run a Multi-Agent Council
 
@@ -125,21 +126,22 @@ Use subagents only when the user explicitly requests parallel agents, a multi-ag
 When authorized:
 
 1. Prepare a neutral issue packet containing the exact question, selected layer, shared evidence, citation rules, and output schema.
-2. Spawn one persistent child agent per selected perspective in one parallel batch. For the full broad council, attempt exactly eight panelists: Christianity, Islam, Hinduism, Buddhism, Taoism, Legalism, Confucianism, and Mohism.
+2. Spawn one persistent child agent per selected perspective in one parallel batch. For the full broad council, attempt exactly eight panelists: Christianity, Islam, Hinduism, Buddhism, Taoism, Legalism, Confucianism, and Mohism. If the user requests every available representative, list the requested roster, participating roster, and any omission with its concrete reason; use batches rather than silently shrinking the council.
 3. Give every panelist the same neutral issue packet plus only the reference file for its assigned perspective. Instruct panelists not to delegate further.
 4. Keep Round 1 independent. Do not expose any panelist's answer to another panelist.
 5. Wait for every opening position. Keep the agent IDs and threads open.
-6. Create an anonymized issue matrix that identifies agreements, conflicts, evidence gaps, and ambiguous terms without naming the speakers.
-7. Send the issue matrix back to the same agent IDs. Ask each panelist to answer the strongest opposing argument, correct any misrepresentation, and revise its position where warranted.
+6. Create an anonymized issue matrix with stable claim IDs. For each contested claim record the exact proposition, contradictory claim IDs, weakest premise, burden of proof, decisive crux, unanswered challenge, and required respondent. Do not treat tone or participant identity as an argument.
+7. Send the issue matrix back to the same agent IDs. Assign each panelist one specific opposing claim. Require a verdict, premise-level rebuttal, counterexample, pointed cross-question, decisive crux, and `upheld / narrowed / withdrawn` status.
 8. Wait for every rebuttal. Route any further cross-examination through the moderator; panelists do not communicate directly.
-9. Produce the final synthesis in the main agent, then close all panelist threads.
+9. When depth is requested, run another follow-up on the unanswered cross-questions so both sides respond before calling an exchange a debate.
+10. Produce the final synthesis in the main agent, then close all panelist threads.
 
 Require each panelist response to contain:
 
 - a concise thesis;
 - one or more source locators;
 - explicit `[Text]` and `[Interpretation]` labels;
-- the strongest disagreement with another likely position;
+- one non-negotiable thesis and one incompatible rival proposition;
 - uncertainty or internal diversity that materially limits the claim.
 
 Keep moderation, issue selection, cross-examination, and final synthesis in the main agent. Pass actual anonymized claims between agents; never ask a panelist to invent an opponent's position.
@@ -156,6 +158,8 @@ Do not use CSV fan-out for a council that needs persistent panelists across mult
 - Avoid preaching, ridicule, ranking traditions by personal preference, or treating minority branches as curiosities.
 - Describe historical-figure dialogue as a reconstruction based on attributed texts and scholarship.
 - Never claim to channel a sacred figure, prophet, deity, or deceased thinker, and never present generated dialogue as authentic historical speech.
+- Attack propositions, premises, and consequences directly; never attack a participant, believer, or community.
+- Do not soften a real contradiction merely to sound agreeable, and do not exaggerate one into a strawman merely to create drama.
 - For personal crisis, self-harm, abuse, medical, legal, or financial situations, address immediate safety and professional guidance first; use the council only as supplementary reflection.
 
 ## Shape the Output
@@ -168,5 +172,7 @@ Prefer clear speaker headings and concise turns. A default response should conta
 - `首輪立場 / Opening Positions`
 - `交叉回應 / Cross-Responses`
 - `主持人總結 / Moderator Synthesis`
+
+Do not expose chain-of-thought, tool calls, token counts, agent completion logs, transport errors, or fallback mechanics. Report only user-relevant limitations, such as an omitted participant or an incomplete exchange.
 
 Shorten or expand the format to match the request. For a simple comparison, answer directly rather than staging unnecessary dialogue.

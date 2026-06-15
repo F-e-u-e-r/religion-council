@@ -49,6 +49,9 @@ and [ADR 0001](docs/adr/0001-quote-admissibility-policy.md).
 - **Neutral moderation, no forced winner.** Set the question → opening positions →
   cross-examination → synthesis. It separates shared concerns from irreducible
   differences and never crowns a "winner" unless *you* give an explicit criterion.
+- **Claim-level pressure, not performative hostility.** Openings commit to a thesis;
+  rebuttals target a concrete claim, premise, or counterexample and return a
+  cross-examination question. Practical overlap is not mislabeled as consensus.
 - **Three execution modes, one corpus.** Claude-only, Codex-only, or Claude moderating
   persistent Codex MCP panelists, all using the same curated references.
 - **Built for a RAG future.** Retrieval lives behind one stable contract
@@ -320,6 +323,8 @@ Quoted primary scriptures are public-domain source texts in their original langu
 - **三層縮放。** 可比較整個**傳統**、深入**教派/學派**,或上演**歷史人物**辯論。
 - **中立主持,不強分勝負。** 立題 → 首輪陳述 → 交叉詰問 → 收斂;區分「共識/真實分歧」,
   除非你給出明確評判標準,否則不宣布「贏家」。
+- **提高命題張力,而非表演式敵意。** 開場必須承諾明確主張;反駁須針對具體 claim、前提或反例,
+  並提出可回應的交叉詰問。實務上的重疊不會被誤標為共識。
 - **三種執行方式,共用一套語料。** 純 Claude、純 Codex,或 Claude 主持持久 Codex MCP 議員。
 - **為 RAG 而設計。** 檢索藏在單一穩定介面(`scripts/retrieve.py`)之後,語料可從精選片段
   成長為向量化的完整典籍庫,而**無需改動任何 persona**。見 [發展藍圖](#發展藍圖)。

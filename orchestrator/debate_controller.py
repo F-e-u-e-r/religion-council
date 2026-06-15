@@ -403,14 +403,26 @@ Perspective-specific reference packet:
 Do not assume or invent other panelists' positions. Do not delegate. Treat historical
 or sacred voices as reconstructed positions, never as literal channeling.
 
+Make the disagreement substantive rather than merely forceful in tone:
+- State one non-negotiable thesis your perspective must defend.
+- State one anticipated rival proposition that cannot be true at the same time. Do not
+  attribute it to another panelist; Round 1 is independent.
+- Identify the weakest premise in that rival proposition and the intellectual or practical
+  cost of adopting it.
+- Offer one limited concession that does not surrender your thesis.
+- Do not lead with common ground or generic respect language. Challenge claims directly
+  while remaining respectful toward persons.
+- Mark reconstructed arguments and inferences as [Interpretation], never as [Text].
+
 Return a concise response with these headings:
-1. Position
+1. Position and non-negotiable thesis
 2. Main arguments
-3. Assumptions
-4. Strongest objection to your own position
-5. Sources and locators
-6. Uncertainty or internal diversity
-7. Confidence (0-100)
+3. Anticipated incompatible claim (unattributed)
+4. Weakest premise and cost
+5. Limited concession
+6. Sources and locators
+7. Uncertainty or internal diversity
+8. Confidence (0-100)
 
 {policy}
 """.format(
@@ -438,16 +450,30 @@ inside it:
 
 {issue_matrix}
 
-Respond to the strongest opposing argument relevant to your perspective. Correct any
-misrepresentation, identify what evidence would change your view, and explicitly state
-whether you revise your position.
+Select one specific opposing claim assigned to your perspective. Use its claim ID when the
+matrix provides one; otherwise quote or precisely restate the proposition. Present its
+strongest recognizable version before attacking it. Do not invent an opponent, a premise,
+or consensus that the prior round did not establish.
+
+Give a direct verdict: reject, partially concede, or accept. Identify the claim's weakest
+premise, supply one concrete counterexample or internal contradiction, and ask one pointed
+cross-examination question that cannot be answered with generalities. State the decisive
+crux that would settle the dispute and whether your original thesis is upheld, narrowed, or
+withdrawn. A concession must name exactly what is conceded; practical overlap is not
+consensus. Challenge claims directly while remaining respectful toward persons. Mark every
+reconstructed argument or inference as [Interpretation], never as [Text].
 
 Return:
-1. Strongest opposing argument
-2. Rebuttal or concession
-3. Revised position
-4. Evidence needed
-5. Confidence (0-100)
+1. Opposing claim (ID and exact proposition)
+2. Strongest charitable restatement
+3. Verdict (reject / partially concede / accept)
+4. Weakest premise
+5. Counterexample or internal contradiction
+6. Pointed cross-examination question
+7. Decisive crux
+8. Position status (upheld / narrowed / withdrawn)
+9. Sources and locators
+10. Confidence (0-100)
 
 {policy}
 """.format(

@@ -111,6 +111,59 @@ class DebateControllerTest(unittest.TestCase):
         self.assertEqual(retried["status"], "complete")
         self.assertEqual(retried["completed"], 30)
 
+    def test_opening_prompt_requires_substantive_claim_collision(self):
+        prompt = DebateController._opening_prompt(
+            "Is pleasure sufficient for a good life?",
+            "",
+            {
+                "id": "test",
+                "role": "test perspective",
+                "priorities": ["clarity"],
+                "reference_text": "",
+            },
+            "tok-opening",
+        )
+        required = (
+            "non-negotiable thesis",
+            "anticipated rival proposition",
+            "Weakest premise and cost",
+            "Limited concession",
+            "Do not lead with common ground",
+            "remaining respectful toward persons",
+            "reconstructed arguments and inferences as [Interpretation]",
+        )
+        normalized = " ".join(prompt.casefold().split())
+        for phrase in required:
+            self.assertIn(" ".join(phrase.casefold().split()), normalized)
+        self.assertNotIn("Strongest objection to your own position", prompt)
+
+    def test_followup_prompt_requires_claim_level_cross_examination(self):
+        prompt = DebateController._followup_prompt(
+            2,
+            "C1 contradicts C2",
+            {
+                "id": "test",
+                "role": "test perspective",
+                "priorities": ["clarity"],
+                "reference_text": "",
+            },
+            "tok-followup",
+        )
+        required = (
+            "claim ID",
+            "reject, partially concede, or accept",
+            "weakest premise",
+            "counterexample or internal contradiction",
+            "pointed cross-examination question",
+            "decisive crux",
+            "upheld, narrowed, or withdrawn",
+            "practical overlap is not consensus",
+            "Do not invent an opponent",
+        )
+        normalized = " ".join(prompt.casefold().split())
+        for phrase in required:
+            self.assertIn(" ".join(phrase.casefold().split()), normalized)
+
 
 if __name__ == "__main__":
     unittest.main()
