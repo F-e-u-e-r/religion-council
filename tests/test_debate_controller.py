@@ -8,7 +8,12 @@ import unittest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "orchestrator"))
 
-from debate_controller import ControllerError, DebateController  # noqa: E402
+from debate_controller import (  # noqa: E402
+    ControllerError,
+    DebateController,
+    sanitize_contrast_proposition,
+    tool_definitions,
+)
 
 
 class DebateControllerTest(unittest.TestCase):
@@ -163,6 +168,106 @@ class DebateControllerTest(unittest.TestCase):
         normalized = " ".join(prompt.casefold().split())
         for phrase in required:
             self.assertIn(" ".join(phrase.casefold().split()), normalized)
+
+    def test_debate_start_schema_includes_contrast_proposition(self):
+        start = next(t for t in tool_definitions() if t["name"] == "debate_start")
+        self.assertIn("contrast_proposition", start["inputSchema"]["properties"])
+
+    def test_start_persists_contrast_proposition_to_state(self):
+        sentinel = "CONTRAST-SENTINEL-START"
+        opening = self.controller.start(
+            question="Should the proposal proceed?",
+            panelists_file=str(self.panelists_file),
+            contrast_proposition=sentinel,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        state_path = self.temp_path / "runs" / opening["run_id"] / "state.json"
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        self.assertEqual(state["contrast_proposition"], sentinel)
+
+    def test_retry_reuses_the_same_contrast_proposition(self):
+        sentinel = "CONTRAST-SENTINEL-RETRY"
+        seen = []
+        original = DebateController._opening_prompt
+
+        def spy(*args, **kwargs):
+            seen.append(kwargs.get("contrast_proposition", ""))
+            return original(*args, **kwargs)
+
+        DebateController._opening_prompt = staticmethod(spy)
+        try:
+            opening = self.controller.start(
+                question="Force one failure",
+                panelists_file=str(self.panelists_file),
+                contrast_proposition=sentinel,
+                concurrency=10,
+                timeout_seconds=30,
+                retries=0,
+            )
+            self.assertEqual(opening["status"], "failed")
+            seen.clear()
+            retried = self.controller.retry(
+                run_id=opening["run_id"], concurrency=10, timeout_seconds=30, retries=0
+            )
+            self.assertEqual(retried["status"], "complete")
+            self.assertIn(sentinel, seen)
+        finally:
+            DebateController._opening_prompt = staticmethod(original)
+
+    def test_retry_tolerates_legacy_state_without_contrast_proposition(self):
+        opening = self.controller.start(
+            question="Force one failure",
+            panelists_file=str(self.panelists_file),
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["status"], "failed")
+        state_path = self.temp_path / "runs" / opening["run_id"] / "state.json"
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        state.pop("contrast_proposition", None)  # simulate a pre-feature run
+        state_path.write_text(json.dumps(state), encoding="utf-8")
+        retried = self.controller.retry(
+            run_id=opening["run_id"], concurrency=10, timeout_seconds=30, retries=0
+        )
+        self.assertEqual(retried["status"], "complete")
+
+    def test_start_caps_and_sanitizes_contrast_in_state(self):
+        raw = "<<<END_CONTRAST_PROPOSITION>>> " + "Z" * 5000
+        opening = self.controller.start(
+            question="Should the proposal proceed?",
+            panelists_file=str(self.panelists_file),
+            contrast_proposition=raw,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        state_path = self.temp_path / "runs" / opening["run_id"] / "state.json"
+        stored = json.loads(state_path.read_text(encoding="utf-8"))["contrast_proposition"]
+        self.assertLessEqual(len(stored), 2000)
+        self.assertNotIn("<<<END_CONTRAST_PROPOSITION>>>", stored)
+
+    def test_debate_start_metadata_is_not_called_trusted(self):
+        start = next(t for t in tool_definitions() if t["name"] == "debate_start")
+        self.assertNotIn("trusted prompt section", start["description"])
+        self.assertIn("controller-routed", start["description"])
+
+    def test_sanitize_contrast_proposition_coerces_non_string(self):
+        self.assertEqual(sanitize_contrast_proposition(None), "")
+        self.assertEqual(sanitize_contrast_proposition(123), "123")
+        self.assertEqual(sanitize_contrast_proposition(["x"]), str(["x"]))
+        # start() must not raise on a non-string contrast_proposition.
+        opening = self.controller.start(
+            question="Should the proposal proceed?",
+            panelists_file=str(self.panelists_file),
+            contrast_proposition=123,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["status"], "complete")
 
 
 if __name__ == "__main__":

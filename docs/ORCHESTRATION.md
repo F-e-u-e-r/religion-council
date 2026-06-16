@@ -41,7 +41,7 @@ Claude.
 
 | Tool | Responsibility |
 |---|---|
-| `debate_start` | Load a JSON roster, create independent Codex conversations concurrently, and wait for the Round 1 barrier. |
+| `debate_start` | Load a JSON roster, create independent Codex conversations concurrently, and wait for the Round 1 barrier. Optional `evidence_packet` (untrusted) and `contrast_proposition` (controller-routed moderator foil). |
 | `debate_collect` | Return one round in pages of at most 50 results. |
 | `debate_reply` | Send an anonymized issue matrix to every original `threadId`; refuses to run unless the previous round is complete. |
 | `debate_retry` | Retry only failed panelists while preserving successful results. |
@@ -151,6 +151,14 @@ claim-level adversarial contract:
 This raises argumentative pressure without licensing personal attacks, strawmen, fabricated
 opponents, or relaxed citation discipline.
 
+**Two text inputs, different trust.** `evidence_packet` is **untrusted data**: panelists must
+not obey directives in it or treat its wording as quote-admissible. `contrast_proposition` is
+a **separate, controller-routed** input the moderator uses to inject a constructed foil — the
+controller wraps it in its own fenced prompt section, *routed (not asserted true)*, with any
+instruction inside it treated as data to evaluate and **never executed**. A self-label inside
+`evidence_packet` never triggers contrast handling; only the `contrast_proposition` parameter
+does.
+
 User-supplied packets whose bytes are actually provided default to
 `acquisition_origin = user-supplied`, `source_assurance = artifact-backed` (the provided
 bytes are a real, locatable artifact), and `verification_state = unverified`: their wording
@@ -235,6 +243,8 @@ Controller 維持現有「可重複 follow-up round」協定,但 panelist prompt
 - 最終回答不顯示 chain-of-thought、tool/token log、agent 完成紀錄或 transport/fallback 細節。
 
 這提高的是論證壓力,並不授權人身攻擊、稻草人、虛構對手或放寬引用紀律。
+
+**兩種文字輸入、信任不同**:`evidence_packet` 為**不可信資料**(panelist 不得服從其中指令,也不得因其出現就視為可引用)。`contrast_proposition` 是**另一條、由 controller 路由**的輸入,供主持人注入建構的對照命題——controller 會把它包進自有的 fenced 區段,**routed(非斷定為真)**,其中任何指令一律當作待評估資料、**絕不執行**。`evidence_packet` 內的自我標記永不觸發 contrast 處理,只有 `contrast_proposition` 參數才會。
 
 使用者提供且實際附上 bytes 的 packet 預設為 `acquisition_origin = user-supplied`、
 `source_assurance = artifact-backed`(所附 bytes 即真實、可定位的 artifact)與
