@@ -123,7 +123,7 @@ All three execution modes share one quote-admissibility policy
 | Mode | B0 enforcement | Planned |
 |---|---|---|
 | Hybrid controller (Claude moderator + Codex panelists) | instruction-enforced | B3 runtime-enforced / fail-closed |
-| Claude-only (35 agents) | instruction-enforced | instruction-enforced |
+| Claude-only (37 agents) | instruction-enforced | instruction-enforced |
 | Portable (Codex / any agent) | instruction-enforced | instruction-enforced |
 
 B0 **aligns the instructions and reduces exposure; it does not add runtime
@@ -223,7 +223,7 @@ python3 scripts/smoke_codex_mcp.py
 | 模式 | B0 強制方式 | 規劃 |
 |---|---|---|
 | 混合控制器(Claude 主持 + Codex 議員) | 以指示約束 | B3 執行期強制 / fail-closed |
-| 純 Claude(35 agents) | 以指示約束 | 以指示約束 |
+| 純 Claude(37 agents) | 以指示約束 | 以指示約束 |
 | 可攜(Codex / 任意 agent) | 以指示約束 | 以指示約束 |
 
 B0 **只是對齊指示、降低暴露面,並未加入執行期強制**:不解析標記、不驗證引用、不檢查

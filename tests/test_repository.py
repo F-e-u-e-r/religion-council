@@ -10,14 +10,14 @@ FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 
 
 class RepositoryValidationTest(unittest.TestCase):
-    def test_release_version_is_v030(self):
-        self.assertEqual((ROOT / "VERSION").read_text(encoding="utf-8").strip(), "v0.3.0")
+    def test_release_version_is_v040(self):
+        self.assertEqual((ROOT / "VERSION").read_text(encoding="utf-8").strip(), "v0.4.0")
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        self.assertIn("version-v0.3.0", readme)
+        self.assertIn("version-v0.4.0", readme)
         controller = (ROOT / "orchestrator" / "debate_controller.py").read_text(
             encoding="utf-8"
         )
-        self.assertIn('CONTROLLER_VERSION = "0.3.0"', controller)
+        self.assertIn('CONTROLLER_VERSION = "0.4.0"', controller)
 
     def test_markdown_relative_links_exist(self):
         missing = []
@@ -61,9 +61,9 @@ class RepositoryValidationTest(unittest.TestCase):
             self.assertEqual(len(panelists), expected, relative)
             self.assertEqual(len(ids), len(set(ids)), relative)
 
-    def test_claude_agent_roster_is_one_moderator_plus_34_voices(self):
+    def test_claude_agent_roster_is_one_moderator_plus_36_voices(self):
         paths = sorted((ROOT / ".claude" / "agents").glob("council-*.md"))
-        self.assertEqual(len(paths), 35)
+        self.assertEqual(len(paths), 37)
         self.assertEqual(sum(path.name == "council-moderator.md" for path in paths), 1)
         names = []
         for path in paths:
@@ -90,7 +90,7 @@ class RepositoryValidationTest(unittest.TestCase):
         self.assertEqual(keys, {"name", "description"})
         self.assertIn("name: religion-council", match.group(1))
         references = set(re.findall(r"`(references/[^`]+\.md)`", text))
-        self.assertEqual(len(references), 15)
+        self.assertEqual(len(references), 16)
         for relative in references:
             self.assertTrue((skill.parent / relative).is_file(), relative)
 
