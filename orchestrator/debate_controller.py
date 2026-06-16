@@ -1592,7 +1592,7 @@ class ControllerMcpServer:
                     "capabilities": {"tools": {"listChanged": False}},
                     "serverInfo": {
                         "name": "religion-council-controller",
-                        "title": "Religion Council Debate Controller",
+                        "title": "Worldview Council Debate Controller",
                         "version": CONTROLLER_VERSION,
                     },
                 },

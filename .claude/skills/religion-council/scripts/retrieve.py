@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""File-based retrieval for the curated Religion Council references.
+"""File-based retrieval for the curated Worldview Council references.
 
 This A0 retriever parses cited bullets from a tradition reference file,
 ranks them lexically, and returns the stable metadata records expected by
@@ -284,7 +284,7 @@ def capabilities():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Religion Council lexical retrieval")
+    parser = argparse.ArgumentParser(description="Worldview Council lexical retrieval")
     parser.add_argument("--tradition", choices=sorted(TRADITIONS))
     parser.add_argument("--query")
     parser.add_argument("--k", type=int, default=5)

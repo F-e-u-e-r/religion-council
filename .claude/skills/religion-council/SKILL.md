@@ -1,9 +1,9 @@
 ---
 name: religion-council
-description: 多傳統哲學議會。召集宗教/思想流派 persona(基督宗教、伊斯蘭教、印度教、佛教、道教、法家、儒家、墨家),以議會圓桌方式討論人生意義與其他哲學問題,發言須以原典為據並附出處。當使用者想要跨宗教/哲學傳統的圓桌討論、辯論,或提出「人生意義 / 倫理 / 形上學」類問題並希望由多個傳統各自回答時使用;使用者明確要求 Claude 主持 Codex 議員時,使用專案的 religion-council-controller MCP tools。
+description: 多傳統哲學議會。召集宗教、哲學與倫理 worldview persona(基督宗教、伊斯蘭教、印度教、佛教、道教、法家、儒家、墨家、世俗人文主義、彌爾等),以議會圓桌方式討論人生意義與其他哲學問題,發言須以原典為據並附出處。當使用者想要世界觀議會、跨宗教/哲學傳統的圓桌討論、辯論,或提出「人生意義 / 倫理 / 形上學 / 自由 / 世俗人文」類問題並希望由多個傳統各自回答時使用;使用者明確要求 Claude 主持 Codex 議員時,使用專案的 religion-council-controller MCP tools。
 ---
 
-# 多傳統哲學議會(Religion Council)
+# 多傳統哲學議會(Worldview Council)
 
 這是議會的**共用操作手冊**。主持人(moderator)與每個傳統的議會成員(subagent)都遵守本手冊。
 本檔負責「指揮 + 引用規範」;各成員的立場與經文片段見 `references/<傳統>.md`;檢索工具見 `scripts/`。

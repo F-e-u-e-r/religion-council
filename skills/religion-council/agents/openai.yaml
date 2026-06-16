@@ -1,4 +1,4 @@
 interface:
-  display_name: "Religion Council"
+  display_name: "Worldview Council"
   short_description: "Grounded multi-tradition philosophical dialogue"
   default_prompt: "Use $religion-council to spawn one independent agent per selected tradition and run a sourced, moderated roundtable on the meaning of life."

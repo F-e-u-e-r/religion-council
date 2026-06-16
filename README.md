@@ -1,7 +1,7 @@
-# Religion Council · 多傳統哲學議會
+# Worldview Council · 多傳統哲學議會
 
-> A source-grounded, moderated roundtable across the world's major religious and
-> philosophical traditions — as a drop-in skill for AI coding agents.
+> A source-grounded, moderated roundtable across religious, philosophical, and
+> ethical worldviews — a drop-in skill for AI coding agents.
 >
 > 以原典為據、由中立主持人調度的「跨傳統哲學議會」——可直接掛載到 AI coding agent 的 skill。
 
@@ -12,13 +12,15 @@
 
 **English** · [繁體中文](#繁體中文)
 
+_Formerly “Religion Council.” The repo, skill, and MCP identifiers stay `religion-council` for compatibility._
+
 ---
 
 ## What is this?
 
-**Religion Council** turns your AI agent into a neutral **moderator** that convenes a
-fair, **source-grounded** dialogue among religious and philosophical traditions —
-without flattening them into one mushy consensus.
+**Worldview Council** turns your AI agent into a neutral **moderator** that convenes a
+fair, **source-grounded** dialogue among religious, philosophical, and ethical
+worldviews — without flattening them into one mushy consensus.
 
 Ask *"does life have meaning?"* and you hear Buddhism, Taoism, and Confucianism each
 argue from **its own texts**. Every claim is tagged as either a **[Text]** quotation
@@ -448,13 +450,15 @@ Quoted primary scriptures are public-domain source texts in their original langu
 
 # 繁體中文
 
-[English](#religion-council--多傳統哲學議會) · **繁體中文**
+[English](#worldview-council--多傳統哲學議會) · **繁體中文**
 
 > 以原典為據、由中立主持人調度的「跨傳統哲學議會」——可直接掛載到 AI coding agent 的 skill。
 
+_前稱「Religion Council」;為相容,repo / skill / MCP 識別碼仍維持 `religion-council`。_
+
 ## 這是什麼?
 
-**多傳統哲學議會(Religion Council)** 讓你的 AI agent 化身為中立的**主持人**,召集一場
+**多傳統哲學議會(Worldview Council)** 讓你的 AI agent 化身為中立的**主持人**,召集一場
 **以原典為據**、公平的跨傳統對話——而不是把各家硬揉成一團含糊的共識。
 
 問一句「人生有沒有意義?」,你會聽到佛教、道教、儒家**各自從自己的經典**立論。每一句發言都

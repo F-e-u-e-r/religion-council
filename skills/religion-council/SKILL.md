@@ -1,9 +1,9 @@
 ---
 name: religion-council
-description: Convene a source-grounded, moderated roundtable among religious traditions, philosophical schools, denominations, or historical thinkers. Use when a user asks for a religion council, interfaith dialogue, cross-tradition comparison, debate, or multiple perspectives on meaning, ethics, suffering, death, metaphysics, knowledge, salvation, liberation, or related philosophical questions. When the user explicitly requests parallel agents, a multi-agent council, or one agent per perspective, run persistent independent panelists across opening and rebuttal rounds. Supports Christianity, Islam, Hinduism, Buddhism, Taoism, Legalism, Confucianism, Mohism, selected denominations, and selected historical thinkers. Also use for Chinese requests such as 宗教議會、跨宗教對話、圓桌討論、教派辯論、人物辯論、人生意義、倫理、形上學、救贖或解脫.
+description: Convene a source-grounded, moderated roundtable across religious, philosophical, and ethical worldviews. Use when a user asks for a worldview council, religion council, interfaith dialogue, cross-tradition comparison, debate, or multiple perspectives on meaning, ethics, suffering, death, metaphysics, knowledge, salvation, liberation, autonomy, secular humanism, liberalism, or related philosophical questions. When the user explicitly requests parallel agents, a multi-agent council, or one agent per perspective, run persistent independent panelists across opening and rebuttal rounds. Supports Christianity, Islam, Hinduism, Buddhism, Taoism, Legalism, Confucianism, Mohism, selected denominations, selected historical thinkers, secular humanism, and J. S. Mill. Also use for Chinese requests such as 世界觀議會、宗教議會、跨宗教對話、圓桌討論、教派辯論、人物辯論、人生意義、倫理、形上學、救贖或解脫.
 ---
 
-# Religion Council
+# Worldview Council
 
 Run a fair, source-grounded dialogue without flattening distinct traditions into one view. Act as the neutral moderator; represent each selected perspective from its own reference material.
 

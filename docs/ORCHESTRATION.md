@@ -141,7 +141,7 @@ Rosters use JSON to stay dependency-free:
 
 Included rosters:
 
-- `orchestrator/panelists/religion-8.json`: the eight broad Religion Council perspectives;
+- `orchestrator/panelists/religion-8.json`: the eight broad tradition-level perspectives;
 - `orchestrator/panelists/thirty-member-example.json`: a generic 30-member decision panel.
 
 ## Persisted state
