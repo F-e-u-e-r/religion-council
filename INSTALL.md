@@ -10,7 +10,7 @@ Religion Council supports three execution modes:
 
 | Mode | Moderator | Panelists | Best for |
 |---|---|---|---|
-| **1. Claude Code** | Claude | Claude custom subagents | Native Claude workflow with the bundled 35-agent roster. |
+| **1. Claude Code** | Claude | Claude custom subagents | Native Claude workflow with the bundled 37-agent roster. |
 | **2. Codex** | Codex | Native Codex subagents when explicitly requested | Portable Codex skill and direct Codex use. |
 | **3. Claude + Codex** | Claude | Persistent Codex MCP threads | Deterministic fan-out, round barriers, retries, and persisted audit records. |
 
@@ -189,7 +189,7 @@ Religion Council 支援三種執行方式:
 
 | 模式 | 主持人 | 議員 | 適合 |
 |---|---|---|---|
-| **1. Claude Code** | Claude | Claude custom subagent | 使用內附 35 個 agent 的 Claude 原生流程。 |
+| **1. Claude Code** | Claude | Claude custom subagent | 使用內附 37 個 agent 的 Claude 原生流程。 |
 | **2. Codex** | Codex | 明確要求時使用 Codex 原生 subagent | 可攜 Codex skill 與直接使用 Codex。 |
 | **3. Claude + Codex** | Claude | 持久化 Codex MCP thread | 固定併發、輪次 barrier、重試與完整紀錄。 |
 

@@ -50,7 +50,7 @@ A0 parses the cited bullets in the selected `references/` file and applies deter
 lexical ranking. Parenthetical locator notes are not treated as denominations unless they contain
 an explicit, recognized school marker. Every parsed bullet is source-bound `[Text]`; the additive
 `evidence_type` and `verbatim` fields distinguish a direct quotation from a close, cited summary.
-The core retrieval keys are stable. As long as future phases honor them, `SKILL.md` and all 34
+The core retrieval keys are stable. As long as future phases honor them, `SKILL.md` and all 36
 voices keep working unchanged. This is the seam the whole
 [roadmap](../README.md#roadmap) turns on.
 
@@ -181,7 +181,7 @@ persona 對語料的需求全部走同一個函式 `retrieve.retrieve(tradition,
 A0 階段會解析所選 `references/` 檔中的附出處條目,並作可重現的詞彙排序。括號內的出處備註
 只有在含明確、已登錄的教派標記時才會成為 `school`;所有解析條目均為有來源約束的 `[Text]`,
 再以附加欄位 `evidence_type` 與 `verbatim` 區分逐字引文和附出處摘要。核心檢索欄位保持穩定;
-只要未來階段守住它們,`SKILL.md` 與 34 個聲音都不必改。這正是整個
+只要未來階段守住它們,`SKILL.md` 與 36 個聲音都不必改。這正是整個
 [發展藍圖](../README.md#發展藍圖)的樞紐。
 
 ### 檢索 envelope 與 contract version

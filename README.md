@@ -8,7 +8,7 @@
 ![code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)
 ![content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)
 ![runs on: Codex · Claude Code · any agent](https://img.shields.io/badge/runs%20on-Codex%20·%20Claude%20Code%20·%20any%20agent-green.svg)
-![version: v0.3.0](https://img.shields.io/badge/version-v0.3.0-orange.svg)
+![version: v0.4.0](https://img.shields.io/badge/version-v0.4.0-orange.svg)
 
 **English** · [繁體中文](#繁體中文)
 
@@ -25,9 +25,9 @@ argue from **its own texts**. Every claim is tagged as either a **[Text]** quota
 (with a real locator) or an **[Interpretation]**, and the moderator surfaces the
 genuine tensions instead of forcing agreement.
 
-Version **v0.3.0** supports three execution modes:
+Version **v0.4.0** supports three execution modes:
 
-1. **Claude Code only** — 35 specialized Claude agents (1 moderator + 34 voices).
+1. **Claude Code only** — 37 specialized Claude agents (1 moderator + 36 voices).
 2. **Codex only** — a portable Codex skill, with native Codex subagents when requested.
 3. **Claude moderator + Codex panelists** — a deterministic Python MCP controller manages
    persistent Codex threads, barriers, retries, and audit records.
@@ -52,9 +52,12 @@ and [ADR 0001](docs/adr/0001-quote-admissibility-policy.md).
 - **Claim-level pressure, not performative hostility.** Openings commit to a thesis;
   rebuttals target a concrete claim, premise, or counterexample and return a
   cross-examination question. Practical overlap is not mislabeled as consensus.
-- **Safe constructed contrast.** When a roster leans one way, the moderator can inject a
-  controller-routed contrast proposition as debate framing only: not source evidence, not a
-  participant claim, and never an instruction to execute.
+- **A real secular-liberal voice, with a safe foil as fallback.** Religious rosters lean one
+  way, so the council ships `council-secular-humanist` and `council-mill` (grounded in *On
+  Liberty* / *Utilitarianism*) as full panelists that can actually rebut. Only when a roster
+  still leans one way does the moderator fall back to a controller-routed contrast proposition
+  — debate framing only: not source evidence, not a participant claim, never an instruction to
+  execute.
 - **Three execution modes, one corpus.** Claude-only, Codex-only, or Claude moderating
   persistent Codex MCP panelists, all using the same curated references.
 - **Built for a RAG future.** Retrieval lives behind one stable contract
@@ -68,6 +71,7 @@ and [ADR 0001](docs/adr/0001-quote-admissibility-policy.md).
 | **Traditions** (8) | Christianity · Islam · Hinduism · Buddhism · Taoism · Legalism\* · Confucianism\* · Mohism\* |
 | **Denominations** | *Christianity:* Catholic · Orthodox · Protestant — *Islam:* Sunni · Shia |
 | **Thinkers** | *Christianity:* Jesus · Augustine · Aquinas · Luther · Calvin — *Islam:* Muhammad · al-Ghazali · Ibn Rushd — *Buddhism:* Shakyamuni · Nāgārjuna · Vasubandhu · Pure Land — *Hinduism:* Krishna · Shankara · Rāmānuja · Madhva — *Pre-Qin China:* Confucius · Mencius · Xunzi · Laozi · Zhuangzi |
+| **Non-religious** | Secular Humanism · J. S. Mill (liberty / utilitarianism) — *philosophical / ethical stances, not religions; outside the default eight, added on request* |
 
 \* Legalism, Confucianism, and Mohism are **philosophical / intellectual traditions**, not
 religions, and the skill labels them as such (and distinguishes philosophical from
@@ -75,7 +79,7 @@ religious Taoism where it matters).
 
 ## Quick start
 
-**1. Claude Code only** (uses the 35 custom agents):
+**1. Claude Code only** (uses the 37 custom agents):
 
 ```bash
 git clone https://github.com/F-e-u-e-r/religion-council.git
@@ -121,6 +125,10 @@ How do Catholic, Orthodox, and Protestant views on salvation differ?
 Nāgārjuna vs Vasubandhu on emptiness vs consciousness.
 Self-power or other-power for liberation? Pure Land vs Zen / Theravāda.
 al-Ghazali vs Ibn Rushd on faith and reason.
+
+# Secular vs religious (non-religious tier)
+Must life's meaning come from religion or an afterlife? Secular humanism vs Christianity and Buddhism.
+在不傷害他人、不違法並承擔後果下,個人是否仍有義務按宗教或傳統美德生活?請彌爾與儒家、天主教辯論。
 ```
 
 ## How it works
@@ -173,21 +181,21 @@ religion/
 ├── DISCLAIMER.md                 # sourcing rules + religious-sensitivity statement
 ├── LICENSE                       # MIT — skill logic, agents, scripts, config
 ├── LICENSE-CONTENT               # CC BY 4.0 — references & corpus
-├── VERSION                       # current release: v0.3.0
+├── VERSION                       # current release: v0.4.0
 ├── .mcp.json                     # Claude → deterministic Codex controller
 │
 ├── skills/religion-council/      # ▸ PORTABLE skill (Codex & any agent)
 │   ├── SKILL.md                  #   English operating manual (self-contained)
-│   ├── references/               #   15 persona files (snippets + citations)
+│   ├── references/               #   16 persona files (snippets + citations)
 │   ├── scripts/retrieve.py       #   dependency-free lexical retrieval
 │   └── agents/openai.yaml        #   Codex interface metadata
 │
 ├── .claude/                      # ▸ CLAUDE CODE distribution
-│   ├── agents/council-*.md       #   35 sub-agents (1 moderator + 34 voices)
+│   ├── agents/council-*.md       #   37 sub-agents (1 moderator + 36 voices)
 │   └── skills/religion-council/
 │       ├── SKILL.md              #   繁中 operating manual
 │       ├── USAGE.md              #   how to convene a council
-│       ├── references/           #   15 persona files (+ 延伸語料 corpus pointers)
+│       ├── references/           #   16 persona files (+ 延伸語料 corpus pointers)
 │       └── scripts/retrieve.py   #   lexical retrieval (stable {text+metadata} contract)
 │
 ├── orchestrator/                 # ▸ CLAUDE MODERATOR + CODEX PANELISTS
@@ -214,7 +222,7 @@ enforcement ladder) and **[ADR 0003](docs/adr/0003-retrieval-evidence-adapter.md
 (the retrieval→evidence adapter).
 
 **Axis A — corpus & retrieval.** Pivots on one seam: the retrieval envelope contract.
-Keep it stable and the 34 personas never change as the backend grows from files to a
+Keep it stable and the 36 personas never change as the backend grows from files to a
 vector service.
 
 | Stage | What | Retrieval |
@@ -312,9 +320,9 @@ Quoted primary scriptures are public-domain source texts in their original langu
 標注為**〔據典〕**(引文+真實出處)或**〔詮釋〕**;主持人負責把真正的張力點攤開,而非強行
 調和。
 
-目前 **v0.3.0** 支援三種執行方式:
+目前 **v0.4.0** 支援三種執行方式:
 
-1. **純 Claude Code**——附 35 個專屬 agent(1 位主持人 + 34 個聲音)。
+1. **純 Claude Code**——附 37 個專屬 agent(1 位主持人 + 36 個聲音)。
 2. **純 Codex**——可攜 Codex skill;明確要求時可用 Codex 原生 subagent。
 3. **Claude 主持 + Codex 議員**——Python MCP controller 保存 Codex threadId、執行
    barrier、重試及紀錄。
@@ -328,8 +336,10 @@ Quoted primary scriptures are public-domain source texts in their original langu
   除非你給出明確評判標準,否則不宣布「贏家」。
 - **提高命題張力,而非表演式敵意。** 開場必須承諾明確主張;反駁須針對具體 claim、前提或反例,
   並提出可回應的交叉詰問。實務上的重疊不會被誤標為共識。
-- **安全的建構對照命題。** 名單天然偏向同一邊時,主持人可加入由 controller 路由的對照命題,
-  但它只作 debate framing:不是 source evidence、不是成員主張,也不是可執行指令。
+- **真正的世俗自由派聲音,對照命題只作後備。** 名單多半偏宗教,故議會新增 `council-secular-humanist`
+  與 `council-mill`(彌爾,據《論自由》《效益主義》)作能真正反詰的正式成員;只有名單仍偏向同一邊時,
+  主持人才退而加入由 controller 路由的對照命題,且它只作 debate framing:不是 source evidence、
+  不是成員主張,也不是可執行指令。
 - **三種執行方式,共用一套語料。** 純 Claude、純 Codex,或 Claude 主持持久 Codex MCP 議員。
 - **為 RAG 而設計。** 檢索藏在單一穩定介面(`scripts/retrieve.py`)之後,語料可從精選片段
   成長為向量化的完整典籍庫,而**無需改動任何 persona**。見 [發展藍圖](#發展藍圖)。
@@ -341,6 +351,7 @@ Quoted primary scriptures are public-domain source texts in their original langu
 | **傳統**(8) | 基督宗教 · 伊斯蘭教 · 印度教 · 佛教 · 道教 · 法家\* · 儒家\* · 墨家\* |
 | **教派** | *基督宗教:* 天主教 · 東正教 · 新教 — *伊斯蘭教:* 遜尼 · 什葉 |
 | **人物** | *基督宗教:* 耶穌 · 奧古斯丁 · 阿奎那 · 路德 · 加爾文 — *伊斯蘭教:* 穆罕默德 · 安薩里 · 伊本·魯世德 — *佛教:* 釋迦牟尼 · 龍樹 · 世親 · 淨土 — *印度教:* 克里希納 · 商羯羅 · 羅摩奴闍 · 摩陀婆 — *先秦:* 孔子 · 孟子 · 荀子 · 老子 · 莊子 |
+| **非宗教** | 世俗人文主義 · 約翰·彌爾(自由/效益主義)— *哲學/倫理立場,非宗教,不屬八家;按需加入* |
 
 \* 法家、儒家、墨家是**哲學/思想流派**而非宗教,skill 會據此標示(並在必要時區分哲學道家與
 宗教道教)。
@@ -392,7 +403,7 @@ persona 與引用紀律不必更動。
 與 **[ADR 0003](docs/adr/0003-retrieval-evidence-adapter.md)**(檢索→證據 adapter)。
 
 **軸線 A — 語料與檢索。** 樞紐是一條接縫:檢索 envelope 契約。守住它,後端由檔案逐步升級為
-向量服務時,34 個 persona 都不必改。
+向量服務時,36 個 persona 都不必改。
 
 | 階段 | 內容 | 檢索 |
 |---|---|---|
