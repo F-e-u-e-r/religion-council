@@ -381,19 +381,25 @@
     }
   ],
   "user_visible_assurance": {
-    "status": "planned; not implemented in this PR",
-    "en": "FUTURE B-stage requirement (not in force at B0): from B1 onward a rendered response should show its response-level enforcement mode, and from B2 onward each [Text] claim should show its own verification / assurance qualifier (e.g. curated-snapshot vs edition-backed), so an instruction-only citation is not mistaken for a runtime span-verified one. B0 does not render these; the current generator emits only claim markers and rules.",
-    "zh-Hant": "未來 B 階段要求(B0 尚未生效):自 B1 起,輸出應顯示其 response-level 強制模式;自 B2 起,每個〔據典〕主張應顯示自身的 verification / assurance qualifier(如 curated-snapshot 與 edition-backed 之別),避免 instruction-only 引用被誤認為 runtime span-verified 引用。B0 不輸出這些;現行 generator 只輸出主張標記與規則。"
+    "status": "controller assurance implemented; user-visible authority rendering not yet machine-enforced (pending ADR 0004 / P1)",
+    "en": "From B1 onward the controller produces response-level enforcement modes and per-[Text] verification / assurance qualifiers (e.g. curated-snapshot vs edition-backed). These are available controller-side and surfaced via collect(); the user-facing renderer that rebuilds the answer from only admitted claims (so an instruction-only or denied citation cannot reach the authority surface) is the renderer trust boundary specified in ADR 0004 and is pending (P1). See assurance_layers for the precise split.",
+    "zh-Hant": "自 B1 起,controller 已產生 response-level 強制模式與每個〔據典〕的 verification / assurance qualifier(如 curated-snapshot 與 edition-backed 之別),於 controller 端可得並經 collect() 呈現;而「面向使用者、只從 admitted claims 重建答案」的 renderer(使 instruction-only 或被拒引用無法進入權威表面)是 ADR 0004 所定的 renderer trust boundary,尚待 P1 實作。精確分層見 assurance_layers。"
+  },
+  "assurance_layers": {
+    "controller_structured_claim_boundary": "implemented",
+    "user_visible_authority_surface": "planned",
+    "interpretation_surface_semantic_enforcement": "instruction-enforced",
+    "note": "ADR 0004: machine enforcement covers the construction + traceability of the authority surface (B1b schema, B2 verification, B3 boundary — all over STRUCTURED claims). The user-facing finalizer that rebuilds the answer from admitted claims, with a deterministic post-render trace check, is pending (P1). The interpretation surface (free panelist prose) stays instruction-bounded and is framed non-authoritative; it is not semantically verified."
   },
   "mode_assurance": [
     {
       "id": "hybrid-controller",
       "label": { "en": "Hybrid controller (Claude moderator + Codex panelists)", "zh-Hant": "混合控制器(Claude 主持 + Codex 議員)" },
       "b0": "instruction-enforced",
-      "planned": "opt-in B3 structured-fail-closed",
+      "planned": "end-to-end renderer trust boundary (ADR 0004 / P1)",
       "text": {
-        "en": "Hybrid controller: instruction-enforced by default; opt-in structured paths can reach B1b schema enforcement, B2 claim validation, and B3 structured-fail-closed boundary enforcement.",
-        "zh-Hant": "混合控制器:預設以指示約束;opt-in 結構化路徑可達 B1b schema 強制、B2 claim 驗證與 B3 structured-fail-closed 邊界強制。"
+        "en": "Hybrid controller: instruction-enforced by default; opt-in structured paths reach B1b schema enforcement, B2 claim validation, and the B3 fail-closed boundary OVER STRUCTURED CLAIMS. This is a controller-side structured-claim boundary, not yet end-to-end: the user-facing prose renderer is not yet machine-enforced (the renderer trust boundary / finalizer is specified in ADR 0004 and pending P1).",
+        "zh-Hant": "混合控制器:預設以指示約束;opt-in 結構化路徑可達 B1b schema 強制、B2 claim 驗證與「對結構化 claims」的 B3 fail-closed 邊界。此為 controller 端的結構化 claim 邊界,尚非 end-to-end:面向使用者的 prose renderer 尚未 machine-enforced(renderer trust boundary / finalizer 由 ADR 0004 規範,待 P1)。"
       }
     },
     {
