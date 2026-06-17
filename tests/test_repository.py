@@ -10,14 +10,14 @@ FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 
 
 class RepositoryValidationTest(unittest.TestCase):
-    def test_release_version_is_v040(self):
-        self.assertEqual((ROOT / "VERSION").read_text(encoding="utf-8").strip(), "v0.4.0")
+    def test_release_version_is_v050(self):
+        self.assertEqual((ROOT / "VERSION").read_text(encoding="utf-8").strip(), "v0.5.0")
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        self.assertIn("version-v0.4.0", readme)
+        self.assertIn("version-v0.5.0", readme)
         controller = (ROOT / "orchestrator" / "debate_controller.py").read_text(
             encoding="utf-8"
         )
-        self.assertIn('CONTROLLER_VERSION = "0.4.0"', controller)
+        self.assertIn('CONTROLLER_VERSION = "0.5.0"', controller)
 
     def test_markdown_relative_links_exist(self):
         missing = []

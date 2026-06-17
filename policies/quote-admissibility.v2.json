@@ -233,6 +233,24 @@
     { "id": "runtime-validated", "description": { "en": "Produced by B2 claim-level validation.", "zh-Hant": "由 B2 的 claim-level 驗證產生。" } },
     { "id": "failed", "description": { "en": "Verification attempted and not satisfied.", "zh-Hant": "已嘗試驗證但未通過。" } }
   ],
+  "response_enforcement_modes": [
+    {
+      "id": "instruction-enforced",
+      "verification": "unverified",
+      "description": {
+        "en": "Response-level qualifier (ADR 0002 §6): the response was governed by the instruction-enforced policy only; no structured claim payload was parsed. The B0 default and the prose path of every mode. Does NOT imply runtime evidence validation (B2) or boundary fail-closed (B3).",
+        "zh-Hant": "回應層級標記(ADR 0002 §6):此回應僅受 instruction-enforced 政策約束,未解析任何結構化主張 payload。B0 預設與各模式的 prose 路徑。不蘊含執行期證據驗證(B2)或邊界 fail-closed(B3)。"
+      }
+    },
+    {
+      "id": "structured-schema-enforced",
+      "verification": "unverified",
+      "description": {
+        "en": "Response-level qualifier (ADR 0002 §6): a religion-council/claim/v1 payload was parsed, schema-validated, and bound to evidence seeds (B1b). This is SCHEMA enforcement only — evidence is still unverified (no B2 span validation) and the boundary is not fail-closed (no B3). It asserts structure and occurrence-level binding, never that any quotation was verified.",
+        "zh-Hant": "回應層級標記(ADR 0002 §6):已解析、通過 schema 驗證並綁定至 evidence seeds 的 religion-council/claim/v1 payload(B1b)。僅為 SCHEMA 強制——證據仍為 unverified(無 B2 span 驗證)、邊界亦非 fail-closed(無 B3)。只主張結構與 occurrence 級綁定,絕不表示任何引文已驗證。"
+      }
+    }
+  ],
   "rules": [
     {
       "id": "evidence-marker-not-authority",

@@ -9,6 +9,27 @@ write_lock = threading.Lock()
 state_lock = threading.Lock()
 thread_counter = 0
 failed_once = set()
+# Per-thread B1b structured scenario, so the repair turn (a codex-reply) knows whether
+# this thread should succeed on repair or stay malformed and be dropped.
+thread_scenario = {}
+
+
+# B1b structured claim blocks (only emitted when the prompt carries the claim/v1 contract).
+VALID_BLOCK = (
+    "\n<<<CLAIM_PROTOCOL_V1>>>\n"
+    '{"protocol_version":"religion-council/claim/v1",'
+    '"claims":[{"claim_id":"c1","claim_type":"text","text":"克己復禮為仁"}],'
+    '"edges":[{"claim_id":"c1","evidence_seed_id":"S1",'
+    '"evidentiary_role":"primary-source","evidence_type":"quotation"}]}\n'
+    "<<<END_CLAIM_PROTOCOL_V1>>>\n"
+)
+# Invalid claim_type "opinion" -> validate_claim_payload raises SchemaRejection.
+MALFORMED_BLOCK = (
+    "\n<<<CLAIM_PROTOCOL_V1>>>\n"
+    '{"protocol_version":"religion-council/claim/v1",'
+    '"claims":[{"claim_id":"c1","claim_type":"opinion","text":"x"}],"edges":[]}\n'
+    "<<<END_CLAIM_PROTOCOL_V1>>>\n"
+)
 
 
 def send(message):
@@ -66,12 +87,15 @@ def handle(message):
         params = message["params"]
         name = params["name"]
         arguments = params["arguments"]
+        prompt = arguments.get("prompt", "")
+        structured = "religion-council/claim/v1" in prompt
         time.sleep(0.005)
         if name == "codex":
-            panelist_id = arguments["prompt"].split("Panelist ID: ", 1)[1].splitlines()[0]
+            panelist_id = prompt.split("Panelist ID: ", 1)[1].splitlines()[0]
+            scenario = "ok"
             with state_lock:
                 should_fail = (
-                    "Force one failure" in arguments["prompt"]
+                    "Force one failure" in prompt
                     and panelist_id == "panelist_30"
                     and panelist_id not in failed_once
                 )
@@ -80,6 +104,12 @@ def handle(message):
                 else:
                     thread_counter += 1
                     thread_id = "thread-{:03d}".format(thread_counter)
+                    if structured and panelist_id == "panelist_30":
+                        if "STRUCTURED_DROP" in prompt:
+                            scenario = "drop"
+                        elif "STRUCTURED_REPAIR" in prompt:
+                            scenario = "repair"
+                    thread_scenario[thread_id] = scenario
             if should_fail:
                 send(
                     {
@@ -93,10 +123,25 @@ def handle(message):
                 )
                 return
             content = "opening:" + panelist_id
+            if structured:
+                content += MALFORMED_BLOCK if scenario in ("drop", "repair") else VALID_BLOCK
             tool_result(request_id, thread_id, content)
         elif name == "codex-reply":
             thread_id = arguments["threadId"]
-            tool_result(request_id, thread_id, "followup:" + thread_id)
+            is_repair = "rejected at the schema level" in prompt
+            if is_repair:
+                with state_lock:
+                    scenario = thread_scenario.get(thread_id, "ok")
+                if scenario == "drop":
+                    # Still malformed on repair -> controller drops the payload, keeps prose.
+                    tool_result(request_id, thread_id, "repair-attempt:" + thread_id + MALFORMED_BLOCK)
+                else:
+                    tool_result(request_id, thread_id, "repaired:" + thread_id + VALID_BLOCK)
+            else:
+                content = "followup:" + thread_id
+                if structured:
+                    content += VALID_BLOCK
+                tool_result(request_id, thread_id, content)
     elif request_id is not None:
         send(
             {

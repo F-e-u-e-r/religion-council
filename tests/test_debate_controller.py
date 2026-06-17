@@ -16,6 +16,25 @@ from debate_controller import (  # noqa: E402
 )
 
 
+def evidence_envelope():
+    """One-record retrieval/v1 envelope -> a single catalog seed S1 (cited by the fake)."""
+    return {
+        "contract_version": "religion-council/retrieval/v1",
+        "records": [
+            {
+                "text": "克己復禮為仁",
+                "work": "論語",
+                "locator": "顏淵",
+                "tradition": "confucianism",
+                "evidence_type": "quotation",
+                "verbatim": True,
+                "source_file": "/x",
+                "source_line": 1,
+            }
+        ],
+    }
+
+
 class DebateControllerTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -268,6 +287,179 @@ class DebateControllerTest(unittest.TestCase):
             retries=0,
         )
         self.assertEqual(opening["status"], "complete")
+
+    # ---- B1b structured mode ---------------------------------------------------------
+
+    def _structured_result(self, run_id, panelist_id="panelist_01"):
+        state_path = self.temp_path / "runs" / run_id / "state.json"
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        return state["rounds"]["1"]["results"][panelist_id], state
+
+    def test_structured_off_is_unchanged_prose(self):
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["status"], "complete")
+        self.assertEqual(opening["enforcement_mode"], "instruction-enforced")
+        result, state = self._structured_result(opening["run_id"])
+        self.assertFalse(state["structured_claims"])
+        self.assertNotIn("schema_status", result)
+        self.assertNotIn("claim_bindings", result)
+        self.assertEqual(state["evidence_catalog"], [])
+
+    def test_structured_on_binds_claims_unverified(self):
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),
+            structured_claims=True,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["status"], "complete")
+        self.assertEqual(opening["enforcement_mode"], "structured-schema-enforced")
+        result, state = self._structured_result(opening["run_id"])
+        self.assertEqual(result["schema_status"], "ok")
+        self.assertEqual(result["claim_payload_source"], "reply")
+        edge = result["claim_bindings"]["claims"][0]["edges"][0]
+        self.assertEqual(edge["evidence_seed_id"], "S1")
+        self.assertTrue(edge["occurrence_id"])
+        self.assertTrue(edge["artifact_id"])
+        self.assertEqual(edge["verification_state"], "unverified")  # no B2
+        # collect surfaces the same qualifier, never implying verification
+        collected = self.controller.collect(opening["run_id"], limit=1)
+        self.assertEqual(collected["enforcement_mode"], "structured-schema-enforced")
+
+    def test_structured_repair_then_bind(self):
+        opening = self.controller.start(
+            question="STRUCTURED_REPAIR: does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),
+            structured_claims=True,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["status"], "complete")  # barrier reached
+        repaired, _ = self._structured_result(opening["run_id"], "panelist_30")
+        self.assertEqual(repaired["schema_status"], "repaired")
+        self.assertNotIn("error", repaired)
+        self.assertEqual(
+            repaired["claim_bindings"]["claims"][0]["edges"][0]["evidence_seed_id"], "S1"
+        )
+        # audit: original (malformed) reply kept as content; bindings sourced from the repair
+        self.assertEqual(repaired["claim_payload_source"], "repair")
+        self.assertIn("opening:panelist_30", repaired["content"])
+        self.assertIn("repaired:", repaired["repair_content"])
+
+    def test_structured_drop_keeps_prose_and_round_completes(self):
+        opening = self.controller.start(
+            question="STRUCTURED_DROP: does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),
+            structured_claims=True,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["status"], "complete")  # NOT fail-closed
+        dropped, _ = self._structured_result(opening["run_id"], "panelist_30")
+        self.assertEqual(dropped["schema_status"], "schema_failed")
+        self.assertNotIn("error", dropped)  # schema failure must not be a transport error
+        self.assertNotIn("claim_bindings", dropped)
+        self.assertTrue(dropped["content"])  # prose kept
+        # other panelists still bound -> response-level qualifier remains structured
+        self.assertEqual(opening["enforcement_mode"], "structured-schema-enforced")
+        # barrier still reachable for round 2
+        followup = self.controller.reply(
+            run_id=opening["run_id"],
+            issue_matrix="anonymized matrix",
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(followup["status"], "complete")
+
+    def test_structured_mode_survives_failed_panelist_retry(self):
+        # Finding #4: retry rebuilds prompts in its own path; structured mode must persist.
+        opening = self.controller.start(
+            question="Force one failure",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),
+            structured_claims=True,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["status"], "failed")
+        self.assertEqual(opening["failed_panelists"], ["panelist_30"])
+        retried = self.controller.retry(
+            run_id=opening["run_id"], concurrency=10, timeout_seconds=30, retries=0
+        )
+        self.assertEqual(retried["status"], "complete")
+        self.assertEqual(retried["enforcement_mode"], "structured-schema-enforced")
+        result, _ = self._structured_result(opening["run_id"], "panelist_30")
+        self.assertEqual(result["schema_status"], "ok")  # bound on retry, not dropped to prose
+        self.assertEqual(
+            result["claim_bindings"]["claims"][0]["edges"][0]["evidence_seed_id"], "S1"
+        )
+
+    def test_structured_threadid_reuse_and_second_round_binds(self):
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),
+            structured_claims=True,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        run_id = opening["run_id"]
+        first = self.controller.collect(run_id, round_number=1, limit=50)
+        opening_threads = {r["panelist_id"]: r["thread_id"] for r in first["results"]}
+        followup = self.controller.reply(
+            run_id=run_id,
+            issue_matrix="anonymized matrix",
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(followup["status"], "complete")
+        self.assertEqual(followup["enforcement_mode"], "structured-schema-enforced")
+        second = self.controller.collect(run_id, round_number=2, limit=50)
+        reply_threads = {r["panelist_id"]: r["thread_id"] for r in second["results"]}
+        self.assertEqual(opening_threads, reply_threads)  # threadId reuse preserved
+        self.assertEqual(second["results"][0]["schema_status"], "ok")
+
+    def test_malformed_evidence_envelope_is_rejected_at_start(self):
+        with self.assertRaises(ControllerError):
+            self.controller.start(
+                question="Does life have meaning?",
+                panelists_file=str(self.panelists_file),
+                evidence_envelope={"contract_version": "wrong", "records": []},
+                structured_claims=True,
+                concurrency=10,
+                timeout_seconds=30,
+                retries=0,
+            )
+
+    def test_structured_requires_evidence_envelope(self):
+        # B1b binds claims to seeds; structured mode without an evidence source is a no-op
+        # and must fail fast rather than emit empty structured runs.
+        with self.assertRaises(ControllerError):
+            self.controller.start(
+                question="Does life have meaning?",
+                panelists_file=str(self.panelists_file),
+                structured_claims=True,  # no evidence_envelope supplied
+                concurrency=10,
+                timeout_seconds=30,
+                retries=0,
+            )
 
 
 if __name__ == "__main__":
