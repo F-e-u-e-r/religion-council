@@ -257,6 +257,48 @@
         "en": "Response-level qualifier (ADR 0002 §6): claim-level evidence validation ran against the curated-snapshot tier (B2). Each [Text] support edge gained runtime-validated or failed; a failed support edge was removed and a [Text] that lost all support was downgraded to a non-supporting unverified-citation; the council continued. This is claim-level validation, NOT B3 boundary fail-closed: per-claim verification_state and span_assurance_tier carry the actual per-claim outcome, and individual claims may still have failed. Span verification is the curated-snapshot tier (fidelity to the ingested snapshot), not edition-backed (A2).",
         "zh-Hant": "回應層級標記(ADR 0002 §6):已對 curated-snapshot tier 執行 claim-level 證據驗證(B2)。每條 [Text] support edge 取得 runtime-validated 或 failed;失敗的 support edge 已移除,失去全部支持的 [Text] 降為非支持的 unverified-citation;council 續行。此為 claim-level 驗證,非 B3 邊界 fail-closed:逐 claim 的 verification_state 與 span_assurance_tier 才是各 claim 的真實結果,個別 claim 仍可能 failed。Span 驗證為 curated-snapshot tier(符合收錄快照),非 edition-backed(A2)。"
       }
+    },
+    {
+      "id": "structured-fail-closed",
+      "verification": "runtime-validated",
+      "description": {
+        "en": "Response-level qualifier (ADR 0002 §6/§7): the hybrid response boundary is fail-closed (B3). Built on B2 verification, a fail-closed gate runs before the renderer and DEFAULT-DENIES — only affirmatively-passing claims are admitted; unknown claim types, a [Text] without runtime-validated evidence (unstructured-evidence bypass), a missing verification (renderer bypass), or an unsupported protocol are denied. This is the only fail-closed rung: B1b repairs/drops and B2 removes-and-continues, whereas B3 denies at the boundary by default. Per-claim boundary decisions carry which claims are renderable; verification remains the curated-snapshot tier.",
+        "zh-Hant": "回應層級標記(ADR 0002 §6/§7):混合模式的回應邊界為 fail-closed(B3)。在 B2 驗證之上,renderer 前的 fail-closed 閘採 DEFAULT-DENY——只有明確通過的 claim 才 admit;unknown claim type、無 runtime-validated 證據的 [Text](unstructured-evidence bypass)、缺驗證(renderer bypass)、或不支援的 protocol 一律 deny。這是唯一 fail-closed 的一層:B1b 修復/丟棄、B2 移除後續行,而 B3 在邊界預設拒絕。逐 claim 的 boundary 決定標示哪些可 render;驗證仍為 curated-snapshot tier。"
+      }
+    }
+  ],
+  "boundary_denial_reasons": [
+    {
+      "id": "unknown-claim-type",
+      "scope": "claim",
+      "description": {
+        "en": "B3 claim-level default-deny: the claim's type is not a recognized claim_type.",
+        "zh-Hant": "B3 claim 級預設拒絕:該 claim 的型別不在已知 claim_type 內。"
+      }
+    },
+    {
+      "id": "unstructured-evidence-bypass",
+      "scope": "claim",
+      "description": {
+        "en": "B3 claim-level default-deny: a [Text] claim reached the boundary without runtime-validated evidence, i.e. it bypassed the structured/verified pipeline.",
+        "zh-Hant": "B3 claim 級預設拒絕:[Text] claim 未經 runtime-validated 證據即抵達邊界,等於略過了結構/驗證管線。"
+      }
+    },
+    {
+      "id": "renderer-bypass",
+      "scope": "response",
+      "description": {
+        "en": "B3 response-level default-deny: the response carried no claim_verification, i.e. the structured/verification pipeline was bypassed before the renderer.",
+        "zh-Hant": "B3 回應級預設拒絕:回應沒有 claim_verification,即結構/驗證管線在 renderer 前被略過。"
+      }
+    },
+    {
+      "id": "unsupported-protocol",
+      "scope": "response",
+      "description": {
+        "en": "B3 response-level default-deny: the response's protocol_version is not the supported version.",
+        "zh-Hant": "B3 回應級預設拒絕:回應的 protocol_version 非受支援版本。"
+      }
     }
   ],
   "rules": [
@@ -348,10 +390,10 @@
       "id": "hybrid-controller",
       "label": { "en": "Hybrid controller (Claude moderator + Codex panelists)", "zh-Hant": "混合控制器(Claude 主持 + Codex 議員)" },
       "b0": "instruction-enforced",
-      "planned": "B3 runtime-enforced / fail-closed",
+      "planned": "opt-in B3 structured-fail-closed",
       "text": {
-        "en": "Hybrid controller: B0 instruction-enforced; runtime-enforced / fail-closed enforcement is planned for B3.",
-        "zh-Hant": "混合控制器:B0 以指示約束;執行期強制 / fail-closed 規劃於 B3。"
+        "en": "Hybrid controller: instruction-enforced by default; opt-in structured paths can reach B1b schema enforcement, B2 claim validation, and B3 structured-fail-closed boundary enforcement.",
+        "zh-Hant": "混合控制器:預設以指示約束;opt-in 結構化路徑可達 B1b schema 強制、B2 claim 驗證與 B3 structured-fail-closed 邊界強制。"
       }
     },
     {

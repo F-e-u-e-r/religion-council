@@ -334,6 +334,7 @@ class EnumConformanceTest(unittest.TestCase):
         "SPAN_ASSURANCE_TIERS",
         "VERIFICATION_STATES",
         "RESPONSE_ENFORCEMENT_MODES",
+        "BOUNDARY_DENIAL_REASONS",
     )
 
     def test_adapter_emitted_values_are_in_policy(self):

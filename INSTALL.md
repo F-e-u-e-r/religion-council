@@ -127,7 +127,9 @@ malformed payloads, and persist bound claims. To enable B2 claim validation, als
 `verify_claims=true`; quotation edges are checked against curated evidence snapshots,
 source-bound summaries validate by evidence edge, and per-claim outcomes are written under
 `claim_verification`. B1b bindings remain `verification_state = "unverified"`, and the
-controller is still not fail-closed.
+controller is still not fail-closed. To enable B3, also pass `fail_closed=true`; the
+controller writes a `boundary_decision` that default-denies unknown claim types,
+unvalidated `[Text]`, missing verification, and unsupported protocols before rendering.
 
 Run:
 
@@ -296,7 +298,9 @@ round barrier,並把紀錄寫到 `.religion-council/runs/<run-id>/state.json`。
 drop,再把有效 claim 綁定至 evidence seeds 並寫入 state。若要啟用 B2 claim 驗證,再傳入
 `verify_claims=true`;quotation edge 會對 curated evidence snapshot 驗證,source-bound summary 以
 evidence edge 驗證,每個 claim 的結果寫在 `claim_verification`。B1b binding 仍保持
-`verification_state = "unverified"`,controller 也仍未 fail-closed。
+`verification_state = "unverified"`。若要啟用 B3,再傳入 `fail_closed=true`;controller 會寫入
+`boundary_decision`,並在 render 前預設拒絕未知 claim type、未驗證〔據典〕、缺驗證與不支援
+protocol。
 
 ```bash
 codex login
