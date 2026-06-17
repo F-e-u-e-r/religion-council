@@ -123,8 +123,11 @@ The controller exposes:
 `debate_start` also has an opt-in B1b structured path: pass `structured_claims=true` with an
 `evidence_envelope` from `retrieve_envelope(...)`. The controller will render compact evidence
 seed IDs into the prompt, parse and schema-check `religion-council/claim/v1`, repair or drop
-malformed payloads, and persist bound claims. This is not B2 validation: all bindings remain
-`verification_state = "unverified"`, and the controller is still not fail-closed.
+malformed payloads, and persist bound claims. To enable B2 claim validation, also pass
+`verify_claims=true`; quotation edges are checked against curated evidence snapshots,
+source-bound summaries validate by evidence edge, and per-claim outcomes are written under
+`claim_verification`. B1b bindings remain `verification_state = "unverified"`, and the
+controller is still not fail-closed.
 
 Run:
 
@@ -290,7 +293,9 @@ round barrier,並把紀錄寫到 `.religion-council/runs/<run-id>/state.json`。
 `debate_start` 另有 opt-in B1b 結構化路徑:同時傳入 `structured_claims=true` 與
 `retrieve_envelope(...)` 產生的 `evidence_envelope`。Controller 會把 compact evidence seed ID
 放進 prompt,解析並 schema-check `religion-council/claim/v1`,對格式錯誤 payload 執行 repair 或
-drop,再把有效 claim 綁定至 evidence seeds 並寫入 state。這不是 B2 驗證:所有 binding 仍是
+drop,再把有效 claim 綁定至 evidence seeds 並寫入 state。若要啟用 B2 claim 驗證,再傳入
+`verify_claims=true`;quotation edge 會對 curated evidence snapshot 驗證,source-bound summary 以
+evidence edge 驗證,每個 claim 的結果寫在 `claim_verification`。B1b binding 仍保持
 `verification_state = "unverified"`,controller 也仍未 fail-closed。
 
 ```bash
