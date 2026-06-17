@@ -79,6 +79,42 @@ ENTRY_RE = re.compile(
 ASCII_WORD_RE = re.compile(r"[a-z0-9]+")
 CJK_RE = re.compile(r"[\u3400-\u9fff]+")
 
+# A1: optional curated presentation/provenance sidecar. It merges per-record presentation
+# dimensions (representation_kind / rendering_mode) and provenance / rights onto matching
+# records by (tradition, work, locator). These are curator-declared, carried-not-trusted
+# metadata: nothing is inferred. An absent, unparseable, or structurally-invalid sidecar
+# leaves retrieval unchanged, and a field whose value has the wrong type is dropped at merge
+# (pure-stdlib type-checking; the policy enum-membership check lives in the test suite, since
+# this portable retriever must not import the orchestrator's policy_enums).
+PRESENTATION_FILE = REFERENCES_DIR / "presentation.json"
+PRESENTATION_FIELD_TYPES = {
+    "representation_kind": str,
+    "rendering_mode": str,
+    "provenance": dict,
+    "rights": str,
+}
+PRESENTATION_FIELDS = tuple(PRESENTATION_FIELD_TYPES)
+
+
+def _load_presentation():
+    try:
+        with PRESENTATION_FILE.open(encoding="utf-8") as handle:
+            data = json.load(handle)
+    except (OSError, ValueError):
+        return {}
+    index = {}
+    if isinstance(data, dict):
+        for tradition, entries in data.items():
+            if not isinstance(entries, list):
+                continue  # skip the "_note" string and any malformed section
+            for entry in entries:
+                if isinstance(entry, dict):
+                    index[(tradition, entry.get("work"), entry.get("locator"))] = entry
+    return index
+
+
+PRESENTATION = _load_presentation()
+
 
 def normalize(value):
     return re.sub(r"\s+", "", value.casefold())
@@ -143,24 +179,34 @@ def parse_reference(tradition):
         text = raw_text[1:-1] if quoted else raw_text
         locator = match.group("locator").strip()
         school = extract_school(tradition, locator, config["school"])
-        records.append(
-            {
-                "text": text,
-                "tradition": tradition,
-                "school": school,
-                "work": match.group("work").strip(),
-                "locator": locator or "reference file entry",
-                "language": "zh-Hant",
-                "version": "curated-reference-v0.1",
-                "category": config["category"],
-                "label": "Text",
-                "evidence_type": "quotation" if quoted else "source-bound-summary",
-                "verbatim": quoted,
-                "topic": match.group("topic").strip(),
-                "source_file": str(path),
-                "source_line": line_number,
-            }
-        )
+        work = match.group("work").strip()
+        resolved_locator = locator or "reference file entry"
+        record = {
+            "text": text,
+            "tradition": tradition,
+            "school": school,
+            "work": work,
+            "locator": resolved_locator,
+            "language": "zh-Hant",
+            "version": "curated-reference-v0.1",
+            "category": config["category"],
+            "label": "Text",
+            "evidence_type": "quotation" if quoted else "source-bound-summary",
+            "verbatim": quoted,
+            "topic": match.group("topic").strip(),
+            "source_file": str(path),
+            "source_line": line_number,
+        }
+        # A1: merge curated presentation/provenance for this exact (work, locator), if any.
+        # Only carry a field whose value has the expected type; a wrong-typed value is dropped
+        # so a malformed sidecar cannot inject garbage into the contract.
+        curation = PRESENTATION.get((tradition, work, resolved_locator))
+        if curation:
+            for field, expected_type in PRESENTATION_FIELD_TYPES.items():
+                value = curation.get(field)
+                if isinstance(value, expected_type):
+                    record[field] = value
+        records.append(record)
     return records
 
 

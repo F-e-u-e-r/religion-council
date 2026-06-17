@@ -31,7 +31,7 @@ Public architecture stages are:
   | Stage | What | Retrieval |
   |---|---|---|
   | **A0** | Curated council: voices quote hand-picked, cited snippets in `references/`. Offline, any agent. | File parse + lexical ranking. |
-  | **A1** | Deeper curated corpus: expand `references/` and `01–08/典籍清單.md` + `思想概要.md` with more public-domain / openly-licensed excerpts + provenance. | Still file-based. |
+  | **A1** | Deeper curated corpus: expand `references/` and `01–08/典籍清單.md` + `思想概要.md` with more public-domain / openly-licensed excerpts + provenance. v0.8.0 ships the presentation/provenance/rights metadata foundation and first curation seed; broader excerpt growth remains rights-reviewed content work. | Still file-based. |
   | **A2** | Full 典籍 + local index: store complete open scriptures in-repo, chunked; benchmark lexical / cross-lingual / dense / hybrid; build the chosen index. | Local index — same retrieval envelope contract. |
   | **A3** | Networked RAG service: index behind a retrieval service; `retrieve.py` becomes a thin client. | Networked — same contract. |
 

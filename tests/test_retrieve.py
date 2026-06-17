@@ -33,6 +33,40 @@ class RetrieveTest(unittest.TestCase):
             self.claude_path.read_bytes(),
         )
 
+    def test_presentation_sidecars_are_byte_identical(self):
+        # Both retriever copies load their LOCAL sidecar, so the two sidecars must match too.
+        portable = self.portable_path.parent.parent / "references" / "presentation.json"
+        claude = self.claude_path.parent.parent / "references" / "presentation.json"
+        self.assertEqual(portable.read_bytes(), claude.read_bytes())
+
+    def test_wrong_typed_sidecar_values_are_dropped_at_merge(self):
+        # A malformed sidecar (valid JSON, wrong value types) must not inject garbage: each
+        # wrong-typed field is dropped; a correctly-typed sibling field still merges.
+        sample = self.module.parse_reference("confucianism")[0]
+        key = ("confucianism", sample["work"], sample["locator"])
+        original = dict(self.module.PRESENTATION)
+        self.module.PRESENTATION[key] = {
+            "work": sample["work"],
+            "locator": sample["locator"],
+            "representation_kind": 123,            # wrong type -> dropped
+            "rendering_mode": "meaning-rendering",  # str -> carried
+            "provenance": "not-a-dict",            # wrong type -> dropped
+            "rights": None,                         # wrong type -> dropped
+        }
+        try:
+            merged = next(
+                r
+                for r in self.module.parse_reference("confucianism")
+                if r["work"] == sample["work"] and r["locator"] == sample["locator"]
+            )
+        finally:
+            self.module.PRESENTATION.clear()
+            self.module.PRESENTATION.update(original)
+        self.assertNotIn("representation_kind", merged)
+        self.assertNotIn("provenance", merged)
+        self.assertNotIn("rights", merged)
+        self.assertEqual(merged["rendering_mode"], "meaning-rendering")
+
     def test_retrieve_envelope_wraps_records_with_contract_version(self):
         envelope = self.module.retrieve_envelope("buddhism", "空", 1)
         self.assertEqual(
@@ -77,6 +111,36 @@ class RetrieveTest(unittest.TestCase):
         self.assertEqual(records[0]["work"], "轉法輪經")
         self.assertEqual(records[0]["locator"], "(初轉法輪,南傳)")
         self.assertEqual(records[0]["school"], "南傳")
+
+    def test_presentation_sidecar_merges_onto_renderings(self):
+        # A1: curated presentation/provenance is merged onto the matching Qur'an renderings.
+        records = self.module.parse_reference("islam")
+        rendering = next(
+            r for r in records if r["work"] == "古蘭經" and r["locator"] == "51:56"
+        )
+        self.assertEqual(rendering["representation_kind"], "published-translation")
+        self.assertEqual(rendering["rendering_mode"], "meaning-rendering")
+        self.assertEqual(rendering["provenance"]["translator"], "馬堅")
+        self.assertIn("copyright", rendering["rights"])
+
+    def test_uncurated_records_have_no_presentation_fields(self):
+        # The summary entry (not curated) and a whole non-curated tradition stay untouched.
+        islam = self.module.parse_reference("islam")
+        summary = next(r for r in islam if not r["verbatim"])
+        for field in self.module.PRESENTATION_FIELDS:
+            self.assertNotIn(field, summary)
+        for record in self.module.parse_reference("confucianism"):
+            for field in self.module.PRESENTATION_FIELDS:
+                self.assertNotIn(field, record)
+
+    def test_presentation_sidecar_is_additive_to_core_contract(self):
+        # Merging presentation does not change the core return shape every persona relies on.
+        record = next(
+            r
+            for r in self.module.parse_reference("islam")
+            if r.get("representation_kind")
+        )
+        self.assertTrue({"text", "tradition", "work", "locator", "evidence_type"} <= set(record))
 
     def test_source_bound_summary_is_text_but_not_verbatim(self):
         records = self.module.retrieve("buddhism", "四諦", 1)
