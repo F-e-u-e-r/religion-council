@@ -45,6 +45,12 @@ class CatalogSeed:
     locator: Optional[str] = None
     tradition: Optional[str] = None
     snippet: Optional[str] = None
+    # A1 curated presentation/provenance (carried-not-trusted): present only when the curation
+    # sidecar marked the source record, so a renderer can present a rendering correctly.
+    representation_kind: Optional[str] = None
+    rendering_mode: Optional[str] = None
+    provenance: Optional[dict] = None
+    rights: Optional[str] = None
 
 
 class EvidenceCatalog:
@@ -87,6 +93,10 @@ class EvidenceCatalog:
                     locator=seed.locator,
                     tradition=seed.tradition,
                     snippet=_snippet(text, snippet_chars) if isinstance(text, str) else None,
+                    representation_kind=getattr(seed, "declared_representation_kind", None),
+                    rendering_mode=getattr(seed, "declared_rendering_mode", None),
+                    provenance=getattr(seed, "provenance", None),
+                    rights=getattr(seed, "rights", None),
                 )
             )
         return cls(catalog)
@@ -113,6 +123,11 @@ class EvidenceCatalog:
             head = "{}: {}".format(seed.seed_id, where) if where else seed.seed_id
             if seed.snippet:
                 head += " — “{}”".format(seed.snippet)
+            # A1: flag a curated rendering so a panelist treats it as a rendering, not the
+            # original wording (e.g. a Chinese Qur'an rendering).
+            if seed.rendering_mode:
+                marker = seed.representation_kind or "rendering"
+                head += " [{}: {}]".format(marker, seed.rendering_mode)
             lines.append(head)
         return "\n".join(lines)
 

@@ -98,8 +98,22 @@ the parity test in `tests/test_retrieve.py`).
 | `evidence_type` | optional contractual | Additive: `quotation` vs `source-bound-summary`. |
 | `verbatim` | optional contractual | Additive: `true` only for a verbatim quotation. |
 | `topic` | optional contractual | Parsed `〔topic〕` tag; supplementary. |
+| `representation_kind` | optional contractual (A1 curated) | Present only when the `presentation.json` sidecar marks the record (e.g. `published-translation`). Curator-declared, carried-not-trusted; never inferred. |
+| `rendering_mode` | optional contractual (A1 curated) | e.g. `meaning-rendering` for a Chinese Qur'an rendering, so B2/renderer present it with a rendering marker. Curated; never inferred. |
+| `provenance` | optional contractual (A1 curated) | Object: translator / edition / source-language note for a rendering. |
+| `rights` | optional contractual (A1 curated) | Per-snippet rights note (satisfies the A1 rights gate). |
 | `source_file` | implementation metadata | Absolute path; may change. Do not depend on it. |
 | `source_line` | implementation metadata | Parse position; used for stable tie-breaking only. |
+
+The A1 curated fields (introduced in v0.8.0) come from an optional
+`references/presentation.json` sidecar, merged by `retrieve.py` onto a record by exact
+`(tradition, work, locator)`. The sidecar is additive: an absent, unparseable, or
+structurally-invalid file leaves retrieval unchanged, and a field whose value has the wrong type
+is dropped at merge (pure-stdlib type-checking; enum-membership is checked in the test suite,
+since the portable retriever must not import `policy_enums`). Only entries already marked as
+renderings in the reference prose are curated (nothing is inferred). `representation_kind` /
+`rendering_mode` remain declared, carried-not-trusted — B2 still span-verifies and the renderer
+still shows a rendering marker.
 
 **Contractual** fields are the stable seam every persona and future retriever must
 keep. **Optional contractual** fields are additive and stable but supplementary — safe
@@ -224,8 +238,19 @@ envelope 的共用 contract-conformance suite 取代。見
 | `evidence_type` | 可選契約 | 附加:`quotation` 與 `source-bound-summary`。 |
 | `verbatim` | 可選契約 | 附加:僅逐字引文為 `true`。 |
 | `topic` | 可選契約 | 解析得到的 `〔主題〕` 標籤,屬補充。 |
+| `representation_kind` | 可選契約(A1 curated) | 僅當 `presentation.json` sidecar 標註該筆時出現(如 `published-translation`)。由 curator 宣告、carried-not-trusted,絕不臆測。 |
+| `rendering_mode` | 可選契約(A1 curated) | 如古蘭經中文釋義為 `meaning-rendering`,供 B2/renderer 以釋義標記呈現。Curated,絕不臆測。 |
+| `provenance` | 可選契約(A1 curated) | 物件:譯者/版本/來源語言備註。 |
+| `rights` | 可選契約(A1 curated) | 每片段的權利備註(滿足 A1 rights gate)。 |
 | `source_file` | 實作 metadata | 絕對路徑,可能變動,不應依賴。 |
 | `source_line` | 實作 metadata | 解析位置,僅用於穩定排序。 |
+
+A1 curated 欄位(v0.8.0 引入)來自選用的 `references/presentation.json` sidecar,由
+`retrieve.py` 依精確 `(tradition, work, locator)` merge;為附加性質:檔案缺漏、無法解析或
+結構無效則檢索不變,且值型別錯誤者於 merge 時丟棄(純 stdlib 型別檢查;enum 成員檢查在測試套件,
+因 portable retriever 不得 import `policy_enums`)。僅標註 reference prose 中已標明為釋義/翻譯者
+(絕不臆測)。`representation_kind` / `rendering_mode` 仍為宣告、carried-not-trusted——B2 仍
+span 驗證,renderer 仍顯示釋義標記。
 
 **契約**欄位是每個 persona 與未來檢索器都必須守住的穩定介面;**可選契約**欄位為附加且穩定的
 補充欄位,可用但非 persona 契約的承重點;**實作 metadata** 屬 A0 階段檔案解析器的內部細節,

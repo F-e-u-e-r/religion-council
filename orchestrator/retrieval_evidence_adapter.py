@@ -45,10 +45,15 @@ class EvidenceSeed:
     retrieval_rank: Optional[int] = None
     source_file: Optional[str] = None
     source_line: Optional[int] = None
-    # representation_kind / rendering_mode are intentionally omitted at B1a:
-    # representation_kinds has no "unknown" member, and neither is inferable from a
-    # retrieval record (e.g. a Chinese Qur'an snippet is a meaning-rendering, but
-    # language=zh-Hant alone cannot say so). They are set at B1b / during curation.
+    # A1 curated presentation/provenance, carried-not-trusted (ADR 0003 §2). Present only when
+    # the curation sidecar marks this record (e.g. a Chinese Qur'an snippet is a
+    # published-translation + meaning-rendering); absent -> None. They are NOT inferred from the
+    # record (language=zh-Hant alone cannot say a snippet is a rendering); B2 still span-verifies
+    # and the renderer still shows a rendering marker — these are declared, not a verification.
+    declared_representation_kind: Optional[str] = None
+    declared_rendering_mode: Optional[str] = None
+    provenance: Optional[dict] = None
+    rights: Optional[str] = None
 
 
 def artifact_kind_of(record):
@@ -159,6 +164,10 @@ def adapt(envelope, store, *, acquisition_origin="bundled", retrieval_path="retr
                 retrieval_rank=index,
                 source_file=record.get("source_file"),
                 source_line=record.get("source_line"),
+                declared_representation_kind=record.get("representation_kind"),
+                declared_rendering_mode=record.get("rendering_mode"),
+                provenance=record.get("provenance"),
+                rights=record.get("rights"),
             )
         )
         store.append_origin(

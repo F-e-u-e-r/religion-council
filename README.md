@@ -8,7 +8,7 @@
 ![code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)
 ![content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)
 ![runs on: Codex · Claude Code · any agent](https://img.shields.io/badge/runs%20on-Codex%20·%20Claude%20Code%20·%20any%20agent-green.svg)
-![version: v0.7.0](https://img.shields.io/badge/version-v0.7.0-orange.svg)
+![version: v0.8.0](https://img.shields.io/badge/version-v0.8.0-orange.svg)
 
 **English** · [繁體中文](#繁體中文)
 
@@ -25,7 +25,7 @@ argue from **its own texts**. Every claim is tagged as either a **[Text]** quota
 (with a real locator) or an **[Interpretation]**, and the moderator surfaces the
 genuine tensions instead of forcing agreement.
 
-Version **v0.7.0** supports three execution modes:
+Version **v0.8.0** supports three execution modes:
 
 1. **Claude Code only** — 37 specialized Claude agents (1 moderator + 36 voices).
 2. **Codex only** — a portable Codex skill, with native Codex subagents when requested.
@@ -45,6 +45,12 @@ renderer bypasses, and unsupported protocols are default-denied. Claude-only and
 modes stay instruction-enforced. See the
 [assurance matrix](docs/ORCHESTRATION.md#quote-admissibility-assurance) and
 [ADR 0002](docs/adr/0002-roadmap-stage-nomenclature.md).
+
+Version v0.8.0 adds the A1 corpus-enrichment metadata foundation: `retrieve.py` can merge
+curated `representation_kind`, `rendering_mode`, `provenance`, and `rights` from a portable
+`presentation.json` sidecar, with seed curation for the existing Chinese Qur'an
+meaning-renderings. Bulk public-domain excerpt expansion remains source- and rights-reviewed
+content work.
 
 ## Why it's different
 
@@ -189,7 +195,7 @@ religion/
 ├── DISCLAIMER.md                 # sourcing rules + religious-sensitivity statement
 ├── LICENSE                       # MIT — skill logic, agents, scripts, config
 ├── LICENSE-CONTENT               # CC BY 4.0 — references & corpus
-├── VERSION                       # current release: v0.7.0
+├── VERSION                       # current release: v0.8.0
 ├── .mcp.json                     # Claude → deterministic Codex controller
 │
 ├── skills/religion-council/      # ▸ PORTABLE skill (Codex & any agent)
@@ -235,8 +241,8 @@ vector service.
 
 | Stage | What | Retrieval |
 |---|---|---|
-| **A0 — Curated council** *(today)* | Voices quote hand-picked, cited snippets in `references/`. Offline, any agent. | File parse + lexical ranking. |
-| **A1 — Deeper corpus** | Expand `references/` and `01–08/典籍清單.md` + `思想概要.md` with more public-domain / openly-licensed excerpts + provenance. | Still file-based. |
+| **A0 — Curated council** | Voices quote hand-picked, cited snippets in `references/`. Offline, any agent. | File parse + lexical ranking. |
+| **A1 — Deeper corpus** *(metadata foundation, v0.8.0)* | Adds the `presentation.json` provenance/rights sidecar and seeds existing Qur'an meaning-renderings; broader public-domain excerpt expansion remains rights-reviewed curation work. | Still file-based. |
 | **A2 — Full 典籍 + local index** | Store complete open scriptures in-repo, chunked; benchmark lexical / cross-lingual / dense / hybrid; build the chosen index. | Local index — same envelope contract. |
 | **A3 — RAG server** | Index behind a retrieval service; `retrieve.py` becomes a thin client. Optionally expose the council as an API/app. | Networked — same contract. |
 
@@ -331,7 +337,7 @@ Quoted primary scriptures are public-domain source texts in their original langu
 標注為**〔據典〕**(引文+真實出處)或**〔詮釋〕**;主持人負責把真正的張力點攤開,而非強行
 調和。
 
-目前 **v0.7.0** 支援三種執行方式:
+目前 **v0.8.0** 支援三種執行方式:
 
 1. **純 Claude Code**——附 37 個專屬 agent(1 位主持人 + 36 個聲音)。
 2. **純 Codex**——可攜 Codex skill;明確要求時可用 Codex 原生 subagent。
@@ -344,6 +350,11 @@ claim 對 curated evidence snapshot 做執行期驗證,並以每個 claim 的 `r
 `failed` 結果寫入 state。v0.7.0 加入 opt-in B3 `fail_closed=true`:只有明確 admit 的 claim 可通過
 response boundary;unknown claim type、未 runtime-validated 的〔據典〕、renderer bypass 與不支援
 protocol 會預設拒絕。純 Claude 與可攜模式仍維持 instruction-enforced。
+
+v0.8.0 新增 A1 語料加厚的 metadata 基礎建設:`retrieve.py` 可從可攜的
+`presentation.json` sidecar 合併 curated `representation_kind`、`rendering_mode`、
+`provenance` 與 `rights`,並為既有古蘭經中文釋義片段建立種子標註。大量新增公有領域摘錄仍屬
+需來源與 rights review 的人工 curation 工作。
 
 ## 有何不同?
 
@@ -425,8 +436,8 @@ persona 與引用紀律不必更動。
 
 | 階段 | 內容 | 檢索 |
 |---|---|---|
-| **A0 — 精選議會**(現在) | 各成員引用 `references/` 中手選、附出處片段,離線、任何 agent 皆可跑。 | 檔案解析 + 詞彙排序。 |
-| **A1 — 加厚語料** | 擴充 `references/` 與 `01–08/典籍清單.md`、`思想概要.md`,補上更多公有領域/開放授權精選片段與 provenance。 | 仍為檔案式。 |
+| **A0 — 精選議會** | 各成員引用 `references/` 中手選、附出處片段,離線、任何 agent 皆可跑。 | 檔案解析 + 詞彙排序。 |
+| **A1 — 加厚語料**(metadata 基礎,v0.8.0) | 新增 `presentation.json` provenance/rights sidecar,並為既有古蘭經中文釋義建立種子標註;更大規模的公有領域摘錄擴充仍須逐筆來源與 rights review。 | 仍為檔案式。 |
 | **A2 — 完整典籍 + 本地索引** | 把開放典籍全文入庫並切分;benchmark lexical / cross-lingual / dense / hybrid;再建所選索引。 | 本地索引——envelope 契約不變。 |
 | **A3 — RAG server** | 索引移到檢索服務,`retrieve.py` 變薄客戶端;亦可把議會做成 API/應用。 | 網路檢索——仍是同一契約。 |
 

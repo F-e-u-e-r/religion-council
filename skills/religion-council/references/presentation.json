@@ -1,0 +1,41 @@
+{
+  "_note": "A1 curated presentation/provenance/rights sidecar (optional, additive). retrieve.py merges these per-record presentation dimensions onto matching records by (work, locator). representation_kind / rendering_mode are curator-declared, carried-not-trusted metadata (ADR 0003 §2): downstream still span-verifies (B2) and presents renderings with a marker (B3/renderer). Absent/unparseable/structurally-invalid -> no curation; a wrong-typed value is dropped at merge (enum-membership is checked in the test suite). Only entries already marked as renderings in the reference prose are curated here; do not infer values.",
+  "islam": [
+    {
+      "work": "古蘭經",
+      "locator": "51:56",
+      "representation_kind": "published-translation",
+      "rendering_mode": "meaning-rendering",
+      "provenance": {
+        "translator": "馬堅",
+        "source_language": "ar",
+        "note": "Chinese rendering per 馬堅 translation; the Qur'an canon is Arabic (the reference prose marks every Qur'an entry 釋義). Confirm edition/script before relying on verbatim fidelity."
+      },
+      "rights": "Short excerpt of a 20th-century published Chinese translation (馬堅). Modern translations are typically in copyright; confirm licensing before redistribution (see DISCLAIMER.md)."
+    },
+    {
+      "work": "古蘭經",
+      "locator": "112:1-4(忠誠章)",
+      "representation_kind": "published-translation",
+      "rendering_mode": "meaning-rendering",
+      "provenance": {
+        "translator": "馬堅",
+        "source_language": "ar",
+        "note": "Chinese rendering per 馬堅 translation; the Qur'an canon is Arabic. Confirm edition/script before relying on verbatim fidelity."
+      },
+      "rights": "Short excerpt of a 20th-century published Chinese translation (馬堅). Modern translations are typically in copyright; confirm licensing before redistribution (see DISCLAIMER.md)."
+    },
+    {
+      "work": "古蘭經",
+      "locator": "2:156",
+      "representation_kind": "published-translation",
+      "rendering_mode": "meaning-rendering",
+      "provenance": {
+        "translator": "馬堅",
+        "source_language": "ar",
+        "note": "Chinese rendering per 馬堅 translation; the Qur'an canon is Arabic. Confirm edition/script before relying on verbatim fidelity."
+      },
+      "rights": "Short excerpt of a 20th-century published Chinese translation (馬堅). Modern translations are typically in copyright; confirm licensing before redistribution (see DISCLAIMER.md)."
+    }
+  ]
+}

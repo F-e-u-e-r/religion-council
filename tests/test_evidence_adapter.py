@@ -181,10 +181,33 @@ class AdapterTest(unittest.TestCase):
         self.assertEqual(seed.artifact_kind, "source-text")
         self.assertEqual(seed.byte_offset, 0)
 
-    def test_seed_omits_representation_dimensions(self):
-        seed = adapter.adapt(envelope([make_record()]), self.store)[0]
-        self.assertFalse(hasattr(seed, "representation_kind"))
-        self.assertFalse(hasattr(seed, "rendering_mode"))
+    def test_seed_carries_curated_representation_dimensions(self):
+        # A1: representation_kind / rendering_mode are never inferred — None on an uncurated
+        # record, carried (declared, not trusted) when the record supplies them. The attrs use
+        # the declared_ prefix; there is no bare representation_kind on the seed.
+        plain = adapter.adapt(envelope([make_record()]), self.store)[0]
+        self.assertIsNone(plain.declared_representation_kind)
+        self.assertIsNone(plain.declared_rendering_mode)
+        self.assertIsNone(plain.provenance)
+        self.assertIsNone(plain.rights)
+        self.assertFalse(hasattr(plain, "representation_kind"))
+        curated = adapter.adapt(
+            envelope(
+                [
+                    make_record(
+                        representation_kind="published-translation",
+                        rendering_mode="meaning-rendering",
+                        provenance={"translator": "馬堅"},
+                        rights="short excerpt; verify before redistribution",
+                    )
+                ]
+            ),
+            self.store,
+        )[0]
+        self.assertEqual(curated.declared_representation_kind, "published-translation")
+        self.assertEqual(curated.declared_rendering_mode, "meaning-rendering")
+        self.assertEqual(curated.provenance, {"translator": "馬堅"})
+        self.assertEqual(curated.rights, "short excerpt; verify before redistribution")
 
     def test_producer_metadata_is_carried(self):
         seed = adapter.adapt(envelope([make_record()]), self.store)[0]
