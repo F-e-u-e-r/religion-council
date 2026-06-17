@@ -137,6 +137,13 @@ class QuotePolicyConformanceTest(unittest.TestCase):
                 "instruction-enforced",
                 "structured-schema-enforced",
                 "structured-claim-validated",
+                "structured-fail-closed",
+            },
+            "boundary_denial_reasons": {
+                "unknown-claim-type",
+                "unstructured-evidence-bypass",
+                "renderer-bypass",
+                "unsupported-protocol",
             },
         }
         for section, expected_ids in expected.items():
@@ -153,10 +160,12 @@ class QuotePolicyConformanceTest(unittest.TestCase):
             debate_controller.QUOTE_ADMISSIBILITY_POLICY_EN,
         )
         modes = {m["id"]: m["verification"] for m in self.manifest["response_enforcement_modes"]}
-        # B1b modes verify nothing; only the B2 mode declares runtime claim validation.
+        # B1b modes verify nothing; B2/B3 modes declare runtime claim validation. None of these
+        # flips the global instruction-enforced status above.
         self.assertEqual(modes["instruction-enforced"], "unverified")
         self.assertEqual(modes["structured-schema-enforced"], "unverified")
         self.assertEqual(modes["structured-claim-validated"], "runtime-validated")
+        self.assertEqual(modes["structured-fail-closed"], "runtime-validated")
 
     def test_no_evidence_representation_cell_is_categorically_forbidden(self):
         matrix = self.manifest["evidence_representation_compatibility"]

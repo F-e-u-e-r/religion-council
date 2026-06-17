@@ -595,6 +595,138 @@ class DebateControllerTest(unittest.TestCase):
             result["claim_verification"]["claims"][0]["verification_state"], "runtime-validated"
         )
 
+    # ---- B3 response-boundary fail-closed ---------------------------------------------
+
+    def test_fail_closed_requires_verify_claims(self):
+        with self.assertRaises(ControllerError):
+            self.controller.start(
+                question="Does life have meaning?",
+                panelists_file=str(self.panelists_file),
+                evidence_envelope=evidence_envelope(),
+                structured_claims=True,
+                fail_closed=True,  # without verify_claims
+                concurrency=10,
+                timeout_seconds=30,
+                retries=0,
+            )
+
+    def test_fail_closed_admits_validated_claims(self):
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),  # validates
+            structured_claims=True,
+            verify_claims=True,
+            fail_closed=True,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["status"], "complete")  # boundary gate is pre-renderer, not a round fail
+        self.assertEqual(opening["enforcement_mode"], "structured-fail-closed")
+        result, state = self._structured_result(opening["run_id"])
+        self.assertTrue(state["fail_closed"])
+        decision = result["boundary_decision"]
+        self.assertTrue(decision["admitted"])
+        self.assertEqual(decision["claims"][0]["decision"], "admit")
+        self.assertEqual(decision["claims"][0]["render_as"], "text")
+
+    def test_fail_closed_admits_downgraded_claim_as_non_supporting(self):
+        # B2 downgrades a failed [Text] to unverified-citation; B3 admits it, but non-supporting.
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope_mismatch(),  # quotation not in snapshot -> fail
+            structured_claims=True,
+            verify_claims=True,
+            fail_closed=True,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["status"], "complete")
+        result, _ = self._structured_result(opening["run_id"])
+        decision = result["boundary_decision"]
+        self.assertEqual(decision["claims"][0]["decision"], "admit")
+        self.assertEqual(decision["claims"][0]["render_as"], "non-supporting")
+
+    def test_fail_closed_denies_schema_failed_response_as_renderer_bypass(self):
+        # A schema_failed panelist has no claim_verification, so the fail-closed boundary
+        # default-denies it (renderer-bypass) — yet the round still completes.
+        opening = self.controller.start(
+            question="STRUCTURED_DROP: does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),
+            structured_claims=True,
+            verify_claims=True,
+            fail_closed=True,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["status"], "complete")
+        dropped, _ = self._structured_result(opening["run_id"], "panelist_30")
+        self.assertEqual(dropped["schema_status"], "schema_failed")
+        self.assertFalse(dropped["boundary_decision"]["admitted"])
+        self.assertEqual(dropped["boundary_decision"]["response_denial"], "renderer-bypass")
+
+    def test_fail_closed_applies_on_reply_round_two(self):
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),
+            structured_claims=True,
+            verify_claims=True,
+            fail_closed=True,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        followup = self.controller.reply(
+            run_id=opening["run_id"],
+            issue_matrix="anonymized matrix",
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(followup["status"], "complete")
+        self.assertEqual(followup["enforcement_mode"], "structured-fail-closed")
+        state_path = self.temp_path / "runs" / opening["run_id"] / "state.json"
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        r2 = state["rounds"]["2"]["results"]["panelist_01"]
+        self.assertTrue(r2["boundary_decision"]["admitted"])
+        self.assertEqual(r2["boundary_decision"]["claims"][0]["decision"], "admit")
+
+    def test_boundary_error_degrades_gracefully(self):
+        # An unexpected gate crash must record a flag and let the round/barrier complete.
+        import response_boundary
+
+        original = response_boundary.gate_response
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("gate exploded")
+
+        response_boundary.gate_response = boom
+        try:
+            opening = self.controller.start(
+                question="Does life have meaning?",
+                panelists_file=str(self.panelists_file),
+                evidence_envelope=evidence_envelope(),
+                structured_claims=True,
+                verify_claims=True,
+                fail_closed=True,
+                concurrency=10,
+                timeout_seconds=30,
+                retries=0,
+            )
+        finally:
+            response_boundary.gate_response = original
+        self.assertEqual(opening["status"], "complete")  # barrier intact despite the crash
+        result, _ = self._structured_result(opening["run_id"])
+        self.assertIn("boundary_error", result)
+        self.assertIn("gate exploded", result["boundary_error"])
+        self.assertNotIn("error", result)
+
     def test_verification_error_degrades_gracefully(self):
         # An unexpected verifier crash must record a flag and let the round/barrier complete.
         original = claim_verification.verify_bound_claims

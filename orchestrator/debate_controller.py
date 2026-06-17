@@ -25,6 +25,7 @@ import uuid
 import claim_binding
 import claim_protocol
 import claim_verification
+import response_boundary
 import retrieval_evidence_adapter
 from claim_protocol import SchemaRejection
 from evidence_snapshot import EvidenceStore
@@ -32,7 +33,7 @@ from generated_quote_policy import QUOTE_ADMISSIBILITY_POLICY_EN
 
 
 PROTOCOL_VERSION = "2025-06-18"
-CONTROLLER_VERSION = "0.6.0"
+CONTROLLER_VERSION = "0.7.0"
 PANELIST_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 CONTRAST_MAX_CHARS = 2000
 
@@ -666,51 +667,69 @@ Return:
         result["claim_verification"] = verified
         result["verification_summary"] = claim_verification.verification_summary(verified)
 
-    def _run_panelist_job(
-        self, job, catalog, structured, verify, read_snapshot, timeout_seconds, retries
-    ):
-        """Transport call (with transport retries), then optional structured + B2 verification."""
+    @staticmethod
+    def _gate_structured(result):
+        """B3: fail-closed boundary decision over the verified result (additive)."""
+        result["boundary_decision"] = response_boundary.gate_response(result)
+
+    def _structured_context(self, state):
+        """Bundle the per-run structured/B2/B3 settings used by every panelist job."""
+        structured = bool(state.get("structured_claims"))
+        verify = structured and bool(state.get("verify_claims"))
+        fail_closed = verify and bool(state.get("fail_closed"))
+        read_snapshot = None
+        if verify:
+            store = EvidenceStore(self.state_dir / state["run_id"] / "evidence")
+            read_snapshot = store.read_snapshot
+        return {
+            "structured": structured,
+            "verify": verify,
+            "fail_closed": fail_closed,
+            "catalog": (
+                claim_binding.EvidenceCatalog.from_state(state.get("evidence_catalog"))
+                if structured
+                else None
+            ),
+            "read_snapshot": read_snapshot,
+        }
+
+    def _run_panelist_job(self, job, sctx, timeout_seconds, retries):
+        """Transport call (with transport retries), then optional B1b bind / B2 verify / B3 gate.
+
+        Each structured stage degrades gracefully — a crash records a flag and the round still
+        completes; it never aborts the round or the complete-round barrier.
+        """
         result = self._call_with_retries(
             job["tool"], job["arguments"], timeout_seconds, retries
         )
-        if structured and "error" not in result:
-            self._attach_structured(result, catalog, timeout_seconds, retries)
-            if verify:
+        if sctx["structured"] and "error" not in result:
+            self._attach_structured(result, sctx["catalog"], timeout_seconds, retries)
+            if sctx["verify"]:
                 try:
-                    self._verify_structured(result, read_snapshot)
+                    self._verify_structured(result, sctx["read_snapshot"])
                 except Exception as exc:
-                    # B2 must degrade gracefully: a verification crash records a flag and the
-                    # round still completes — it never aborts the round or the barrier.
                     result["verification_error"] = str(exc)
+            if sctx["fail_closed"]:
+                try:
+                    self._gate_structured(result)
+                except Exception as exc:
+                    result["boundary_error"] = str(exc)
         return result
 
     def _dispatch_jobs(self, state, results, jobs, concurrency, timeout_seconds, retries):
         """Run jobs concurrently into ``results``; shared by _execute_round and retry().
 
-        Centralizing this guarantees the retry path gets the same structured + B2 handling as a
-        fresh round (a flag threaded only through start/reply would be lost on retry).
+        Centralizing this guarantees the retry path gets the same structured + B2 + B3 handling
+        as a fresh round (a flag threaded only through start/reply would be lost on retry).
         """
-        structured = bool(state.get("structured_claims"))
-        catalog = (
-            claim_binding.EvidenceCatalog.from_state(state.get("evidence_catalog"))
-            if structured
-            else None
-        )
-        verify = structured and bool(state.get("verify_claims"))
-        read_snapshot = None
-        if verify:
-            store = EvidenceStore(self.state_dir / state["run_id"] / "evidence")
-            read_snapshot = store.read_snapshot
+        sctx = self._structured_context(state)
         max_workers = max(1, min(int(concurrency), len(jobs)))
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_map = {
                 executor.submit(
                     self._run_panelist_job,
                     job,
-                    catalog,
-                    structured,
-                    verify,
-                    read_snapshot,
+                    sctx,
                     int(timeout_seconds),
                     int(retries),
                 ): (panelist_id, job)
@@ -730,13 +749,20 @@ Return:
 
         Ladder: ``instruction-enforced`` (prose, or structured but nothing bound) →
         ``structured-schema-enforced`` (B1b: bound, schema-only, unverified) →
-        ``structured-claim-validated`` (B2: claim-level validation ran). The B2 value reflects
-        that validation was APPLIED; per-claim verification_state carries the real outcome and
-        individual claims may still have failed. None of these is B3 boundary fail-closed.
+        ``structured-claim-validated`` (B2: claim-level validation ran) →
+        ``structured-fail-closed`` (B3: the response boundary is fail-closed). Each value
+        reflects which stage was APPLIED; per-claim verification_state / boundary_decision carry
+        the real per-claim outcome (claims may still have failed or been denied).
         """
         if not state.get("structured_claims"):
             return "instruction-enforced"
         results = state.get("rounds", {}).get(str(round_number), {}).get("results", {})
+        # The fail-closed boundary, once applied, is the response-level mode even if it denied
+        # everything — the per-result boundary_decision carries what was actually admitted.
+        if state.get("fail_closed") and any(
+            "boundary_decision" in result for result in results.values()
+        ):
+            return "structured-fail-closed"
         bound = any(
             result.get("schema_status") in ("ok", "repaired")
             for result in results.values()
@@ -830,6 +856,7 @@ Return:
         evidence_envelope=None,
         structured_claims=False,
         verify_claims=False,
+        fail_closed=False,
         concurrency=8,
         timeout_seconds=900,
         retries=1,
@@ -844,9 +871,13 @@ Return:
         # snapshots + an occurrence-level seed catalog (gitignored, under the run dir), and
         # render its compact S# ids into the structured prompt. Prose mode is untouched.
         structured = bool(structured_claims)
-        # B2: opt-in claim-level verification, layered on B1b (you cannot verify what is not
-        # bound), so it requires structured mode.
+        # B2/B3 form an opt-in ladder layered on B1b: verification needs binding, and the
+        # fail-closed boundary needs verification. Enforce the chain so a flag is never silently
+        # inert (fail_closed -> verify_claims -> structured_claims).
         verify = bool(verify_claims)
+        boundary = bool(fail_closed)
+        if boundary and not verify:
+            raise ControllerError("fail_closed=True requires verify_claims=True.")
         if verify and not structured:
             raise ControllerError("verify_claims=True requires structured_claims=True.")
         catalog = claim_binding.EvidenceCatalog([])
@@ -877,6 +908,7 @@ Return:
             "contrast_proposition": contrast_proposition,
             "structured_claims": structured,
             "verify_claims": verify,
+            "fail_closed": boundary,
             "evidence_catalog": catalog.to_state(),
             "panelists_file": resolved_file,
             "panelists": [
@@ -1143,8 +1175,12 @@ def tool_definitions():
                 "runs claim-level validation against the curated-snapshot tier: each [Text] "
                 "support edge becomes runtime-validated or failed, failed support edges are "
                 "removed and a [Text] losing all support is downgraded to a non-supporting "
-                "unverified-citation; the council continues (not fail-closed). Default behavior "
-                "is unchanged prose."
+                "unverified-citation; the council continues (not fail-closed). Opt-in B3 "
+                "(fail_closed=true, requires verify_claims) then runs a fail-closed boundary gate "
+                "before the renderer: it DEFAULT-DENIES, admitting only affirmatively-passing "
+                "claims and denying unknown claim types, a [Text] without runtime-validated "
+                "evidence, a missing verification, or an unsupported protocol (per-result "
+                "boundary_decision). Default behavior is unchanged prose."
             ),
             "inputSchema": {
                 "type": "object",
@@ -1157,6 +1193,7 @@ def tool_definitions():
                     "evidence_envelope": {"type": "object"},
                     "structured_claims": {"type": "boolean"},
                     "verify_claims": {"type": "boolean"},
+                    "fail_closed": {"type": "boolean"},
                     "cwd": {"type": "string"},
                     **common_controls,
                 },
