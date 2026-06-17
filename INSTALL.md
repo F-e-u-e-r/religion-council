@@ -120,6 +120,12 @@ The controller exposes:
 - `debate_retry`: retry only failed panelists;
 - `debate_status`: inspect barriers and persisted state.
 
+`debate_start` also has an opt-in B1b structured path: pass `structured_claims=true` with an
+`evidence_envelope` from `retrieve_envelope(...)`. The controller will render compact evidence
+seed IDs into the prompt, parse and schema-check `religion-council/claim/v1`, repair or drop
+malformed payloads, and persist bound claims. This is not B2 validation: all bindings remain
+`verification_state = "unverified"`, and the controller is still not fail-closed.
+
 Run:
 
 ```bash
@@ -280,6 +286,12 @@ Claude 主持人
 Controller 提供 `debate_start`、`debate_collect`、`debate_reply`、`debate_retry`、
 `debate_status` 五個 MCP tools。它會保存 `panelist ID ↔ threadId`、等待全員完成才跨過
 round barrier,並把紀錄寫到 `.religion-council/runs/<run-id>/state.json`。
+
+`debate_start` 另有 opt-in B1b 結構化路徑:同時傳入 `structured_claims=true` 與
+`retrieve_envelope(...)` 產生的 `evidence_envelope`。Controller 會把 compact evidence seed ID
+放進 prompt,解析並 schema-check `religion-council/claim/v1`,對格式錯誤 payload 執行 repair 或
+drop,再把有效 claim 綁定至 evidence seeds 並寫入 state。這不是 B2 驗證:所有 binding 仍是
+`verification_state = "unverified"`,controller 也仍未 fail-closed。
 
 ```bash
 codex login

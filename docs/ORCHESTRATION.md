@@ -41,7 +41,7 @@ Claude.
 
 | Tool | Responsibility |
 |---|---|
-| `debate_start` | Load a JSON roster, create independent Codex conversations concurrently, and wait for the Round 1 barrier. Optional `evidence_packet` (untrusted) and `contrast_proposition` (controller-routed moderator foil). |
+| `debate_start` | Load a JSON roster, create independent Codex conversations concurrently, and wait for the Round 1 barrier. Optional `evidence_packet` (untrusted) and `contrast_proposition` (controller-routed moderator foil). Optional B1b structured mode requires `structured_claims=true` plus an `evidence_envelope` from `retrieve_envelope(...)`. |
 | `debate_collect` | Return one round in pages of at most 50 results. |
 | `debate_reply` | Send an anonymized issue matrix to every original `threadId`; refuses to run unless the previous round is complete. |
 | `debate_retry` | Retry only failed panelists while preserving successful results. |
@@ -50,6 +50,20 @@ Claude.
 The controller keeps one `codex mcp-server` subprocess alive for the Claude MCP session and uses
 concurrent JSON-RPC `tools/call` requests. Panelists are instructed not to delegate, run in
 read-only sandboxes, and use approval policy `never`.
+
+### B1b Structured Mode
+
+By default, `debate_start` preserves the B0 prose path. When `structured_claims=true`, the
+caller must also provide a retrieval `evidence_envelope` (`religion-council/retrieval/v1`).
+The controller adapts that envelope into immutable evidence snapshots and a per-run `S#`
+catalog, asks panelists to append one `religion-council/claim/v1` JSON block, schema-checks
+the block, and binds valid edges to occurrence-level evidence seeds.
+
+Malformed structured payloads follow B1 semantics: reject, issue one repair prompt to the
+same `threadId`, then drop the structured payload if repair still fails. The prose response
+is kept and the round can still complete. This mode does **not** verify evidence, validate
+spans, remove failed support edges, or fail closed at the renderer boundary; successful
+bindings remain `verification_state = "unverified"`.
 
 ## Panelist rosters
 
@@ -83,6 +97,8 @@ Each run writes `.religion-council/runs/<run-id>/state.json`. It includes:
 - per-round responses, attempts, request tokens, and timestamps;
 - barrier status and failures;
 - the issue matrix used for each reply round.
+- when B1b structured mode is enabled: the evidence catalog, per-response `schema_status`,
+  `claim_payload_source`, optional `repair_content`, and bound claim records.
 
 The directory is intentionally ignored by Git because transcripts may contain user-supplied or
 sensitive material.
@@ -120,16 +136,17 @@ All three execution modes share one quote-admissibility policy
 [`policies/quote-admissibility.v2.json`](../policies/quote-admissibility.v2.json)). The
 *guarantee* behind that shared policy is uneven:
 
-| Mode | B0 enforcement | Planned |
+| Mode | Current enforcement | Planned |
 |---|---|---|
-| Hybrid controller (Claude moderator + Codex panelists) | instruction-enforced | B3 runtime-enforced / fail-closed |
+| Hybrid controller (Claude moderator + Codex panelists) | instruction-enforced by default; opt-in B1b `structured-schema-enforced` when a `claim/v1` payload is parsed and bound to evidence seeds | B2 claim-level validation; B3 runtime-enforced / fail-closed |
 | Claude-only (37 agents) | instruction-enforced | instruction-enforced |
 | Portable (Codex / any agent) | instruction-enforced | instruction-enforced |
 
-B0 **aligns the instructions and reduces exposure; it does not add runtime
-enforcement.** It does not parse labels, verify citations, validate spans, or reject
-non-conforming panelist output. The hybrid controller is therefore **not fail-closed**;
-fail-closed enforcement is deferred to B3.
+B1b **adds schema enforcement only** in the hybrid controller's opt-in structured path. It
+parses and binds `religion-council/claim/v1` payloads, but it does not validate spans or
+decide admissibility. The response-level qualifier `structured-schema-enforced` means
+structure and occurrence-level binding succeeded; it never means evidence was runtime
+validated. Fail-closed enforcement is deferred to B3.
 
 ## Debate pressure and consensus
 
@@ -198,6 +215,8 @@ Claude 只負責主持、匿名 issue matrix 與最終綜合。
 - 失敗只重試失敗者,不覆蓋成功結果。
 - 結果分頁讀取,避免一次把 30 份 transcript 塞進 Claude context。
 - 紀錄原子寫入 `.religion-council/runs/<run-id>/state.json`,且不 commit。
+- B1b 結構化模式必須同時提供 `structured_claims=true` 與 `evidence_envelope`;controller 會把
+  `religion-council/claim/v1` payload 綁定到本輪 evidence seeds,但驗證狀態仍為 `unverified`。
 
 目前 Codex MCP tool schema 沒有應用層 idempotency key;若 server 已建立 thread,但 response 在
 timeout 前未回到 controller,重試仍可能留下未登記的孤立 thread。因此現階段不能宣稱
@@ -220,15 +239,15 @@ python3 scripts/smoke_codex_mcp.py
 [`policies/quote-admissibility.v2.json`](../policies/quote-admissibility.v2.json)),
 但其**保證強度並不對等**:
 
-| 模式 | B0 強制方式 | 規劃 |
+| 模式 | 目前強制方式 | 規劃 |
 |---|---|---|
-| 混合控制器(Claude 主持 + Codex 議員) | 以指示約束 | B3 執行期強制 / fail-closed |
+| 混合控制器(Claude 主持 + Codex 議員) | 預設以指示約束;opt-in B1b 結構化路徑在 payload 成功解析並綁定 evidence seeds 時標為 `structured-schema-enforced` | B2 claim 層驗證;B3 執行期強制 / fail-closed |
 | 純 Claude(37 agents) | 以指示約束 | 以指示約束 |
 | 可攜(Codex / 任意 agent) | 以指示約束 | 以指示約束 |
 
-B0 **只是對齊指示、降低暴露面,並未加入執行期強制**:不解析標記、不驗證引用、不檢查
-span、不拒絕不合規的議員輸出。因此混合控制器**並非 fail-closed**;fail-closed 強制延後至
-B3。
+B1b 在混合控制器的 opt-in 結構化路徑只加入 **schema 強制**:解析並綁定
+`religion-council/claim/v1` payload,但不驗證 span、不判定可採性。`structured-schema-enforced`
+只表示結構與 occurrence 級綁定成功,絕不表示證據已 runtime-validated。fail-closed 強制延後至 B3。
 
 ### 辯論壓力與共識判準
 

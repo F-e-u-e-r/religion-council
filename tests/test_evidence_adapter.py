@@ -307,15 +307,17 @@ class ClaimProtocolDraftDormantTest(unittest.TestCase):
         with self.assertRaises(SchemaRejection):
             validate_claim_payload_draft(bad_edge_enum)
 
-    def test_validator_is_not_wired_into_controller(self):
+    def test_frozen_v1_wired_but_draft_stays_dormant(self):
+        # B1b wires the FROZEN v1 path (claim_protocol + claim_binding + the adapter) into
+        # the controller. The B1a DRAFT validator stays dormant: nothing in the controller
+        # references it, so the draft remains a library exercised only by these tests.
         source = (ROOT / "orchestrator" / "debate_controller.py").read_text(encoding="utf-8")
-        for module in (
-            "evidence_snapshot",
-            "retrieval_evidence_adapter",
-            "claim_protocol",
-            "policy_enums",
-        ):
-            self.assertNotIn(module, source)
+        self.assertIn("claim_protocol", source)
+        self.assertIn("claim_binding", source)
+        self.assertIn("retrieval_evidence_adapter", source)
+        self.assertNotIn("validate_claim_payload_draft", source)
+        self.assertNotIn("DRAFT_PROTOCOL_VERSION", source)
+        self.assertNotIn("v1-draft", source)
 
 
 class EnumConformanceTest(unittest.TestCase):
@@ -331,6 +333,7 @@ class EnumConformanceTest(unittest.TestCase):
         "SOURCE_ASSURANCES",
         "SPAN_ASSURANCE_TIERS",
         "VERIFICATION_STATES",
+        "RESPONSE_ENFORCEMENT_MODES",
     )
 
     def test_adapter_emitted_values_are_in_policy(self):

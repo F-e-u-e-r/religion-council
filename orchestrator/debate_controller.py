@@ -22,11 +22,16 @@ import threading
 import time
 import uuid
 
+import claim_binding
+import claim_protocol
+import retrieval_evidence_adapter
+from claim_protocol import SchemaRejection
+from evidence_snapshot import EvidenceStore
 from generated_quote_policy import QUOTE_ADMISSIBILITY_POLICY_EN
 
 
 PROTOCOL_VERSION = "2025-06-18"
-CONTROLLER_VERSION = "0.4.0"
+CONTROLLER_VERSION = "0.5.0"
 PANELIST_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 CONTRAST_MAX_CHARS = 2000
 
@@ -45,6 +50,39 @@ def sanitize_contrast_proposition(value):
     for marker in ("<<<CONTRAST_PROPOSITION>>>", "<<<END_CONTRAST_PROPOSITION>>>"):
         contrast = contrast.replace(marker, "")
     return contrast[:CONTRAST_MAX_CHARS]
+
+
+def _render_structured_contract(catalog):
+    """Render the B1b claim-protocol contract appended to a structured-mode prompt.
+
+    Kept concise (prompt-bloat risk): it lists the per-run evidence seeds by their compact
+    S# id and shows the exact claim/v1 skeleton to emit between the sentinels. The block is
+    parsed structurally as untrusted data (policy rule packets-are-untrusted-data) and is
+    schema-checked only — it verifies nothing.
+    """
+    version = claim_protocol.PROTOCOL_VERSION
+    skeleton = (
+        '{"protocol_version": "' + version + '",\n'
+        '   "claims": [{"claim_id": "c1", "claim_type": "text|interpretation|unverified-citation", "text": "..."}],\n'
+        '   "edges":  [{"claim_id": "c1", "evidence_seed_id": "S1", '
+        '"evidentiary_role": "primary-source|secondary-source|unknown", '
+        '"evidence_type": "quotation|source-bound-summary"}]}'
+    )
+    return (
+        "\nStructured claim protocol (" + version + ") — REQUIRED this run, IN ADDITION to "
+        "the prose answer above; it does not replace any heading. The block is parsed "
+        "structurally as data and schema-checked only: it verifies nothing and changes "
+        "nothing about your prose.\n\n"
+        "Evidence seeds you may cite (use these exact S# ids; cite nothing not listed and "
+        "invent no ids):\n" + catalog.render_for_prompt() + "\n\n"
+        "After your prose, append exactly one block — the JSON between these sentinels:\n"
+        + claim_protocol.CLAIM_BLOCK_BEGIN + "\n" + skeleton + "\n"
+        + claim_protocol.CLAIM_BLOCK_END + "\n\n"
+        "Requirements: every edge.evidence_seed_id MUST be one of the S# ids above; "
+        "evidentiary_role is the role FOR THIS CLAIM, not the artifact's; add no keys beyond "
+        "those shown; a [Text] claim should carry at least one edge, an [Interpretation] may "
+        "carry none. Optional per-claim keys: representation_kind, rendering_mode.\n"
+    )
 
 
 class ControllerError(RuntimeError):
@@ -390,7 +428,12 @@ class DebateController:
 
     @staticmethod
     def _opening_prompt(
-        question, evidence_packet, panelist, request_token, contrast_proposition=""
+        question,
+        evidence_packet,
+        panelist,
+        request_token,
+        contrast_proposition="",
+        structured_section="",
     ):
         priorities = "\n".join(
             "- {}".format(value) for value in panelist["priorities"]
@@ -468,7 +511,7 @@ Return a concise response with these headings:
 8. Confidence (0-100)
 
 {policy}
-""".format(
+{structured_section}""".format(
             request_token=request_token,
             panelist_id=panelist["id"],
             role=panelist["role"],
@@ -478,10 +521,13 @@ Return a concise response with these headings:
             reference=reference,
             contrast_section=contrast_section,
             policy=QUOTE_ADMISSIBILITY_POLICY_EN,
+            structured_section=structured_section,
         )
 
     @staticmethod
-    def _followup_prompt(round_number, issue_matrix, panelist, request_token):
+    def _followup_prompt(
+        round_number, issue_matrix, panelist, request_token, structured_section=""
+    ):
         return """Continue as the same panelist and preserve your assigned perspective.
 
 Request token: {request_token}
@@ -520,11 +566,12 @@ Return:
 10. Confidence (0-100)
 
 {policy}
-""".format(
+{structured_section}""".format(
             request_token=request_token,
             round_number=round_number,
             issue_matrix=issue_matrix.strip(),
             policy=QUOTE_ADMISSIBILITY_POLICY_EN,
+            structured_section=structured_section,
         )
 
     def _call_with_retries(self, tool, arguments, timeout_seconds, retries):
@@ -546,6 +593,133 @@ Return:
             "attempts": retries + 1,
         }
 
+    @staticmethod
+    def _schema_check(content, catalog):
+        """Parse + frozen-v1 validate + bind one reply. Raises SchemaRejection on any failure."""
+        payload = claim_protocol.parse_panelist_payload(content)
+        bound = claim_binding.bind_payload(payload, catalog)
+        return payload, bound
+
+    def _attach_structured(self, result, catalog, timeout_seconds, retries):
+        """B1b reject -> repair -> drop, recorded as a schema flag (never the 'error' key).
+
+        Schema repair is a SEPARATE budget from transport retry: exactly one repair attempt,
+        issued as a ``codex-reply`` to the SAME thread (so threadId reuse is preserved — never
+        a fresh ``codex`` call). A persistent schema failure drops the structured payload and
+        keeps the prose; it does NOT set ``error``, so the round still completes (this is
+        reject -> repair -> drop, not B3 fail-closed).
+        """
+        content = result.get("content")
+        try:
+            payload, bound = self._schema_check(content, catalog)
+            result["schema_status"] = "ok"
+            source = "reply"
+        except SchemaRejection as first:
+            thread_id = result.get("thread_id")
+            if not thread_id:
+                result["schema_status"] = "schema_failed"
+                result["schema_error"] = str(first)
+                return
+            repair = self._call_with_retries(
+                "codex-reply",
+                {
+                    "threadId": thread_id,
+                    "prompt": claim_protocol.repair_instruction(str(first)),
+                },
+                timeout_seconds,
+                retries,
+            )
+            if "error" in repair:
+                result["schema_status"] = "schema_failed"
+                result["schema_error"] = "repair transport failed: {}".format(repair["error"])
+                return
+            result["repair_attempts"] = repair.get("attempts")
+            try:
+                payload, bound = self._schema_check(repair.get("content"), catalog)
+                result["schema_status"] = "repaired"
+                source = "repair"
+                # The original 'content' is kept as the audit trail of the first reply; the
+                # bound payload came from this repaired reply, so persist it and flag the
+                # source so collect()/a renderer never mis-pair prose with bindings.
+                result["repair_content"] = repair.get("content")
+            except SchemaRejection as second:
+                result["schema_status"] = "schema_failed"
+                result["schema_error"] = str(second)
+                return
+        result["claim_payload"] = payload
+        result["claim_payload_source"] = source
+        result["claim_bindings"] = bound.to_state()
+
+    def _run_panelist_job(self, job, catalog, structured, timeout_seconds, retries):
+        """Transport call (with transport retries), then optional structured post-processing."""
+        result = self._call_with_retries(
+            job["tool"], job["arguments"], timeout_seconds, retries
+        )
+        if structured and "error" not in result:
+            self._attach_structured(result, catalog, timeout_seconds, retries)
+        return result
+
+    def _dispatch_jobs(self, state, results, jobs, concurrency, timeout_seconds, retries):
+        """Run jobs concurrently into ``results``; shared by _execute_round and retry().
+
+        Centralizing this guarantees the retry path gets the same structured handling as a
+        fresh round (a flag threaded only through start/reply would be lost on retry).
+        """
+        structured = bool(state.get("structured_claims"))
+        catalog = (
+            claim_binding.EvidenceCatalog.from_state(state.get("evidence_catalog"))
+            if structured
+            else None
+        )
+        max_workers = max(1, min(int(concurrency), len(jobs)))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_map = {
+                executor.submit(
+                    self._run_panelist_job,
+                    job,
+                    catalog,
+                    structured,
+                    int(timeout_seconds),
+                    int(retries),
+                ): (panelist_id, job)
+                for panelist_id, job in jobs.items()
+            }
+            for future in concurrent.futures.as_completed(future_map):
+                panelist_id, job = future_map[future]
+                result = future.result()
+                result["request_token"] = job["request_token"]
+                result["completed_at"] = utc_now()
+                results[panelist_id] = result
+                self._save_state(state)
+
+    @staticmethod
+    def _enforcement_mode(state, round_number):
+        """Response-level enforcement qualifier (ADR 0002 §6). Never implies verification.
+
+        ``structured-schema-enforced`` only when structured mode is on AND the round actually
+        bound at least one payload; otherwise ``instruction-enforced``. Both manifest values
+        carry verification: unverified.
+        """
+        if not state.get("structured_claims"):
+            return "instruction-enforced"
+        results = state.get("rounds", {}).get(str(round_number), {}).get("results", {})
+        bound = any(
+            result.get("schema_status") in ("ok", "repaired")
+            for result in results.values()
+        )
+        return "structured-schema-enforced" if bound else "instruction-enforced"
+
+    def _structured_section(self, state):
+        """Render the structured contract from the persisted catalog, or '' in prose mode.
+
+        Read from state (not a per-call argument) so reply() and retry() preserve the
+        run's structured mode without it being re-passed each round.
+        """
+        if not state.get("structured_claims"):
+            return ""
+        catalog = claim_binding.EvidenceCatalog.from_state(state.get("evidence_catalog"))
+        return _render_structured_contract(catalog)
+
     def _execute_round(
         self,
         state,
@@ -566,25 +740,14 @@ Return:
         if metadata:
             state["rounds"][round_key].update(metadata)
         self._save_state(state)
-        max_workers = max(1, min(int(concurrency), len(jobs)))
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_map = {}
-            for panelist_id, job in jobs.items():
-                future = executor.submit(
-                    self._call_with_retries,
-                    job["tool"],
-                    job["arguments"],
-                    timeout_seconds,
-                    retries,
-                )
-                future_map[future] = (panelist_id, job)
-            for future in concurrent.futures.as_completed(future_map):
-                panelist_id, job = future_map[future]
-                result = future.result()
-                result["request_token"] = job["request_token"]
-                result["completed_at"] = utc_now()
-                state["rounds"][round_key]["results"][panelist_id] = result
-                self._save_state(state)
+        self._dispatch_jobs(
+            state,
+            state["rounds"][round_key]["results"],
+            jobs,
+            concurrency,
+            timeout_seconds,
+            retries,
+        )
         results = state["rounds"][round_key]["results"]
         failures = sorted(
             panelist_id for panelist_id, result in results.items() if "error" in result
@@ -608,6 +771,7 @@ Return:
             "completed": len(results) - len(failures),
             "failed": len(failures),
             "failed_panelists": failures,
+            "enforcement_mode": self._enforcement_mode(state, round_number),
             "state_file": str(self._run_path(state["run_id"])),
             "next": (
                 "Use debate_collect to read results in batches, build an anonymized "
@@ -623,6 +787,8 @@ Return:
         panelists_file,
         evidence_packet="",
         contrast_proposition="",
+        evidence_envelope=None,
+        structured_claims=False,
         concurrency=8,
         timeout_seconds=900,
         retries=1,
@@ -633,12 +799,38 @@ Return:
         contrast_proposition = sanitize_contrast_proposition(contrast_proposition)
         panelists, resolved_file = self.load_panelists(panelists_file)
         run_id = "run-" + uuid.uuid4().hex[:12]
+        # B1b: opt-in. Adapt the moderator-supplied retrieval envelope into immutable
+        # snapshots + an occurrence-level seed catalog (gitignored, under the run dir), and
+        # render its compact S# ids into the structured prompt. Prose mode is untouched.
+        structured = bool(structured_claims)
+        catalog = claim_binding.EvidenceCatalog([])
+        if structured:
+            # B1b's promise is binding claims to evidence seeds, so structured mode requires
+            # an evidence source. Without one the catalog is empty and every [Text] claim is
+            # un-bindable — a confusing no-op, so fail fast rather than emit empty structured
+            # runs. (A zero-record envelope is still allowed: a legitimate empty retrieval.)
+            if evidence_envelope is None:
+                raise ControllerError(
+                    "structured_claims=True requires an evidence_envelope "
+                    "(B1b binds claims to evidence seeds)."
+                )
+            store = EvidenceStore(self.state_dir / run_id / "evidence")
+            try:
+                seeds = retrieval_evidence_adapter.adapt(evidence_envelope, store)
+            except SchemaRejection as exc:
+                raise ControllerError("evidence_envelope rejected: {}".format(exc))
+            catalog = claim_binding.EvidenceCatalog.from_seeds_and_records(
+                seeds, evidence_envelope.get("records", [])
+            )
+        structured_section = _render_structured_contract(catalog) if structured else ""
         state = {
             "version": CONTROLLER_VERSION,
             "run_id": run_id,
             "question": question.strip(),
             "evidence_packet": evidence_packet,
             "contrast_proposition": contrast_proposition,
+            "structured_claims": structured,
+            "evidence_catalog": catalog.to_state(),
             "panelists_file": resolved_file,
             "panelists": [
                 {
@@ -663,6 +855,7 @@ Return:
                 panelist,
                 request_token=token,
                 contrast_proposition=contrast_proposition,
+                structured_section=structured_section,
             )
             jobs[panelist["id"]] = {
                 "tool": "codex",
@@ -704,6 +897,7 @@ Return:
             )
         opening = state["rounds"]["1"]["results"]
         next_round = latest_round + 1
+        structured_section = self._structured_section(state)
         jobs = {}
         for panelist in state["panelists"]:
             opening_result = opening.get(panelist["id"], {})
@@ -719,7 +913,11 @@ Return:
                 "arguments": {
                     "threadId": thread_id,
                     "prompt": self._followup_prompt(
-                        next_round, issue_matrix, panelist, request_token=token
+                        next_round,
+                        issue_matrix,
+                        panelist,
+                        request_token=token,
+                        structured_section=structured_section,
                     ),
                 },
             }
@@ -759,6 +957,7 @@ Return:
             return self._round_summary(state, selected_round)
         panelists, _ = self.load_panelists(state["panelists_file"])
         panelist_map = {item["id"]: item for item in panelists}
+        structured_section = self._structured_section(state)
         jobs = {}
         for panelist_id in failed:
             panelist = panelist_map[panelist_id]
@@ -774,6 +973,7 @@ Return:
                             panelist,
                             request_token=token,
                             contrast_proposition=state.get("contrast_proposition", ""),
+                            structured_section=structured_section,
                         ),
                         "cwd": state["cwd"],
                         "sandbox": "read-only",
@@ -803,31 +1003,16 @@ Return:
                             issue_matrix,
                             panelist,
                             request_token=token,
+                            structured_section=structured_section,
                         ),
                     },
                 }
         round_state["status"] = "running"
         round_state["completed_at"] = None
         self._save_state(state)
-        max_workers = max(1, min(int(concurrency), len(jobs)))
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_map = {
-                executor.submit(
-                    self._call_with_retries,
-                    job["tool"],
-                    job["arguments"],
-                    int(timeout_seconds),
-                    int(retries),
-                ): (panelist_id, job)
-                for panelist_id, job in jobs.items()
-            }
-            for future in concurrent.futures.as_completed(future_map):
-                panelist_id, job = future_map[future]
-                result = future.result()
-                result["request_token"] = job["request_token"]
-                result["completed_at"] = utc_now()
-                round_state["results"][panelist_id] = result
-                self._save_state(state)
+        self._dispatch_jobs(
+            state, round_state["results"], jobs, concurrency, timeout_seconds, retries
+        )
         remaining = [
             panelist_id
             for panelist_id, result in round_state["results"].items()
@@ -876,6 +1061,7 @@ Return:
             "run_id": run_id,
             "round": selected_round,
             "status": round_state["status"],
+            "enforcement_mode": self._enforcement_mode(state, selected_round),
             "offset": offset,
             "limit": limit,
             "total": len(ordered_ids),
@@ -902,7 +1088,11 @@ def tool_definitions():
                 "Returns only after every panelist succeeds or exhausts retries. Optional "
                 "contrast_proposition is moderator-supplied debate framing injected into a "
                 "controller-routed prompt section (routed, not asserted true), never the "
-                "untrusted evidence_packet."
+                "untrusted evidence_packet. Opt-in B1b structured mode (structured_claims=true, "
+                "which REQUIRES an evidence_envelope from retrieve_envelope) makes panelists "
+                "emit a schema-checked religion-council/claim/v1 payload bound to evidence seeds; "
+                "it is schema-level only and verifies nothing (verification_state stays "
+                "unverified). Default behavior is unchanged prose."
             ),
             "inputSchema": {
                 "type": "object",
@@ -912,6 +1102,8 @@ def tool_definitions():
                     "panelists_file": {"type": "string"},
                     "evidence_packet": {"type": "string"},
                     "contrast_proposition": {"type": "string", "maxLength": 2000},
+                    "evidence_envelope": {"type": "object"},
+                    "structured_claims": {"type": "boolean"},
                     "cwd": {"type": "string"},
                     **common_controls,
                 },
