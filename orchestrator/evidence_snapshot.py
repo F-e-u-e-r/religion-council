@@ -80,6 +80,21 @@ class EvidenceStore:
         _write_once(self.store_dir / (aid + ".meta.json"), meta_bytes)
         return aid, len(blob)
 
+    def read_snapshot(self, artifact_id):
+        """Read an immutable snapshot's canonical bytes by id (B2 verification reads these).
+
+        The stored bytes are already canonical (NFC + LF, UTF-8), so a span search canonicalizes
+        only the needle. ``artifact_id`` must be a 64-hex digest — validated to keep it a pure
+        filename (no path traversal). Raises :class:`EvidenceStoreError` if the snapshot is absent.
+        """
+        if not (isinstance(artifact_id, str) and len(artifact_id) == 64
+                and all(c in "0123456789abcdef" for c in artifact_id)):
+            raise EvidenceStoreError("invalid artifact_id: {!r}".format(artifact_id))
+        path = self.store_dir / artifact_id
+        if not path.is_file():
+            raise EvidenceStoreError("snapshot not found: {}".format(artifact_id))
+        return path.read_bytes()
+
     def append_origin(self, origin):
         """Append one origin observation. Append-only JSONL; duplicates are allowed.
 

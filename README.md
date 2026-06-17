@@ -8,7 +8,7 @@
 ![code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)
 ![content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)
 ![runs on: Codex · Claude Code · any agent](https://img.shields.io/badge/runs%20on-Codex%20·%20Claude%20Code%20·%20any%20agent-green.svg)
-![version: v0.5.0](https://img.shields.io/badge/version-v0.5.0-orange.svg)
+![version: v0.6.0](https://img.shields.io/badge/version-v0.6.0-orange.svg)
 
 **English** · [繁體中文](#繁體中文)
 
@@ -25,7 +25,7 @@ argue from **its own texts**. Every claim is tagged as either a **[Text]** quota
 (with a real locator) or an **[Interpretation]**, and the moderator surfaces the
 genuine tensions instead of forcing agreement.
 
-Version **v0.5.0** supports three execution modes:
+Version **v0.6.0** supports three execution modes:
 
 1. **Claude Code only** — 37 specialized Claude agents (1 moderator + 36 voices).
 2. **Codex only** — a portable Codex skill, with native Codex subagents when requested.
@@ -33,13 +33,15 @@ Version **v0.5.0** supports three execution modes:
    persistent Codex threads, barriers, retries, and audit records.
 
 All three modes share one quote-admissibility policy (`quote-admissibility/v2`). In the
-hybrid controller, v0.5.0 adds opt-in B1b structured claims: `debate_start` can accept a
+hybrid controller, v0.5.0 added opt-in B1b structured claims: `debate_start` can accept a
 retrieval `evidence_envelope`, ask panelists for a `religion-council/claim/v1` payload,
 schema-check it, repair or drop malformed payloads, and bind valid claims to B1a evidence
-seeds. This is **schema enforcement only**: evidence remains `unverified`, spans are not
-validated, and the controller is **not fail-closed**. Claude-only and portable modes stay
-instruction-enforced. See the [assurance matrix](docs/ORCHESTRATION.md#quote-admissibility-assurance)
-and [ADR 0002](docs/adr/0002-roadmap-stage-nomenclature.md).
+seeds. Version v0.6.0 adds opt-in B2 validation for that same structured path: with
+`verify_claims=true`, quotation claims are checked against curated evidence snapshots and
+stored with per-claim `runtime-validated` or `failed` outcomes. This is still **not
+fail-closed**. Claude-only and portable modes stay instruction-enforced. See the
+[assurance matrix](docs/ORCHESTRATION.md#quote-admissibility-assurance) and
+[ADR 0002](docs/adr/0002-roadmap-stage-nomenclature.md).
 
 ## Why it's different
 
@@ -184,7 +186,7 @@ religion/
 ├── DISCLAIMER.md                 # sourcing rules + religious-sensitivity statement
 ├── LICENSE                       # MIT — skill logic, agents, scripts, config
 ├── LICENSE-CONTENT               # CC BY 4.0 — references & corpus
-├── VERSION                       # current release: v0.5.0
+├── VERSION                       # current release: v0.6.0
 ├── .mcp.json                     # Claude → deterministic Codex controller
 │
 ├── skills/religion-council/      # ▸ PORTABLE skill (Codex & any agent)
@@ -245,16 +247,17 @@ quote-admissibility policy, escalating from prompt-only to a fail-closed boundar
 |---|---|---|
 | **B0 — Unified policy** *(done, v0.2.0)* | One policy source → four surfaces; memory alone never supports `[Text]`; packets are untrusted data. | Instruction-enforced; **not** fail-closed. |
 | **B1 — Structured claims + evidence seam** *(done, v0.5.0)* | Hybrid opt-in mode parses `religion-council/claim/v1`, rejects malformed payloads (retry → repair → drop), and binds valid claims to `RetrievalEvidenceAdapterV1` evidence seeds. Initial verification is always `unverified`. | Schema rejection only; not B2 validation or B3 fail-closed. |
-| **B2 — Claim-level validation** | Each `[Text]` claim becomes `runtime-validated` or `failed`; a failed `[Text]` support edge is removed (a non-supporting `[Unverified citation]` may remain); the council still completes. | Claim-level runtime validation. |
+| **B2 — Claim-level validation** *(done, v0.6.0)* | Hybrid opt-in `verify_claims=true` validates bound `[Text]` quotation edges against curated snapshots, validates source-bound summaries by evidence edge, removes failed support edges, and downgrades all-failed `[Text]` claims to `[Unverified citation]`; the council still completes. | Claim-level runtime validation; not B3 fail-closed. |
 | **B3 — Fail-closed boundary** | Unknown claim types and evidence/renderer bypasses are default-denied before the renderer. | Hybrid runtime-enforced / fail-closed. |
 
 The **enforcement ladder** keeps three rejections distinct: **B1** rejects malformed
 structure (retry/repair/drop) · **B2** removes a failed `[Text]` support edge (may keep a
 non-supporting `[Unverified citation]`) and continues · **B3** default-denies at the
-response boundary. Claude-only and portable modes stay instruction-enforced. From v0.5.0,
-hybrid structured runs surface a response-level enforcement mode
-(`structured-schema-enforced` when a payload binds successfully); per-claim runtime
-assurance remains B2.
+response boundary. Claude-only and portable modes stay instruction-enforced. From v0.6.0,
+hybrid structured runs surface a response-level enforcement mode:
+`structured-schema-enforced` when payloads bind successfully, or
+`structured-claim-validated` when `verify_claims=true` and B2 validation ran. Per-claim
+runtime assurance remains in the claim verification records.
 
 **Where the axes meet.** Axis A's retrieval envelope is converted by the B1 adapter into
 immutable, content-addressed Artifact/Span identity — so A can swap retrieval backends
@@ -323,12 +326,18 @@ Quoted primary scriptures are public-domain source texts in their original langu
 標注為**〔據典〕**(引文+真實出處)或**〔詮釋〕**;主持人負責把真正的張力點攤開,而非強行
 調和。
 
-目前 **v0.5.0** 支援三種執行方式:
+目前 **v0.6.0** 支援三種執行方式:
 
 1. **純 Claude Code**——附 37 個專屬 agent(1 位主持人 + 36 個聲音)。
 2. **純 Codex**——可攜 Codex skill;明確要求時可用 Codex 原生 subagent。
 3. **Claude 主持 + Codex 議員**——Python MCP controller 保存 Codex threadId、執行
    barrier、重試及紀錄。
+
+三種模式共用同一份引用可採性政策(`quote-admissibility/v2`)。混合 controller 在 v0.5.0
+加入 opt-in B1b 結構化 claim;v0.6.0 進一步加入 opt-in B2 `verify_claims=true`,可把 quotation
+claim 對 curated evidence snapshot 做執行期驗證,並以每個 claim 的 `runtime-validated` 或
+`failed` 結果寫入 state。這仍**不是 fail-closed**;純 Claude 與可攜模式仍維持
+instruction-enforced。
 
 ## 有何不同?
 
@@ -424,14 +433,15 @@ persona 與引用紀律不必更動。
 |---|---|---|
 | **B0 — 統一政策**(已完成,v0.2.0) | 同一政策來源 → 四個 surface;僅憑記憶永不支持〔據典〕;packet 視為不可信資料。 | instruction-enforced;**尚未** fail-closed。 |
 | **B1 — 結構化 claim + 證據接縫**(已完成,v0.5.0) | 混合模式可 opt-in 解析 `religion-council/claim/v1`,對格式錯誤 payload 執行 retry → repair → drop,並把有效 claim 綁定至 `RetrievalEvidenceAdapterV1` evidence seeds。initial verification 恆為 `unverified`。 | 僅 schema 拒絕;不是 B2 驗證,也不是 B3 fail-closed。 |
-| **B2 — claim 層驗證** | 每個〔據典〕變為 `runtime-validated` 或 `failed`;移除失敗〔據典〕的 support edge(政策允許時保留 non-supporting〔未驗證引用〕),議會仍可完成。 | claim 層執行期驗證。 |
+| **B2 — claim 層驗證**(已完成,v0.6.0) | 混合模式可 opt-in `verify_claims=true`,對已綁定〔據典〕quotation edge 做 curated snapshot 驗證,source-bound summary 以 evidence edge 驗證;失敗 support edge 會移除,全失敗〔據典〕降為〔未驗證引用〕,議會仍可完成。 | claim 層執行期驗證;不是 B3 fail-closed。 |
 | **B3 — fail-closed 邊界** | 未知 claim type 與 evidence/renderer 繞道在進入 renderer 前一律預設拒絕。 | 混合模式 runtime-enforced / fail-closed。 |
 
 **強制力梯度**把三種「拒絕」分清楚:**B1** 拒絕格式不良的結構(retry/repair/drop)·**B2** 移除失敗
 〔據典〕的 support edge(可保留 non-supporting〔未驗證引用〕)後續行·**B3** 在 response 邊界預設拒絕。
-純 Claude 與可攜模式維持 instruction-enforced。v0.5.0 起,混合模式的結構化回合會顯示
-response-level enforcement mode(成功綁定時為 `structured-schema-enforced`);每個〔據典〕自身的
-runtime assurance 仍屬 B2。
+純 Claude 與可攜模式維持 instruction-enforced。v0.6.0 起,混合模式的結構化回合會顯示
+response-level enforcement mode:成功綁定時為 `structured-schema-enforced`;若同時
+`verify_claims=true` 且 B2 驗證已執行,則為 `structured-claim-validated`。每個 claim 的真實
+runtime assurance 仍以 claim verification records 為準。
 
 **兩軸交會處。** 軸線 A 的檢索 envelope 由 B1 adapter 轉換為不可變、content-addressed 的
 Artifact/Span identity——因此 A 可更換檢索後端而不重寫 persona,B 可提升強制力而不必先建向量庫:

@@ -24,6 +24,7 @@ import uuid
 
 import claim_binding
 import claim_protocol
+import claim_verification
 import retrieval_evidence_adapter
 from claim_protocol import SchemaRejection
 from evidence_snapshot import EvidenceStore
@@ -31,7 +32,7 @@ from generated_quote_policy import QUOTE_ADMISSIBILITY_POLICY_EN
 
 
 PROTOCOL_VERSION = "2025-06-18"
-CONTROLLER_VERSION = "0.5.0"
+CONTROLLER_VERSION = "0.6.0"
 PANELIST_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 CONTRAST_MAX_CHARS = 2000
 
@@ -650,19 +651,43 @@ Return:
         result["claim_payload_source"] = source
         result["claim_bindings"] = bound.to_state()
 
-    def _run_panelist_job(self, job, catalog, structured, timeout_seconds, retries):
-        """Transport call (with transport retries), then optional structured post-processing."""
+    @staticmethod
+    def _verify_structured(result, read_snapshot):
+        """B2: verify a bound result against the curated-snapshot tier (additive).
+
+        Leaves the B1b ``claim_bindings`` (initial unverified, ADR 0003 §3) untouched and adds
+        a separate ``claim_verification`` + ``verification_summary``. Claim-level validation,
+        not B3 fail-closed.
+        """
+        bindings = result.get("claim_bindings")
+        if bindings is None:
+            return
+        verified = claim_verification.verify_bound_claims(bindings, read_snapshot)
+        result["claim_verification"] = verified
+        result["verification_summary"] = claim_verification.verification_summary(verified)
+
+    def _run_panelist_job(
+        self, job, catalog, structured, verify, read_snapshot, timeout_seconds, retries
+    ):
+        """Transport call (with transport retries), then optional structured + B2 verification."""
         result = self._call_with_retries(
             job["tool"], job["arguments"], timeout_seconds, retries
         )
         if structured and "error" not in result:
             self._attach_structured(result, catalog, timeout_seconds, retries)
+            if verify:
+                try:
+                    self._verify_structured(result, read_snapshot)
+                except Exception as exc:
+                    # B2 must degrade gracefully: a verification crash records a flag and the
+                    # round still completes — it never aborts the round or the barrier.
+                    result["verification_error"] = str(exc)
         return result
 
     def _dispatch_jobs(self, state, results, jobs, concurrency, timeout_seconds, retries):
         """Run jobs concurrently into ``results``; shared by _execute_round and retry().
 
-        Centralizing this guarantees the retry path gets the same structured handling as a
+        Centralizing this guarantees the retry path gets the same structured + B2 handling as a
         fresh round (a flag threaded only through start/reply would be lost on retry).
         """
         structured = bool(state.get("structured_claims"))
@@ -671,6 +696,11 @@ Return:
             if structured
             else None
         )
+        verify = structured and bool(state.get("verify_claims"))
+        read_snapshot = None
+        if verify:
+            store = EvidenceStore(self.state_dir / state["run_id"] / "evidence")
+            read_snapshot = store.read_snapshot
         max_workers = max(1, min(int(concurrency), len(jobs)))
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
             future_map = {
@@ -679,6 +709,8 @@ Return:
                     job,
                     catalog,
                     structured,
+                    verify,
+                    read_snapshot,
                     int(timeout_seconds),
                     int(retries),
                 ): (panelist_id, job)
@@ -694,11 +726,13 @@ Return:
 
     @staticmethod
     def _enforcement_mode(state, round_number):
-        """Response-level enforcement qualifier (ADR 0002 §6). Never implies verification.
+        """Response-level enforcement qualifier (ADR 0002 §6).
 
-        ``structured-schema-enforced`` only when structured mode is on AND the round actually
-        bound at least one payload; otherwise ``instruction-enforced``. Both manifest values
-        carry verification: unverified.
+        Ladder: ``instruction-enforced`` (prose, or structured but nothing bound) →
+        ``structured-schema-enforced`` (B1b: bound, schema-only, unverified) →
+        ``structured-claim-validated`` (B2: claim-level validation ran). The B2 value reflects
+        that validation was APPLIED; per-claim verification_state carries the real outcome and
+        individual claims may still have failed. None of these is B3 boundary fail-closed.
         """
         if not state.get("structured_claims"):
             return "instruction-enforced"
@@ -707,7 +741,13 @@ Return:
             result.get("schema_status") in ("ok", "repaired")
             for result in results.values()
         )
-        return "structured-schema-enforced" if bound else "instruction-enforced"
+        if not bound:
+            return "instruction-enforced"
+        if state.get("verify_claims") and any(
+            "claim_verification" in result for result in results.values()
+        ):
+            return "structured-claim-validated"
+        return "structured-schema-enforced"
 
     def _structured_section(self, state):
         """Render the structured contract from the persisted catalog, or '' in prose mode.
@@ -789,6 +829,7 @@ Return:
         contrast_proposition="",
         evidence_envelope=None,
         structured_claims=False,
+        verify_claims=False,
         concurrency=8,
         timeout_seconds=900,
         retries=1,
@@ -803,6 +844,11 @@ Return:
         # snapshots + an occurrence-level seed catalog (gitignored, under the run dir), and
         # render its compact S# ids into the structured prompt. Prose mode is untouched.
         structured = bool(structured_claims)
+        # B2: opt-in claim-level verification, layered on B1b (you cannot verify what is not
+        # bound), so it requires structured mode.
+        verify = bool(verify_claims)
+        if verify and not structured:
+            raise ControllerError("verify_claims=True requires structured_claims=True.")
         catalog = claim_binding.EvidenceCatalog([])
         if structured:
             # B1b's promise is binding claims to evidence seeds, so structured mode requires
@@ -830,6 +876,7 @@ Return:
             "evidence_packet": evidence_packet,
             "contrast_proposition": contrast_proposition,
             "structured_claims": structured,
+            "verify_claims": verify,
             "evidence_catalog": catalog.to_state(),
             "panelists_file": resolved_file,
             "panelists": [
@@ -1092,7 +1139,12 @@ def tool_definitions():
                 "which REQUIRES an evidence_envelope from retrieve_envelope) makes panelists "
                 "emit a schema-checked religion-council/claim/v1 payload bound to evidence seeds; "
                 "it is schema-level only and verifies nothing (verification_state stays "
-                "unverified). Default behavior is unchanged prose."
+                "unverified). Opt-in B2 (verify_claims=true, requires structured_claims) then "
+                "runs claim-level validation against the curated-snapshot tier: each [Text] "
+                "support edge becomes runtime-validated or failed, failed support edges are "
+                "removed and a [Text] losing all support is downgraded to a non-supporting "
+                "unverified-citation; the council continues (not fail-closed). Default behavior "
+                "is unchanged prose."
             ),
             "inputSchema": {
                 "type": "object",
@@ -1104,6 +1156,7 @@ def tool_definitions():
                     "contrast_proposition": {"type": "string", "maxLength": 2000},
                     "evidence_envelope": {"type": "object"},
                     "structured_claims": {"type": "boolean"},
+                    "verify_claims": {"type": "boolean"},
                     "cwd": {"type": "string"},
                     **common_controls,
                 },

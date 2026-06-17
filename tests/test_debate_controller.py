@@ -8,6 +8,7 @@ import unittest
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "orchestrator"))
 
+import claim_verification  # noqa: E402
 from debate_controller import (  # noqa: E402
     ControllerError,
     DebateController,
@@ -16,13 +17,12 @@ from debate_controller import (  # noqa: E402
 )
 
 
-def evidence_envelope():
-    """One-record retrieval/v1 envelope -> a single catalog seed S1 (cited by the fake)."""
+def _envelope(text):
     return {
         "contract_version": "religion-council/retrieval/v1",
         "records": [
             {
-                "text": "克己復禮為仁",
+                "text": text,
                 "work": "論語",
                 "locator": "顏淵",
                 "tradition": "confucianism",
@@ -33,6 +33,16 @@ def evidence_envelope():
             }
         ],
     }
+
+
+def evidence_envelope():
+    """One-record envelope whose snapshot text == the fake's quoted text (B2 will validate)."""
+    return _envelope("克己復禮為仁")
+
+
+def evidence_envelope_mismatch():
+    """Snapshot text != the fake's quoted text, so B2 span verification fails (downgrade)."""
+    return _envelope("學而時習之不亦說乎")
 
 
 class DebateControllerTest(unittest.TestCase):
@@ -460,6 +470,157 @@ class DebateControllerTest(unittest.TestCase):
                 timeout_seconds=30,
                 retries=0,
             )
+
+    # ---- B2 claim-level verification --------------------------------------------------
+
+    def test_verify_requires_structured(self):
+        with self.assertRaises(ControllerError):
+            self.controller.start(
+                question="Does life have meaning?",
+                panelists_file=str(self.panelists_file),
+                verify_claims=True,  # without structured_claims
+                concurrency=10,
+                timeout_seconds=30,
+                retries=0,
+            )
+
+    def test_verify_on_validates_against_curated_snapshot(self):
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),  # snapshot == fake's quote -> validates
+            structured_claims=True,
+            verify_claims=True,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["status"], "complete")
+        self.assertEqual(opening["enforcement_mode"], "structured-claim-validated")
+        result, state = self._structured_result(opening["run_id"])
+        self.assertTrue(state["verify_claims"])
+        # B2 adds a separate verified structure...
+        vclaim = result["claim_verification"]["claims"][0]
+        self.assertEqual(vclaim["verification_state"], "runtime-validated")
+        self.assertEqual(vclaim["span_assurance_tier"], "curated-snapshot-span-verified")
+        self.assertEqual(result["verification_summary"]["runtime_validated"], 1)
+        # ...while B1b's bindings stay unverified (ADR 0003 §3; B2 is additive).
+        self.assertEqual(
+            result["claim_bindings"]["claims"][0]["edges"][0]["verification_state"],
+            "unverified",
+        )
+
+    def test_verify_off_stays_schema_enforced(self):
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),
+            structured_claims=True,  # no verify_claims
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["enforcement_mode"], "structured-schema-enforced")
+        result, state = self._structured_result(opening["run_id"])
+        self.assertFalse(state["verify_claims"])
+        self.assertNotIn("claim_verification", result)
+
+    def test_verify_failed_quotation_downgrades_and_council_continues(self):
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope_mismatch(),  # snapshot != quote -> fails
+            structured_claims=True,
+            verify_claims=True,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["status"], "complete")  # not fail-closed
+        result, _ = self._structured_result(opening["run_id"])
+        vclaim = result["claim_verification"]["claims"][0]
+        self.assertEqual(vclaim["verification_state"], "failed")
+        self.assertEqual(vclaim["claim_type"], "unverified-citation")  # downgraded, not [Interpretation]
+        self.assertEqual(vclaim["downgraded_from"], "text")
+        self.assertEqual(result["verification_summary"]["downgraded"], 1)
+
+    def test_verify_applies_on_reply_round_two(self):
+        # reply() goes through the shared _dispatch_jobs, so round 2 must verify too.
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),
+            structured_claims=True,
+            verify_claims=True,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        followup = self.controller.reply(
+            run_id=opening["run_id"],
+            issue_matrix="anonymized matrix",
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(followup["status"], "complete")
+        self.assertEqual(followup["enforcement_mode"], "structured-claim-validated")
+        state_path = self.temp_path / "runs" / opening["run_id"] / "state.json"
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        r2 = state["rounds"]["2"]["results"]["panelist_01"]
+        self.assertEqual(
+            r2["claim_verification"]["claims"][0]["verification_state"], "runtime-validated"
+        )
+
+    def test_verify_survives_failed_panelist_retry(self):
+        # retry() also goes through _dispatch_jobs, so a retried panelist must be verified.
+        opening = self.controller.start(
+            question="Force one failure",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),
+            structured_claims=True,
+            verify_claims=True,
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["status"], "failed")
+        retried = self.controller.retry(
+            run_id=opening["run_id"], concurrency=10, timeout_seconds=30, retries=0
+        )
+        self.assertEqual(retried["status"], "complete")
+        self.assertEqual(retried["enforcement_mode"], "structured-claim-validated")
+        result, _ = self._structured_result(opening["run_id"], "panelist_30")
+        self.assertEqual(
+            result["claim_verification"]["claims"][0]["verification_state"], "runtime-validated"
+        )
+
+    def test_verification_error_degrades_gracefully(self):
+        # An unexpected verifier crash must record a flag and let the round/barrier complete.
+        original = claim_verification.verify_bound_claims
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("verifier exploded")
+
+        claim_verification.verify_bound_claims = boom
+        try:
+            opening = self.controller.start(
+                question="Does life have meaning?",
+                panelists_file=str(self.panelists_file),
+                evidence_envelope=evidence_envelope(),
+                structured_claims=True,
+                verify_claims=True,
+                concurrency=10,
+                timeout_seconds=30,
+                retries=0,
+            )
+        finally:
+            claim_verification.verify_bound_claims = original
+        self.assertEqual(opening["status"], "complete")  # barrier intact despite the crash
+        result, _ = self._structured_result(opening["run_id"])
+        self.assertIn("verification_error", result)
+        self.assertIn("verifier exploded", result["verification_error"])
+        self.assertNotIn("error", result)  # not a transport failure; the round still completes
 
 
 if __name__ == "__main__":

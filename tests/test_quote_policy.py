@@ -136,24 +136,27 @@ class QuotePolicyConformanceTest(unittest.TestCase):
             "response_enforcement_modes": {
                 "instruction-enforced",
                 "structured-schema-enforced",
+                "structured-claim-validated",
             },
         }
         for section, expected_ids in expected.items():
             actual_ids = {entry["id"] for entry in self.manifest[section]}
             self.assertEqual(actual_ids, expected_ids, section)
 
-    def test_b1b_enforcement_mode_never_implies_verification(self):
-        # Finding #5: the B1b response-mode qualifier is additive and must NOT mutate the
-        # policy's global enforcement semantics or claim runtime verification.
+    def test_enforcement_modes_are_additive_not_global_mutations(self):
+        # Findings #5 (B1b) + B2: response-mode qualifiers are additive and must NOT flip the
+        # policy's global enforcement semantics or the generated prompt text.
         self.assertEqual(self.manifest["status"], "instruction-enforced")
         self.assertIs(self.manifest["runtime_enforced"], False)
-        for mode in self.manifest["response_enforcement_modes"]:
-            self.assertEqual(mode["verification"], "unverified", mode["id"])
-        # The generated prompt text still states instruction-enforced (not runtime-validated).
         self.assertIn(
             "instruction-enforced; not runtime-validated",
             debate_controller.QUOTE_ADMISSIBILITY_POLICY_EN,
         )
+        modes = {m["id"]: m["verification"] for m in self.manifest["response_enforcement_modes"]}
+        # B1b modes verify nothing; only the B2 mode declares runtime claim validation.
+        self.assertEqual(modes["instruction-enforced"], "unverified")
+        self.assertEqual(modes["structured-schema-enforced"], "unverified")
+        self.assertEqual(modes["structured-claim-validated"], "runtime-validated")
 
     def test_no_evidence_representation_cell_is_categorically_forbidden(self):
         matrix = self.manifest["evidence_representation_compatibility"]

@@ -41,7 +41,7 @@ Claude.
 
 | Tool | Responsibility |
 |---|---|
-| `debate_start` | Load a JSON roster, create independent Codex conversations concurrently, and wait for the Round 1 barrier. Optional `evidence_packet` (untrusted) and `contrast_proposition` (controller-routed moderator foil). Optional B1b structured mode requires `structured_claims=true` plus an `evidence_envelope` from `retrieve_envelope(...)`. |
+| `debate_start` | Load a JSON roster, create independent Codex conversations concurrently, and wait for the Round 1 barrier. Optional `evidence_packet` (untrusted) and `contrast_proposition` (controller-routed moderator foil). Optional B1b structured mode requires `structured_claims=true` plus an `evidence_envelope` from `retrieve_envelope(...)`; optional B2 validation additionally sets `verify_claims=true`. |
 | `debate_collect` | Return one round in pages of at most 50 results. |
 | `debate_reply` | Send an anonymized issue matrix to every original `threadId`; refuses to run unless the previous round is complete. |
 | `debate_retry` | Retry only failed panelists while preserving successful results. |
@@ -61,9 +61,18 @@ the block, and binds valid edges to occurrence-level evidence seeds.
 
 Malformed structured payloads follow B1 semantics: reject, issue one repair prompt to the
 same `threadId`, then drop the structured payload if repair still fails. The prose response
-is kept and the round can still complete. This mode does **not** verify evidence, validate
-spans, remove failed support edges, or fail closed at the renderer boundary; successful
-bindings remain `verification_state = "unverified"`.
+is kept and the round can still complete. B1b by itself does **not** verify evidence,
+validate spans, remove failed support edges, or fail closed at the renderer boundary;
+successful bindings remain `verification_state = "unverified"`.
+
+From v0.6.0, B2 validation is a separate opt-in on top of structured mode: pass
+`verify_claims=true` with `structured_claims=true`. The controller reads immutable curated
+snapshots, verifies quotation edges by byte span, validates source-bound summaries by their
+evidence edge, moves failed edges to `removed_edges`, and downgrades all-failed `[Text]`
+claims to `[Unverified citation]`. The original B1b `claim_bindings` stay unmodified and
+unverified; B2 results are additive under `claim_verification` with a per-response
+`verification_summary`. Unexpected verifier errors set `verification_error` and do not break
+the round barrier. This is still not B3 fail-closed enforcement.
 
 ## Panelist rosters
 
@@ -99,6 +108,8 @@ Each run writes `.religion-council/runs/<run-id>/state.json`. It includes:
 - the issue matrix used for each reply round.
 - when B1b structured mode is enabled: the evidence catalog, per-response `schema_status`,
   `claim_payload_source`, optional `repair_content`, and bound claim records.
+- when B2 validation is enabled: additive `claim_verification`, `verification_summary`, and
+  optional `verification_error` records.
 
 The directory is intentionally ignored by Git because transcripts may contain user-supplied or
 sensitive material.
@@ -138,15 +149,17 @@ All three execution modes share one quote-admissibility policy
 
 | Mode | Current enforcement | Planned |
 |---|---|---|
-| Hybrid controller (Claude moderator + Codex panelists) | instruction-enforced by default; opt-in B1b `structured-schema-enforced` when a `claim/v1` payload is parsed and bound to evidence seeds | B2 claim-level validation; B3 runtime-enforced / fail-closed |
+| Hybrid controller (Claude moderator + Codex panelists) | instruction-enforced by default; opt-in B1b `structured-schema-enforced`; opt-in B2 `structured-claim-validated` when claim verification runs | B3 runtime-enforced / fail-closed |
 | Claude-only (37 agents) | instruction-enforced | instruction-enforced |
 | Portable (Codex / any agent) | instruction-enforced | instruction-enforced |
 
 B1b **adds schema enforcement only** in the hybrid controller's opt-in structured path. It
 parses and binds `religion-council/claim/v1` payloads, but it does not validate spans or
-decide admissibility. The response-level qualifier `structured-schema-enforced` means
-structure and occurrence-level binding succeeded; it never means evidence was runtime
-validated. Fail-closed enforcement is deferred to B3.
+decide admissibility. B2 adds opt-in claim-level validation against curated snapshots. The
+response-level qualifier `structured-claim-validated` means B2 verification ran; it does not
+mean every claim passed, and it is not fail-closed. The true outcome lives on each claim's
+`verification_state`, `span_assurance_tier`, `span`, and `removed_edges`. Fail-closed
+enforcement is deferred to B3.
 
 ## Debate pressure and consensus
 
@@ -217,6 +230,8 @@ Claude 只負責主持、匿名 issue matrix 與最終綜合。
 - 紀錄原子寫入 `.religion-council/runs/<run-id>/state.json`,且不 commit。
 - B1b 結構化模式必須同時提供 `structured_claims=true` 與 `evidence_envelope`;controller 會把
   `religion-council/claim/v1` payload 綁定到本輪 evidence seeds,但驗證狀態仍為 `unverified`。
+- B2 驗證必須再加 `verify_claims=true`;controller 會讀 curated snapshot 驗證 claim,並把結果
+  另外寫入 `claim_verification`,不改動 B1b 的原始 binding。
 
 目前 Codex MCP tool schema 沒有應用層 idempotency key;若 server 已建立 thread,但 response 在
 timeout 前未回到 controller,重試仍可能留下未登記的孤立 thread。因此現階段不能宣稱
@@ -241,13 +256,16 @@ python3 scripts/smoke_codex_mcp.py
 
 | 模式 | 目前強制方式 | 規劃 |
 |---|---|---|
-| 混合控制器(Claude 主持 + Codex 議員) | 預設以指示約束;opt-in B1b 結構化路徑在 payload 成功解析並綁定 evidence seeds 時標為 `structured-schema-enforced` | B2 claim 層驗證;B3 執行期強制 / fail-closed |
+| 混合控制器(Claude 主持 + Codex 議員) | 預設以指示約束;opt-in B1b 成功綁定時為 `structured-schema-enforced`;opt-in B2 驗證執行後為 `structured-claim-validated` | B3 執行期強制 / fail-closed |
 | 純 Claude(37 agents) | 以指示約束 | 以指示約束 |
 | 可攜(Codex / 任意 agent) | 以指示約束 | 以指示約束 |
 
 B1b 在混合控制器的 opt-in 結構化路徑只加入 **schema 強制**:解析並綁定
-`religion-council/claim/v1` payload,但不驗證 span、不判定可採性。`structured-schema-enforced`
-只表示結構與 occurrence 級綁定成功,絕不表示證據已 runtime-validated。fail-closed 強制延後至 B3。
+`religion-council/claim/v1` payload,但不驗證 span、不判定可採性。B2 另加 opt-in claim 層驗證:
+quotation 會對 curated snapshot 做 byte-span 驗證,source-bound summary 只驗證 evidence edge;
+失敗 edge 會移入 `removed_edges`,全失敗〔據典〕降為〔未驗證引用〕。`structured-claim-validated`
+只表示 B2 驗證已執行,不表示每個 claim 都通過,也不是 fail-closed。真正結果以每個 claim 的
+`verification_state`、`span_assurance_tier`、`span` 與 `removed_edges` 為準。fail-closed 強制延後至 B3。
 
 ### 辯論壓力與共識判準
 

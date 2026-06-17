@@ -249,6 +249,14 @@
         "en": "Response-level qualifier (ADR 0002 §6): a religion-council/claim/v1 payload was parsed, schema-validated, and bound to evidence seeds (B1b). This is SCHEMA enforcement only — evidence is still unverified (no B2 span validation) and the boundary is not fail-closed (no B3). It asserts structure and occurrence-level binding, never that any quotation was verified.",
         "zh-Hant": "回應層級標記(ADR 0002 §6):已解析、通過 schema 驗證並綁定至 evidence seeds 的 religion-council/claim/v1 payload(B1b)。僅為 SCHEMA 強制——證據仍為 unverified(無 B2 span 驗證)、邊界亦非 fail-closed(無 B3)。只主張結構與 occurrence 級綁定,絕不表示任何引文已驗證。"
       }
+    },
+    {
+      "id": "structured-claim-validated",
+      "verification": "runtime-validated",
+      "description": {
+        "en": "Response-level qualifier (ADR 0002 §6): claim-level evidence validation ran against the curated-snapshot tier (B2). Each [Text] support edge gained runtime-validated or failed; a failed support edge was removed and a [Text] that lost all support was downgraded to a non-supporting unverified-citation; the council continued. This is claim-level validation, NOT B3 boundary fail-closed: per-claim verification_state and span_assurance_tier carry the actual per-claim outcome, and individual claims may still have failed. Span verification is the curated-snapshot tier (fidelity to the ingested snapshot), not edition-backed (A2).",
+        "zh-Hant": "回應層級標記(ADR 0002 §6):已對 curated-snapshot tier 執行 claim-level 證據驗證(B2)。每條 [Text] support edge 取得 runtime-validated 或 failed;失敗的 support edge 已移除,失去全部支持的 [Text] 降為非支持的 unverified-citation;council 續行。此為 claim-level 驗證,非 B3 邊界 fail-closed:逐 claim 的 verification_state 與 span_assurance_tier 才是各 claim 的真實結果,個別 claim 仍可能 failed。Span 驗證為 curated-snapshot tier(符合收錄快照),非 edition-backed(A2)。"
+      }
     }
   ],
   "rules": [
