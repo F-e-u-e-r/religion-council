@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "orchestrator"))
 
 import claim_verification  # noqa: E402
+import render_finalizer  # noqa: E402
 from debate_controller import (  # noqa: E402
     ControllerError,
     DebateController,
@@ -726,6 +727,141 @@ class DebateControllerTest(unittest.TestCase):
         self.assertIn("boundary_error", result)
         self.assertIn("gate exploded", result["boundary_error"])
         self.assertNotIn("error", result)
+
+    # ---- P1 strict profile + debate_finalize -----------------------------------------
+
+    def test_profile_strict_turns_on_full_graph(self):
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),
+            profile="strict",
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertEqual(opening["enforcement_mode"], "structured-fail-closed")
+        _, state = self._structured_result(opening["run_id"])
+        self.assertTrue(state["structured_claims"])
+        self.assertTrue(state["verify_claims"])
+        self.assertTrue(state["fail_closed"])
+        self.assertEqual(state["profile"], "strict")
+
+    def test_profile_strict_requires_evidence_envelope(self):
+        with self.assertRaises(ControllerError):
+            self.controller.start(
+                question="Does life have meaning?",
+                panelists_file=str(self.panelists_file),
+                profile="strict",  # no evidence_envelope -> config error, never degrade
+                concurrency=10,
+                timeout_seconds=30,
+                retries=0,
+            )
+
+    def test_profile_strict_conflicts_with_explicit_false(self):
+        with self.assertRaises(ControllerError):
+            self.controller.start(
+                question="Does life have meaning?",
+                panelists_file=str(self.panelists_file),
+                evidence_envelope=evidence_envelope(),
+                profile="strict",
+                fail_closed=False,  # explicit contradiction -> fail fast
+                concurrency=10,
+                timeout_seconds=30,
+                retries=0,
+            )
+
+    def test_finalize_builds_authority_surface_from_admitted_claims(self):
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),  # snapshot text == fake's quote
+            profile="strict",
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        final = self.controller.finalize(opening["run_id"])
+        entry = next(r for r in final["results"] if r["panelist_id"] == "panelist_01")
+        units = entry["finalized"]["answer"]["authority_units"]
+        self.assertEqual(units[0]["text"], "克己復禮為仁")  # sourced from the snapshot span
+        self.assertEqual(units[0]["render_as"], "quotation")
+        self.assertIn("克己復禮為仁", entry["finalized"]["surface_a"])
+        self.assertIsNone(entry.get("finalization_error"))
+
+    def test_strict_is_not_finalized_until_debate_finalize(self):
+        # Workflow invariant: a strict run carries finalization_required and is NOT finalized
+        # after collect; only a successful debate_finalize marks it finalized. collect never
+        # yields a machine-enforced authority surface (no surface_a / finalized response).
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),
+            profile="strict",
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertTrue(opening["finalization_required"])
+        self.assertFalse(opening["finalized"])
+        collected = self.controller.collect(opening["run_id"], limit=50)
+        self.assertTrue(collected["finalization_required"])
+        self.assertFalse(collected["finalized"])
+        for result in collected["results"]:
+            self.assertNotIn("surface_a", result)  # collect is not the finalized answer
+        final = self.controller.finalize(opening["run_id"])
+        self.assertTrue(final["finalized"])
+        recollected = self.controller.collect(opening["run_id"], limit=50)
+        self.assertTrue(recollected["finalized"])  # only debate_finalize sets this
+
+    def test_finalization_error_does_not_mark_round_finalized(self):
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),
+            profile="strict",
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        original = render_finalizer.finalize
+
+        def boom(*args, **kwargs):
+            raise render_finalizer.FinalizationError("trace-text-not-canonical", "forced")
+
+        render_finalizer.finalize = boom
+        try:
+            final = self.controller.finalize(opening["run_id"])
+        finally:
+            render_finalizer.finalize = original
+        self.assertFalse(final["finalized"])
+        self.assertTrue(any("finalization_error" in entry for entry in final["results"]))
+        recollected = self.controller.collect(opening["run_id"], limit=50)
+        self.assertFalse(recollected["finalized"])
+
+    def test_non_strict_run_does_not_require_finalization(self):
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        self.assertFalse(opening["finalization_required"])
+
+    def test_finalize_requires_fail_closed_run(self):
+        opening = self.controller.start(
+            question="Does life have meaning?",
+            panelists_file=str(self.panelists_file),
+            evidence_envelope=evidence_envelope(),
+            structured_claims=True,
+            verify_claims=True,  # B2 only, no fail_closed
+            concurrency=10,
+            timeout_seconds=30,
+            retries=0,
+        )
+        with self.assertRaises(ControllerError):
+            self.controller.finalize(opening["run_id"])
 
     def test_verification_error_degrades_gracefully(self):
         # An unexpected verifier crash must record a flag and let the round/barrier complete.
