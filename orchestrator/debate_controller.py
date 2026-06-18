@@ -25,6 +25,7 @@ import uuid
 import claim_binding
 import claim_protocol
 import claim_verification
+import render_finalizer
 import response_boundary
 import retrieval_evidence_adapter
 from claim_protocol import SchemaRejection
@@ -838,6 +839,10 @@ Return:
             "failed": len(failures),
             "failed_panelists": failures,
             "enforcement_mode": self._enforcement_mode(state, round_number),
+            # Workflow invariant: a strict run is not finalized (no machine-enforced authority
+            # surface) until debate_finalize succeeds. These never assert user-visible assurance.
+            "finalization_required": bool(state.get("finalization_required")),
+            "finalized": bool(round_state.get("finalized")),
             "state_file": str(self._run_path(state["run_id"])),
             "next": (
                 "Use debate_collect to read results in batches, build an anonymized "
@@ -854,9 +859,10 @@ Return:
         evidence_packet="",
         contrast_proposition="",
         evidence_envelope=None,
-        structured_claims=False,
-        verify_claims=False,
-        fail_closed=False,
+        structured_claims=None,
+        verify_claims=None,
+        fail_closed=None,
+        profile=None,
         concurrency=8,
         timeout_seconds=900,
         retries=1,
@@ -864,6 +870,26 @@ Return:
     ):
         if not isinstance(question, str) or not question.strip():
             raise ControllerError("question is required.")
+        # P1: profile="strict" is a configuration invariant (ADR 0004 §8) — it turns on the whole
+        # structured -> verify -> fail-closed -> finalize graph and FAILS at config time if a
+        # component is missing or explicitly contradicted; it never silently degrades to B0.
+        if profile not in (None, "strict"):
+            raise ControllerError("unknown profile: {!r}".format(profile))
+        if profile == "strict":
+            conflicting = [
+                name
+                for name, value in (
+                    ("structured_claims", structured_claims),
+                    ("verify_claims", verify_claims),
+                    ("fail_closed", fail_closed),
+                )
+                if value is False  # explicit False (not merely omitted/None)
+            ]
+            if conflicting:
+                raise ControllerError(
+                    "profile=strict cannot be combined with {}=False".format(", ".join(conflicting))
+                )
+            structured_claims = verify_claims = fail_closed = True
         contrast_proposition = sanitize_contrast_proposition(contrast_proposition)
         panelists, resolved_file = self.load_panelists(panelists_file)
         run_id = "run-" + uuid.uuid4().hex[:12]
@@ -880,6 +906,14 @@ Return:
             raise ControllerError("fail_closed=True requires verify_claims=True.")
         if verify and not structured:
             raise ControllerError("verify_claims=True requires structured_claims=True.")
+        if profile == "strict":
+            # Defense in depth: assert the full strict component graph is on (never degraded).
+            try:
+                render_finalizer.validate_strict_profile(
+                    {"structured_claims": structured, "verify_claims": verify, "fail_closed": boundary}
+                )
+            except render_finalizer.FinalizationError as exc:
+                raise ControllerError("profile=strict invalid: {}".format(exc))
         catalog = claim_binding.EvidenceCatalog([])
         if structured:
             # B1b's promise is binding claims to evidence seeds, so structured mode requires
@@ -909,6 +943,11 @@ Return:
             "structured_claims": structured,
             "verify_claims": verify,
             "fail_closed": boundary,
+            "profile": profile,
+            # P1 workflow invariant: a strict run is not "user-visible assured" until
+            # debate_finalize succeeds. collect()/summaries surface this and never claim a
+            # finalized authority surface; only debate_finalize sets a round's `finalized`.
+            "finalization_required": profile == "strict",
             "evidence_catalog": catalog.to_state(),
             "panelists_file": resolved_file,
             "panelists": [
@@ -1141,6 +1180,10 @@ Return:
             "round": selected_round,
             "status": round_state["status"],
             "enforcement_mode": self._enforcement_mode(state, selected_round),
+            # A strict run is NOT finalized here: collect is the moderator's read step, never the
+            # machine-enforced final answer. A consumer must run debate_finalize when required.
+            "finalization_required": bool(state.get("finalization_required")),
+            "finalized": bool(round_state.get("finalized")),
             "offset": offset,
             "limit": limit,
             "total": len(ordered_ids),
@@ -1149,6 +1192,65 @@ Return:
                 if offset + len(selected) < len(ordered_ids)
                 else None
             ),
+            "results": results,
+        }
+
+    def finalize(self, run_id, round_number=None):
+        """P1 renderer finalization (ADR 0004): a NEW entry, not a rewrite of collect().
+
+        Requires a fail-closed run (B3 boundary decisions). For each panelist it runs the
+        deterministic finalizer over (verification + boundary + catalog + snapshot), producing a
+        Surface A built only from admitted claims, Surface B interpretation, and an audit summary.
+        A per-panelist bypass is recorded as a finalization_error (atomic for that panelist) and
+        does not abort the others.
+        """
+        state = self._load_state(run_id)
+        if not state.get("fail_closed"):
+            raise ControllerError(
+                "finalize requires a fail_closed run (B3 boundary decisions)."
+            )
+        if not state["rounds"]:
+            raise ControllerError("The run has no rounds.")
+        selected_round = int(
+            round_number or max(int(value) for value in state["rounds"])
+        )
+        round_state = state["rounds"].get(str(selected_round))
+        if not round_state:
+            raise ControllerError("Unknown round: {}".format(selected_round))
+        sctx = self._structured_context(state)
+        catalog = sctx["catalog"]
+        read_snapshot = sctx["read_snapshot"]
+        results = []
+        for panelist in state["panelists"]:
+            panelist_id = panelist["id"]
+            result = round_state["results"].get(panelist_id, {})
+            entry = {"panelist_id": panelist_id, "role": panelist["role"]}
+            if "error" in result or "boundary_decision" not in result:
+                entry["finalized"] = None
+                entry["skipped"] = True
+            else:
+                try:
+                    finalized = render_finalizer.finalize(
+                        result, catalog, read_snapshot, speaker_id=panelist_id
+                    )
+                    entry["finalized"] = render_finalizer.finalized_to_state(finalized)
+                except render_finalizer.FinalizationError as exc:
+                    # Atomic for this panelist: no Surface A produced; the bypass is reported.
+                    entry["finalized"] = None
+                    entry["finalization_error"] = {"reason": exc.reason, "detail": str(exc)}
+            results.append(entry)
+        # Only a fully successful debate_finalize marks the round finalized — collect never does.
+        # Per-panelist bypasses are still returned for audit, but the round is not finalized until
+        # every panelist has a finalized answer object.
+        all_finalized = all(entry.get("finalized") is not None for entry in results)
+        round_state["finalized"] = all_finalized
+        self._save_state(state)
+        return {
+            "run_id": run_id,
+            "round": selected_round,
+            "enforcement_mode": self._enforcement_mode(state, selected_round),
+            "finalization_required": bool(state.get("finalization_required")),
+            "finalized": all_finalized,
             "results": results,
         }
 
@@ -1180,7 +1282,10 @@ def tool_definitions():
                 "before the renderer: it DEFAULT-DENIES, admitting only affirmatively-passing "
                 "claims and denying unknown claim types, a [Text] without runtime-validated "
                 "evidence, a missing verification, or an unsupported protocol (per-result "
-                "boundary_decision). Default behavior is unchanged prose."
+                "boundary_decision). profile=\"strict\" turns on the whole structured -> verify "
+                "-> fail-closed graph and fails at config time if a component is missing "
+                "(requires an evidence_envelope); it never degrades to prose. Default behavior is "
+                "unchanged prose."
             ),
             "inputSchema": {
                 "type": "object",
@@ -1194,10 +1299,32 @@ def tool_definitions():
                     "structured_claims": {"type": "boolean"},
                     "verify_claims": {"type": "boolean"},
                     "fail_closed": {"type": "boolean"},
+                    "profile": {"type": "string", "enum": ["strict"]},
                     "cwd": {"type": "string"},
                     **common_controls,
                 },
                 "required": ["question", "panelists_file"],
+            },
+        },
+        {
+            "name": "debate_finalize",
+            "description": (
+                "P1 renderer finalization (ADR 0004), a separate entry from debate_collect. For a "
+                "fail-closed run it deterministically builds the textual-authority surface ONLY "
+                "from admitted, verified, boundary-passed claims (quotation text taken from the "
+                "snapshot span, not producer text; representation system-authoritative; markers "
+                "program-added), keeps interpretation prose as explicitly non-authoritative "
+                "Surface B, and routes rejected claims to an audit summary. Any bypass fails that "
+                "panelist's finalization atomically (no partial Surface A)."
+            ),
+            "inputSchema": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "run_id": {"type": "string"},
+                    "round_number": {"type": "integer", "minimum": 1},
+                },
+                "required": ["run_id"],
             },
         },
         {
@@ -1293,6 +1420,8 @@ class ControllerMcpServer:
             return self.controller.status(**arguments)
         if name == "debate_collect":
             return self.controller.collect(**arguments)
+        if name == "debate_finalize":
+            return self.controller.finalize(**arguments)
         if name == "debate_retry":
             return self.controller.retry(**arguments)
         raise ControllerError("Unknown tool: {}".format(name))

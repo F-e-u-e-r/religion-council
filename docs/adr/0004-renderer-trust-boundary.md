@@ -1,11 +1,16 @@
 # ADR 0004 — Renderer Trust Boundary and the Authority/Interpretation Split
 
 - Status: Accepted
-- Implementation status: **Pending (P1).** This ADR is the contract of record for the
-  user-facing renderer / finalizer. It introduces **no** runtime finalizer, render IR,
-  serializer, or trace validator — those are P1. P0 lands this ADR plus the assurance-honesty
-  corrections to `policies/quote-admissibility.v2.json` and a `CHANGELOG.md`; no runtime file
-  changes behavior.
+- Implementation status: **Implemented in P1.** P0 landed this ADR + the assurance-honesty
+  manifest edits + `CHANGELOG.md` (docs only). P1 landed the runtime: `render_types.py`
+  (authority units minted only via the builder's capability token), `render_finalizer.py`
+  (canonical authority builder, independent trace validator, deterministic Surface A serializer,
+  atomic `finalize`, strict-config validation), and the controller's `profile="strict"` +
+  `debate_finalize` entry/tool.
+- Scope of the guarantee: machine enforcement applies to the **finalized textual-authority
+  surface produced through `debate_finalize`** (and required for `profile="strict"` runs).
+  Interpretation prose (Surface B) remains explicitly non-authoritative and instruction-bounded.
+  The default hybrid prose path (no `debate_finalize`) is unchanged and is not machine-enforced.
 - Owner stage: completes **B3** (response-boundary fail-closed) at the actual user-facing
   surface. Builds on [ADR 0002](0002-roadmap-stage-nomenclature.md) (enforcement ladder),
   [ADR 0003](0003-retrieval-evidence-adapter.md) (evidence identity), and the B1b–B3 +
@@ -176,9 +181,11 @@ We state this plainly so "authority isolation" is never re-described as "all pro
   claims + verification + boundary + deterministic finalization + representation cross-check +
   assurance rendering, and **fails at startup/configuration** if any component is missing —
   it never silently degrades to B0.
-- **Denial-reason naming.** The current response-level `renderer-bypass` reason actually detects
-  a missing `claim_verification` artifact; it will be renamed `verification-artifact-missing`
-  (P1), and `renderer-bypass` reserved for the render-time violations in §5.
+- **Denial-reason naming.** P1 introduced the real render-time `renderer-bypass` reasons as the
+  `TRACE_*` codes in `render_types.py` (§5). The OLDER controller-level `renderer-bypass` boundary
+  reason actually detects a missing `claim_verification` artifact; renaming it to
+  `verification-artifact-missing` is a **deferred follow-up** (a reason-code string is potentially a
+  public contract, so it warrants a deprecation window — see CHANGELOG), not done in P1.
 
 ## The three rejections stay distinct (ADR 0002 §5)
 
@@ -191,26 +198,30 @@ We state this plainly so "authority isolation" is never re-described as "all pro
 
 ## Delivery split
 
-- **P0 (this PR):** this ADR (Accepted; implementation Pending P1); assurance-honesty edits to
-  the manifest (`mode_assurance` hybrid wording; additive `assurance_layers`); `CHANGELOG.md`.
-  No runtime behavior change.
-- **P1 (separate PR):** structured render IR; canonical authority-unit builder; deterministic
-  Surface A serializer; Surface B synthesis contract + non-removable framing; trace validator;
-  the real `renderer-bypass`; representation system-authoritative cross-check; `strict` config
-  validation; answer/audit context separation; adversarial golden tests.
+- **P0 (landed):** this ADR; assurance-honesty manifest edits (`mode_assurance` hybrid wording;
+  additive `assurance_layers`); `CHANGELOG.md`. No runtime behavior change.
+- **P1 (landed):** `render_types.py` (token-guarded authority units) + `render_finalizer.py`
+  (canonical authority-unit builder; deterministic Surface A serializer; Surface B framing;
+  independent trace validator with the `TRACE_*` render-time `renderer-bypass` reasons;
+  representation system-authoritative cross-check; atomic `finalize`; `validate_strict_profile`);
+  controller `profile="strict"` (config invariant), the `debate_finalize` entry/tool, and the
+  workflow invariant that a strict run is not `finalized` until `debate_finalize` succeeds.
+  Deferred follow-up: renaming the older controller `renderer-bypass` reason (see §8).
 
-The P1 success condition is **not** "the moderator complied" but:
+The P1 success condition was **not** "the moderator complied" but the following, which is met by
+the token-guarded builder + independent trace re-derivation + atomic finalization:
 
-> Even if the moderator maliciously or mistakenly asks to cite a denied claim, no API or data
-> path can serialize it into Surface A.
+> Even if the moderator maliciously or mistakenly asks to cite a denied claim, no supported API or
+> data path can serialize it into Surface A.
 
 ## Consequences
 
-- After P1 the guarantee can be stated honestly as: **end-to-end machine-enforced construction
-  and traceability of the textual-authority surface, with explicitly non-authoritative,
-  instruction-bounded interpretation prose.**
-- Until then, assurance surfaces say *controller-side structured-claim boundary; end-user
-  rendering not yet machine-enforced*.
+- The guarantee can now be stated honestly as: **end-to-end machine-enforced construction and
+  traceability of the finalized textual-authority surface (via `debate_finalize`), with explicitly
+  non-authoritative, instruction-bounded interpretation prose.**
+- Scope discipline: this applies to finalized / `profile="strict"` responses. The default hybrid
+  prose path (no `debate_finalize`) is unchanged and not machine-enforced — assurance surfaces
+  must not be read as "all hybrid output is finalized".
 
 ## Non-goals
 

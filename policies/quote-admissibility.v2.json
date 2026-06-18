@@ -381,25 +381,26 @@
     }
   ],
   "user_visible_assurance": {
-    "status": "controller assurance implemented; user-visible authority rendering not yet machine-enforced (pending ADR 0004 / P1)",
-    "en": "From B1 onward the controller produces response-level enforcement modes and per-[Text] verification / assurance qualifiers (e.g. curated-snapshot vs edition-backed). These are available controller-side and surfaced via collect(); the user-facing renderer that rebuilds the answer from only admitted claims (so an instruction-only or denied citation cannot reach the authority surface) is the renderer trust boundary specified in ADR 0004 and is pending (P1). See assurance_layers for the precise split.",
-    "zh-Hant": "自 B1 起,controller 已產生 response-level 強制模式與每個〔據典〕的 verification / assurance qualifier(如 curated-snapshot 與 edition-backed 之別),於 controller 端可得並經 collect() 呈現;而「面向使用者、只從 admitted claims 重建答案」的 renderer(使 instruction-only 或被拒引用無法進入權威表面)是 ADR 0004 所定的 renderer trust boundary,尚待 P1 實作。精確分層見 assurance_layers。"
+    "status": "controller assurance implemented; user-visible authority surface implemented for strict / finalized responses (ADR 0004 / P1)",
+    "en": "From B1 onward the controller produces response-level enforcement modes and per-[Text] verification / assurance qualifiers (e.g. curated-snapshot vs edition-backed), surfaced via collect(). P1 implemented the user-facing renderer (debate_finalize, ADR 0004): for finalized / profile=strict responses the textual-authority surface is rebuilt only from admitted claims and independently trace-validated, so an instruction-only or denied citation cannot reach it. The default hybrid prose path (no debate_finalize) is unchanged and not machine-enforced. See assurance_layers for the precise split and scope.",
+    "zh-Hant": "自 B1 起,controller 已產生 response-level 強制模式與每個〔據典〕的 verification / assurance qualifier(如 curated-snapshot 與 edition-backed 之別),經 collect() 呈現。P1 已實作面向使用者的 renderer(debate_finalize,ADR 0004):對 finalized / profile=strict 回應,textual-authority 表面只由 admitted claims 重建並獨立 trace 驗證,使 instruction-only 或被拒引用無法進入。預設 hybrid prose 路徑(未呼叫 debate_finalize)維持不變、非 machine-enforced。精確分層與適用範圍見 assurance_layers。"
   },
   "assurance_layers": {
     "controller_structured_claim_boundary": "implemented",
-    "user_visible_authority_surface": "planned",
+    "user_visible_authority_surface": "implemented",
+    "user_visible_authority_surface_scope": "strict-finalized-responses",
     "interpretation_surface_semantic_enforcement": "instruction-enforced",
-    "note": "ADR 0004: machine enforcement covers the construction + traceability of the authority surface (B1b schema, B2 verification, B3 boundary — all over STRUCTURED claims). The user-facing finalizer that rebuilds the answer from admitted claims, with a deterministic post-render trace check, is pending (P1). The interpretation surface (free panelist prose) stays instruction-bounded and is framed non-authoritative; it is not semantically verified."
+    "note": "ADR 0004 (P1 landed): machine enforcement covers the construction + traceability of the authority surface — B1b schema, B2 verification, B3 boundary over STRUCTURED claims, and the debate_finalize renderer that rebuilds Surface A only from admitted claims with a deterministic post-render trace check. SCOPE: the user-visible authority surface is machine-enforced for finalized / profile=strict responses; the default hybrid prose path (no debate_finalize) is NOT finalized and must not be read as such. The interpretation surface (free panelist prose) stays instruction-bounded and framed non-authoritative; it is not semantically verified."
   },
   "mode_assurance": [
     {
       "id": "hybrid-controller",
       "label": { "en": "Hybrid controller (Claude moderator + Codex panelists)", "zh-Hant": "混合控制器(Claude 主持 + Codex 議員)" },
       "b0": "instruction-enforced",
-      "planned": "end-to-end renderer trust boundary (ADR 0004 / P1)",
+      "planned": "default-path finalization (currently opt-in via debate_finalize / profile=strict)",
       "text": {
-        "en": "Hybrid controller: instruction-enforced by default; opt-in structured paths reach B1b schema enforcement, B2 claim validation, and the B3 fail-closed boundary OVER STRUCTURED CLAIMS. This is a controller-side structured-claim boundary, not yet end-to-end: the user-facing prose renderer is not yet machine-enforced (the renderer trust boundary / finalizer is specified in ADR 0004 and pending P1).",
-        "zh-Hant": "混合控制器:預設以指示約束;opt-in 結構化路徑可達 B1b schema 強制、B2 claim 驗證與「對結構化 claims」的 B3 fail-closed 邊界。此為 controller 端的結構化 claim 邊界,尚非 end-to-end:面向使用者的 prose renderer 尚未 machine-enforced(renderer trust boundary / finalizer 由 ADR 0004 規範,待 P1)。"
+        "en": "Hybrid controller: instruction-enforced by default; opt-in structured paths reach B1b schema enforcement, B2 claim validation, and the B3 fail-closed boundary OVER STRUCTURED CLAIMS. P1 added the renderer trust boundary (debate_finalize, ADR 0004): for finalized / profile=strict responses the user-facing textual-authority surface is machine-enforced (rebuilt only from admitted claims + trace-validated). This is NOT yet end-to-end for the DEFAULT path: a hybrid run that stops at collect (no debate_finalize) is unchanged instruction-enforced prose and must not be read as finalized.",
+        "zh-Hant": "混合控制器:預設以指示約束;opt-in 結構化路徑可達 B1b schema 強制、B2 claim 驗證與「對結構化 claims」的 B3 fail-closed 邊界。P1 已加入 renderer trust boundary(debate_finalize,ADR 0004):對 finalized / profile=strict 回應,面向使用者的 textual-authority 表面為 machine-enforced(只由 admitted claims 重建並 trace 驗證)。對「預設路徑」仍非 end-to-end:停在 collect(未呼叫 debate_finalize)的 hybrid run 仍是 instruction-enforced prose,不可視為已 finalized。"
       }
     },
     {
