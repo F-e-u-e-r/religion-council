@@ -4,7 +4,6 @@ import sys
 import threading
 import time
 
-
 write_lock = threading.Lock()
 state_lock = threading.Lock()
 thread_counter = 0

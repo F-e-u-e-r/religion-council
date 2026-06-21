@@ -12,37 +12,45 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Changed
+- Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
+  `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
+  deprecation window.
+
+## [v0.9.0] — 2026-06-21 · Strict finalization & traceable authority
+
 ### Added
-- **ADR 0004 — renderer trust boundary** (P0): the contract of record for the user-facing
-  finalizer — authority/interpretation/audit channels, provenance-defined (not semantically
-  classified) authority, a deterministically-built authority surface, a structured render IR,
-  post-render trace validation over render units, and seven normative invariants.
-- **Renderer finalizer (P1):** `render_types.py` (frozen `AuthorityRenderUnit` minted only via the
-  canonical builder's capability token) and `render_finalizer.py` (canonical authority-unit builder;
-  deterministic Surface A serializer; non-removable Surface B framing; independent trace validator
-  with `TRACE_*` render-time `renderer-bypass` reasons; representation system-authoritative
-  cross-check; atomic `finalize`; `validate_strict_profile`).
-- **Controller (P1):** `profile="strict"` configuration invariant (fails fast if the
-  structured→verify→fail-closed→finalize graph is incomplete; never degrades to B0) and a new
-  `debate_finalize` entry + MCP tool that builds Surface A only from admitted claims. Quotation
-  text is sourced from the snapshot span (never producer text). `collect()` is unchanged.
-- **Workflow invariant (P1):** a `profile="strict"` run carries `finalization_required` and is not
-  `finalized` until `debate_finalize` succeeds; `collect()` / round summaries surface this and never
-  emit a finalized authority surface — only `debate_finalize` does.
+- **ADR 0004 — renderer trust boundary:** the contract of record for the user-facing finalizer:
+  authority, interpretation, and audit channels; provenance-defined (not semantically classified)
+  authority; a deterministic authority surface; structured render IR; post-render trace validation;
+  and normative invariants for the Axis-B capstone.
+- **Renderer finalizer:** `render_types.py` provides frozen `AuthorityRenderUnit` values minted
+  only through the canonical builder's capability token. `render_finalizer.py` supplies the
+  canonical authority-unit builder, deterministic Surface A serializer, non-removable Surface B
+  framing, independent `TRACE_*` render-time trace validator, system-authoritative representation
+  cross-check, atomic `finalize`, and `validate_strict_profile`.
+- **Strict controller workflow:** `profile="strict"` fails fast unless the
+  structured → verify → fail-closed → finalize graph is complete. `debate_finalize` builds Surface
+  A only from admitted claims; quotation text is taken from the canonical snapshot span, never
+  producer text. Existing `collect()` behavior remains backward compatible.
+- **Finalization state machine:** a strict run exposes `finalization_required` and remains
+  `finalized=false` until `debate_finalize` succeeds. `collect()` and round summaries never emit a
+  finalized authority surface.
 
 ### Changed
 - **Assurance honesty** in `policies/quote-admissibility.v2.json` (descriptive only, no behavior
-  change): `assurance_layers.user_visible_authority_surface` is now `implemented` with
-  `user_visible_authority_surface_scope: strict-finalized-responses`; the hybrid `mode_assurance`
-  states the renderer boundary is machine-enforced for finalized / `profile=strict` responses while
-  the default hybrid prose path (no `debate_finalize`) is unchanged and not finalized.
+  change): `assurance_layers.user_visible_authority_surface` is `implemented` with
+  `user_visible_authority_surface_scope: strict-finalized-responses`. The hybrid `mode_assurance`
+  states that the renderer boundary is machine-enforced for finalized strict responses while the
+  default hybrid prose path (without `debate_finalize`) is unchanged and not finalized.
 
 ### Notes
-- The interpretation surface (free panelist prose) remains instruction-bounded and explicitly
-  non-authoritative — its semantic correctness is **not** a machine guarantee.
-- Deferred follow-up: renaming the older controller `renderer-bypass` boundary reason to
-  `verification-artifact-missing` (a reason-code string may be a public contract, so it warrants a
-  deprecation window).
+- Strict-finalized responses provide end-to-end machine-enforced construction and traceability of
+  the textual-authority surface (Surface A). Interpretation prose (Surface B) remains explicitly
+  non-authoritative and instruction-bounded.
+- The default hybrid path without `debate_finalize` is unchanged and not finalized. The complete
+  answer is not semantically fail-closed; interpretation prose can still mislead; and the mint
+  guard is a capability-shaped API guard, not a Python sandbox.
 
 ## [v0.8.0] — 2026-06-17 · A1 corpus presentation metadata
 ### Added

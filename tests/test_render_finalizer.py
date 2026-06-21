@@ -1,8 +1,7 @@
-import tempfile
-from pathlib import Path
 import sys
+import tempfile
 import unittest
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "orchestrator"))
@@ -15,7 +14,6 @@ from render_types import (  # noqa: E402
     FinalizationError,
     RenderError,
 )
-
 
 SNAPSHOT = "學而時習之不亦說乎"
 QUOTE = "學而時習之"

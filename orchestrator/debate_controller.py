@@ -12,7 +12,6 @@ import concurrent.futures
 import datetime
 import json
 import os
-from pathlib import Path
 import queue
 import re
 import shlex
@@ -21,6 +20,7 @@ import sys
 import threading
 import time
 import uuid
+from pathlib import Path
 
 import claim_binding
 import claim_protocol
@@ -32,9 +32,8 @@ from claim_protocol import SchemaRejection
 from evidence_snapshot import EvidenceStore
 from generated_quote_policy import QUOTE_ADMISSIBILITY_POLICY_EN
 
-
 PROTOCOL_VERSION = "2025-06-18"
-CONTROLLER_VERSION = "0.8.0"
+CONTROLLER_VERSION = "0.9.0"
 PANELIST_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 CONTRAST_MAX_CHARS = 2000
 
@@ -870,7 +869,7 @@ Return:
     ):
         if not isinstance(question, str) or not question.strip():
             raise ControllerError("question is required.")
-        # P1: profile="strict" is a configuration invariant (ADR 0004 §8) — it turns on the whole
+        # Strict profile is a configuration invariant (ADR 0004 §8) — it turns on the whole
         # structured -> verify -> fail-closed -> finalize graph and FAILS at config time if a
         # component is missing or explicitly contradicted; it never silently degrades to B0.
         if profile not in (None, "strict"):
@@ -944,7 +943,7 @@ Return:
             "verify_claims": verify,
             "fail_closed": boundary,
             "profile": profile,
-            # P1 workflow invariant: a strict run is not "user-visible assured" until
+            # Strict workflow invariant: a run is not "user-visible assured" until
             # debate_finalize succeeds. collect()/summaries surface this and never claim a
             # finalized authority surface; only debate_finalize sets a round's `finalized`.
             "finalization_required": profile == "strict",
@@ -1196,7 +1195,7 @@ Return:
         }
 
     def finalize(self, run_id, round_number=None):
-        """P1 renderer finalization (ADR 0004): a NEW entry, not a rewrite of collect().
+        """Renderer finalization (ADR 0004): a new entry, not a rewrite of collect().
 
         Requires a fail-closed run (B3 boundary decisions). For each panelist it runs the
         deterministic finalizer over (verification + boundary + catalog + snapshot), producing a
@@ -1309,7 +1308,7 @@ def tool_definitions():
         {
             "name": "debate_finalize",
             "description": (
-                "P1 renderer finalization (ADR 0004), a separate entry from debate_collect. For a "
+                "Renderer finalization (ADR 0004), a separate entry from debate_collect. For a "
                 "fail-closed run it deterministically builds the textual-authority surface ONLY "
                 "from admitted, verified, boundary-passed claims (quotation text taken from the "
                 "snapshot span, not producer text; representation system-authoritative; markers "

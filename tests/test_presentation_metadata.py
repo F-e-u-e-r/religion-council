@@ -1,10 +1,9 @@
 import importlib.util
 import json
-from pathlib import Path
 import sys
 import tempfile
 import unittest
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "orchestrator"))
@@ -38,7 +37,7 @@ class SidecarEnumValidityTest(unittest.TestCase):
         with RETRIEVE.PRESENTATION_FILE.open(encoding="utf-8") as handle:
             sidecar = json.load(handle)
         seen = 0
-        for tradition, entries in sidecar.items():
+        for _tradition, entries in sidecar.items():
             if not isinstance(entries, list):
                 continue
             for entry in entries:
@@ -79,7 +78,9 @@ class PipelineCarryThroughTest(unittest.TestCase):
         self.assertEqual(rendering.provenance["translator"], "馬堅")
         # the prompt listing flags the rendering so a panelist won't treat it as the original
         line = next(
-            l for l in catalog.render_for_prompt().splitlines() if "51:56" in l
+            prompt_line
+            for prompt_line in catalog.render_for_prompt().splitlines()
+            if "51:56" in prompt_line
         )
         self.assertIn("meaning-rendering", line)
         self.assertIn("published-translation", line)

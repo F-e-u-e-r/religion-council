@@ -86,8 +86,8 @@
     {
       "id": "runtime-artifact",
       "description": {
-        "en": "An artifact captured during a run. Reserved; the runtime capture path is PR2+.",
-        "zh-Hant": "執行期擷取的文件。保留;執行期擷取路徑屬 PR2+。"
+        "en": "An artifact captured during a run. Reserved for a later delivery.",
+        "zh-Hant": "執行期擷取的文件。保留給後續交付。"
       }
     },
     {
@@ -108,7 +108,7 @@
   "acquisition_methods": [
     { "id": "bundled", "description": { "en": "Shipped in the repository.", "zh-Hant": "隨倉庫一同提供。" } },
     { "id": "retrieved", "description": { "en": "Returned by the retrieval seam.", "zh-Hant": "由檢索介面回傳。" } },
-    { "id": "runtime-captured", "description": { "en": "Captured during a run (PR2+).", "zh-Hant": "執行期擷取(PR2+)。" } },
+    { "id": "runtime-captured", "description": { "en": "Captured during a run (reserved for a later delivery).", "zh-Hant": "執行期擷取（保留給後續交付）。" } },
     { "id": "model-asserted", "description": { "en": "Asserted from model memory; no artifact.", "zh-Hant": "由模型記憶提出;無文件。" } },
     { "id": "user-supplied", "description": { "en": "Supplied by the user in a packet.", "zh-Hant": "由使用者在 packet 中提供。" } }
   ],
@@ -119,8 +119,8 @@
     { "id": "user-supplied-unverified", "description": { "en": "User-supplied; traceable to the packet but not independently established.", "zh-Hant": "使用者提供;可追溯至 packet,但未經獨立確立。" } }
   ],
   "verification_states": [
-    { "id": "unverified", "description": { "en": "PR1 default: instruction-enforced, not runtime-validated.", "zh-Hant": "PR1 預設:以指示約束,未在執行期驗證。" } },
-    { "id": "runtime-validated", "description": { "en": "Reserved for P3–P4 runtime validation.", "zh-Hant": "保留給 P3–P4 的執行期驗證。" } },
+    { "id": "unverified", "description": { "en": "Initial policy delivery: instruction-enforced, not runtime-validated.", "zh-Hant": "初始政策交付：以指示約束，未在執行期驗證。" } },
+    { "id": "runtime-validated", "description": { "en": "Reserved for later runtime validation.", "zh-Hant": "保留給後續執行期驗證。" } },
     { "id": "failed", "description": { "en": "Verification attempted and not satisfied.", "zh-Hant": "已嘗試驗證但未通過。" } }
   ],
   "rules": [
@@ -206,18 +206,18 @@
     {
       "id": "hybrid-controller",
       "label": { "en": "Hybrid controller (Claude moderator + Codex panelists)", "zh-Hant": "混合控制器(Claude 主持 + Codex 議員)" },
-      "pr1": "instruction-enforced",
-      "planned": "P4 runtime-enforced / fail-closed",
+      "initial_delivery": "instruction-enforced",
+      "scope": "runtime-enforced / fail-closed is delivered by the successor policy and runtime",
       "text": {
-        "en": "Hybrid controller: PR1 instruction-enforced; runtime-enforced/fail-closed enforcement is planned for P4.",
-        "zh-Hant": "混合控制器:PR1 以指示約束;執行期強制/fail-closed 規劃於 P4。"
+        "en": "Hybrid controller: this superseded policy delivery is instruction-enforced; see the successor policy and runtime for fail-closed enforcement.",
+        "zh-Hant": "混合控制器：此已被取代的政策交付以指示約束；fail-closed 強制請見後繼政策與執行期實作。"
       }
     },
     {
       "id": "claude-only",
       "label": { "en": "Claude-only", "zh-Hant": "純 Claude" },
-      "pr1": "instruction-enforced",
-      "planned": "instruction-enforced",
+      "initial_delivery": "instruction-enforced",
+      "scope": "instruction-enforced",
       "text": {
         "en": "Claude-only: instruction-enforced.",
         "zh-Hant": "純 Claude:以指示約束。"
@@ -226,8 +226,8 @@
     {
       "id": "portable",
       "label": { "en": "Portable (Codex / any agent)", "zh-Hant": "可攜(Codex / 任意 agent)" },
-      "pr1": "instruction-enforced",
-      "planned": "instruction-enforced",
+      "initial_delivery": "instruction-enforced",
+      "scope": "instruction-enforced",
       "text": {
         "en": "Portable: instruction-enforced.",
         "zh-Hant": "可攜:以指示約束。"

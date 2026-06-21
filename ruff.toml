@@ -1,0 +1,7 @@
+target-version = "py39"
+
+[lint]
+select = ["E", "F", "I", "UP", "B"]
+# Keep the initial release gate focused on correctness and import hygiene. Line wrapping and
+# broad modernization can be adopted separately without obscuring this release's behavior.
+ignore = ["E501", "UP006", "UP032", "UP035", "B904"]

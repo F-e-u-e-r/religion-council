@@ -22,9 +22,8 @@ and Markdown is replaced between fixed BEGIN/END markers.
 
 import argparse
 import json
-from pathlib import Path
 import sys
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_PATH = ROOT / "policies" / "quote-admissibility.v2.json"

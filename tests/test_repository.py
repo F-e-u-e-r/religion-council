@@ -1,8 +1,7 @@
 import json
-from pathlib import Path
 import re
 import unittest
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 MARKDOWN_LINK_RE = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
@@ -10,14 +9,14 @@ FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 
 
 class RepositoryValidationTest(unittest.TestCase):
-    def test_release_version_is_v080(self):
-        self.assertEqual((ROOT / "VERSION").read_text(encoding="utf-8").strip(), "v0.8.0")
+    def test_release_version_is_v090(self):
+        self.assertEqual((ROOT / "VERSION").read_text(encoding="utf-8").strip(), "v0.9.0")
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        self.assertIn("version-v0.8.0", readme)
+        self.assertIn("version-v0.9.0", readme)
         controller = (ROOT / "orchestrator" / "debate_controller.py").read_text(
             encoding="utf-8"
         )
-        self.assertIn('CONTROLLER_VERSION = "0.8.0"', controller)
+        self.assertIn('CONTROLLER_VERSION = "0.9.0"', controller)
 
     def test_markdown_relative_links_exist(self):
         missing = []

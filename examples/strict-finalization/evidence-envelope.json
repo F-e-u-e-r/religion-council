@@ -1,0 +1,21 @@
+{
+  "contract_version": "religion-council/retrieval/v1",
+  "records": [
+    {
+      "text": "克己復禮為仁",
+      "tradition": "confucianism",
+      "work": "論語",
+      "locator": "顏淵",
+      "evidence_type": "quotation",
+      "verbatim": true,
+      "source_file": "examples/strict-finalization/evidence-envelope.json",
+      "source_line": 6,
+      "representation_kind": "published-translation",
+      "rendering_mode": "meaning-rendering",
+      "provenance": {
+        "translator": "Example fixture"
+      },
+      "rights": "short excerpt; offline example fixture"
+    }
+  ]
+}

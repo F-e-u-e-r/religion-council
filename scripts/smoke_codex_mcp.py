@@ -4,16 +4,14 @@
 import argparse
 import json
 import os
-from pathlib import Path
 import shlex
 import sys
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "orchestrator"))
 
 from debate_controller import CodexMcpClient, ControllerError  # noqa: E402
-
 
 OPENING_MARKER = "LIVE_CODEX_MCP_OK"
 REPLY_MARKER = "LIVE_CODEX_REPLY_OK"

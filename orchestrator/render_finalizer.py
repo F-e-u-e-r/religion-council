@@ -1,4 +1,4 @@
-"""P1 renderer finalizer (ADR 0004): canonical authority builder + trace validator + serializer.
+"""Renderer finalizer (ADR 0004): canonical authority builder + trace validator + serializer.
 
 Pipeline (deterministic; the LLM is not in it):
 
@@ -13,15 +13,17 @@ is system-authoritative (a producer may self-downgrade to generated-rendering bu
 to published-translation); finalization is ATOMIC — any bypass raises :class:`FinalizationError`
 and no Surface A is produced.
 """
+import policy_enums
 from render_types import (  # noqa: F401  (re-exported reasons used by callers/tests)
+    _AUTHORITY_MINT,
     ALLOWED_AUTHORITY_RENDER_AS,
     RENDER_AS_QUOTATION,
     RENDER_AS_SOURCE_BOUND_SUMMARY,
     TRACE_CLAIM_NOT_ADMITTED,
     TRACE_MARKER_MISSING,
     TRACE_NOT_FROM_BUILDER,
-    TRACE_REPRESENTATION_MISMATCH,
     TRACE_RENDER_AS_DISALLOWED,
+    TRACE_REPRESENTATION_MISMATCH,
     TRACE_RIGHTS_BLOCKED,
     TRACE_TEXT_NOT_CANONICAL,
     TRACE_UNKNOWN_CLAIM,
@@ -32,9 +34,7 @@ from render_types import (  # noqa: F401  (re-exported reasons used by callers/t
     FinalizationError,
     FinalizedResponse,
     InterpretationRenderUnit,
-    _AUTHORITY_MINT,
 )
-import policy_enums
 
 STRICT_REQUIREMENTS = ("structured_claims", "verify_claims", "fail_closed")
 
@@ -189,7 +189,7 @@ def _build_authority_unit(claim, catalog, read_snapshot):
             provenance=getattr(seed, "provenance", None) if seed is not None else None,
             mint=_AUTHORITY_MINT,
         )
-    except Exception as exc:
+    except Exception:
         return None, TRACE_NOT_FROM_BUILDER
     return unit, None
 
