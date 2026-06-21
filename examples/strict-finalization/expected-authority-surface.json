@@ -1,0 +1,24 @@
+{
+  "output": {
+    "accepted": {
+      "authority_claim_ids": [
+        "claim-text-1"
+      ],
+      "interpretation_count": 1,
+      "representation_kind": "published-translation",
+      "rendering_marker": "meaning-rendering",
+      "surface_a": "“克己復禮為仁” — 論語 顏淵 [meaning-rendering]",
+      "surface_b_frame": "Council interpretation — not source text"
+    },
+    "atomic_failure": "trace-claim-not-admitted",
+    "denied": {
+      "audit_reason_codes": [
+        "renderer-bypass"
+      ],
+      "authority_unit_count": 0,
+      "interpretation_unit_count": 0,
+      "surface_a": "",
+      "surface_b_frame": "Council interpretation — not source text"
+    }
+  }
+}

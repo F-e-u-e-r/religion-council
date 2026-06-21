@@ -1,9 +1,10 @@
 import copy
 import importlib.util
-from pathlib import Path
 import sys
 import unittest
-
+from contextlib import redirect_stderr
+from io import StringIO
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "orchestrator"))
@@ -276,10 +277,13 @@ class QuotePolicyConformanceTest(unittest.TestCase):
         mutated["rules"][0]["text"]["en"] = "MUTATED RULE TEXT"
         original_loader = GEN.load_manifest
         GEN.load_manifest = lambda: mutated
+        stderr = StringIO()
         try:
-            self.assertEqual(GEN.run(check=True), 1)
+            with redirect_stderr(stderr):
+                self.assertEqual(GEN.run(check=True), 1)
         finally:
             GEN.load_manifest = original_loader
+        self.assertIn("Stale generated surfaces", stderr.getvalue())
         # The real surfaces must still be up to date after the simulation.
         self.assertEqual(GEN.run(check=True), 0)
 

@@ -4,17 +4,17 @@
 - Scope: terminology and architecture-of-record only. This ADR introduces **no**
   runtime evidence model, parser, validator, renderer, or fail-closed controller.
 - Relationship to ADR 0001: **partially supersedes ADR 0001 for roadmap-stage
-  terminology only** (its decisions 9–10 named stages "P0" and "P3–P4"). The
+  terminology only** (its decisions 9–10 used retired delivery labels). The
   substantive quote-admissibility policy of ADR 0001 is unchanged and remains in force.
 
 ## Context
 
 The project was described with three overlapping numbering schemes at once: an Axis-A
-`Phase 0 / 0.5 / 1 / 2 / 3` scale, an Axis-B `B0–B3` scale, and a delivery `P0 / PR1 /
-PR2 / PR3 / P4` scale. These did not line up: B0 was called both "P0" and "PR1",
-fail-closed was called "P3–P4" in ADR 0001 and the policy manifest but "P4" in the
-roadmap, and "Phase 2" (Axis A) collided with "B2" (Axis B) despite being different
-milestones. The manifest still embedded `P3–P4`, `P4`, and `PR2+` in its descriptions.
+`Phase 0 / 0.5 / 1 / 2 / 3` scale, an Axis-B `B0–B3` scale, and a retired delivery scale.
+These did not line up: the policy baseline had more than one delivery label, fail-closed used
+different delivery labels across ADRs and the roadmap, and "Phase 2" (Axis A) collided with
+"B2" (Axis B) despite being different milestones. The policy manifest also embedded those
+retired labels in its descriptions.
 
 The two axes are **low-coupling, not independent**. They share a seam: the retrieval
 result is converted, through a single adapter, into the evidence model the
@@ -39,10 +39,9 @@ Public architecture stages are:
 
 ### 2. PR numbers are delivery history, never stage names
 
-`PR1`, `PR2`, … record *when* something shipped. They are not architecture stages and
-must not appear as stage names in the roadmap, ADRs, or the policy manifest. The old
-`P0`, `P3–P4`, and `PR2+` shorthands are retired; where they carried meaning they map to
-B-stages.
+Release and PR identifiers record *when* something shipped. They are not architecture stages and
+must not appear as stage names in the roadmap, ADRs, or the policy manifest. The retired delivery
+shorthands map to B-stages where they carried meaning.
 
 ### 3. Old "Phase 0.5" is delivery history, not an Axis-A stage
 

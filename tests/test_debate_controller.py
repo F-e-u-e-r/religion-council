@@ -1,9 +1,8 @@
 import json
-from pathlib import Path
 import sys
 import tempfile
 import unittest
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "orchestrator"))
@@ -728,7 +727,7 @@ class DebateControllerTest(unittest.TestCase):
         self.assertIn("gate exploded", result["boundary_error"])
         self.assertNotIn("error", result)
 
-    # ---- P1 strict profile + debate_finalize -----------------------------------------
+    # ---- Strict profile + debate_finalize --------------------------------------------
 
     def test_profile_strict_turns_on_full_graph(self):
         opening = self.controller.start(

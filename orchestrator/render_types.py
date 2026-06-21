@@ -1,4 +1,4 @@
-"""P1 render-domain types for the renderer trust boundary (ADR 0004).
+"""Render-domain types for the renderer trust boundary (ADR 0004).
 
 Pure data model — no controller, no I/O. The load-bearing rule is structural: no *supported*
 public construction path mints an ``AuthorityRenderUnit`` (the only authority-bearing render
@@ -18,7 +18,7 @@ Surfaces:
 * ``FinalizedResponse`` — the finalizer's atomic output.
 """
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional, Tuple
 
 # Allowed authority render forms (a quotation or a source-bound summary; never raw prose).
 RENDER_AS_QUOTATION = "quotation"

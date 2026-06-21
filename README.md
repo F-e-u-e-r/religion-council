@@ -8,7 +8,7 @@
 ![code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)
 ![content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)
 ![runs on: Codex · Claude Code · any agent](https://img.shields.io/badge/runs%20on-Codex%20·%20Claude%20Code%20·%20any%20agent-green.svg)
-![version: v0.8.0](https://img.shields.io/badge/version-v0.8.0-orange.svg)
+![version: v0.9.0](https://img.shields.io/badge/version-v0.9.0-orange.svg)
 
 **English** · [繁體中文](#繁體中文)
 
@@ -25,7 +25,7 @@ argue from **its own texts**. Every claim is tagged as either a **[Text]** quota
 (with a real locator) or an **[Interpretation]**, and the moderator surfaces the
 genuine tensions instead of forcing agreement.
 
-Version **v0.8.0** supports three execution modes:
+Version **v0.9.0** supports three execution modes:
 
 1. **Claude Code only** — 37 specialized Claude agents (1 moderator + 36 voices).
 2. **Codex only** — a portable Codex skill, with native Codex subagents when requested.
@@ -46,11 +46,49 @@ modes stay instruction-enforced. See the
 [assurance matrix](docs/ORCHESTRATION.md#quote-admissibility-assurance) and
 [ADR 0002](docs/adr/0002-roadmap-stage-nomenclature.md).
 
-Version v0.8.0 adds the A1 corpus-enrichment metadata foundation: `retrieve.py` can merge
+Version v0.8.0 added the A1 corpus-enrichment metadata foundation: `retrieve.py` can merge
 curated `representation_kind`, `rendering_mode`, `provenance`, and `rights` from a portable
 `presentation.json` sidecar, with seed curation for the existing Chinese Qur'an
 meaning-renderings. Bulk public-domain excerpt expansion remains source- and rights-reviewed
 content work.
+
+v0.9.0 adds the strict-finalization capstone for the hybrid controller. `profile="strict"`
+requires the structured → verify → fail-closed graph and an evidence envelope, then makes
+finalization a separate, explicit step. See [ADR 0004](docs/adr/0004-renderer-trust-boundary.md)
+and the [v0.9.0 changelog](CHANGELOG.md#v090--2026-06-21--strict-finalization--traceable-authority).
+
+### Strict finalization: the guarantee boundary
+
+For a strict run, the lifecycle is:
+
+```text
+debate_start(profile="strict", evidence_envelope=…)
+→ collect
+→ finalization_required=true / finalized=false
+→ debate_finalize
+→ finalized=true
+```
+
+`debate_finalize` produces two deliberately different answer surfaces:
+
+- **Surface A — textual authority.** `AuthorityRenderUnit` values are minted only by the
+  canonical builder, independently trace-validated, then deterministically serialized. Quotation
+  text comes from the canonical snapshot span; representation metadata is system-authoritative.
+- **Surface B — interpretation.** Panelist analysis and inference are framed as
+  non-authoritative interpretation. Rejected claims are separated into audit input and are never
+  passed to the ordinary answer render input.
+
+> Strict-finalized responses provide end-to-end machine-enforced construction and traceability of
+> the textual-authority surface (Surface A). Interpretation prose (Surface B) remains explicitly
+> non-authoritative and instruction-bounded.
+
+This does **not** mean every word is machine-verified. Interpretation prose can still be
+misleading; the complete answer is not semantically fail-closed; the default hybrid path without
+`debate_finalize` is unchanged and not finalized; and the capability-token mint guard is not a
+Python sandbox. Strict mode is opt-in and does not change the default hybrid workflow.
+
+Run the offline, deterministic [strict end-to-end example](examples/strict-finalization/README.md)
+to inspect the complete path and its assertions.
 
 ## Why it's different
 
@@ -195,7 +233,7 @@ religion/
 ├── DISCLAIMER.md                 # sourcing rules + religious-sensitivity statement
 ├── LICENSE                       # MIT — skill logic, agents, scripts, config
 ├── LICENSE-CONTENT               # CC BY 4.0 — references & corpus
-├── VERSION                       # current release: v0.8.0
+├── VERSION                       # current release: v0.9.0
 ├── .mcp.json                     # Claude → deterministic Codex controller
 │
 ├── skills/religion-council/      # ▸ PORTABLE skill (Codex & any agent)
@@ -214,7 +252,10 @@ religion/
 │
 ├── orchestrator/                 # ▸ CLAUDE MODERATOR + CODEX PANELISTS
 │   ├── debate_controller.py      #   MCP server, barriers, retries, persistence
+│   ├── render_types.py           #   Surface A/B/audit render types and mint guard
+│   ├── render_finalizer.py       #   strict finalizer + trace validator + serializer
 │   └── panelists/                #   8-member and 30-member example rosters
+├── examples/strict-finalization/ # offline strict workflow fixture and runnable example
 ├── scripts/smoke_codex_mcp.py    # opt-in authenticated create/reply MCP check
 ├── tests/                        # controller persistence and pagination tests
 ├── docs/CORPUS.md                # corpus & RAG-roadmap notes
@@ -258,6 +299,7 @@ quote-admissibility policy, escalating from prompt-only to a fail-closed boundar
 | **B1 — Structured claims + evidence seam** *(done, v0.5.0)* | Hybrid opt-in mode parses `religion-council/claim/v1`, rejects malformed payloads (retry → repair → drop), and binds valid claims to `RetrievalEvidenceAdapterV1` evidence seeds. Initial verification is always `unverified`. | Schema rejection only; not B2 validation or B3 fail-closed. |
 | **B2 — Claim-level validation** *(done, v0.6.0)* | Hybrid opt-in `verify_claims=true` validates bound `[Text]` quotation edges against curated snapshots, validates source-bound summaries by evidence edge, removes failed support edges, and downgrades all-failed `[Text]` claims to `[Unverified citation]`; the council still completes. | Claim-level runtime validation; not B3 fail-closed. |
 | **B3 — Fail-closed boundary** *(done, v0.7.0)* | Hybrid opt-in `fail_closed=true` runs a response-boundary gate after B2: unknown claim types, unvalidated `[Text]`, renderer bypasses, and unsupported protocols are default-denied before rendering. | Hybrid runtime-enforced / fail-closed. |
+| **ADR 0004 capstone — strict finalization** *(done, v0.9.0)* | `profile="strict"` requires the complete graph and `debate_finalize` builds a deterministic, trace-validated Surface A from admitted claims only, with a non-removable Surface B frame and separate audit input. | End-to-end machine-enforced construction and traceability of Surface A for strict-finalized responses only. |
 
 The **enforcement ladder** keeps three rejections distinct: **B1** rejects malformed
 structure (retry/repair/drop) · **B2** removes a failed `[Text]` support edge (may keep a
@@ -337,7 +379,7 @@ Quoted primary scriptures are public-domain source texts in their original langu
 標注為**〔據典〕**(引文+真實出處)或**〔詮釋〕**;主持人負責把真正的張力點攤開,而非強行
 調和。
 
-目前 **v0.8.0** 支援三種執行方式:
+目前 **v0.9.0** 支援三種執行方式:
 
 1. **純 Claude Code**——附 37 個專屬 agent(1 位主持人 + 36 個聲音)。
 2. **純 Codex**——可攜 Codex skill;明確要求時可用 Codex 原生 subagent。
@@ -351,10 +393,46 @@ claim 對 curated evidence snapshot 做執行期驗證,並以每個 claim 的 `r
 response boundary;unknown claim type、未 runtime-validated 的〔據典〕、renderer bypass 與不支援
 protocol 會預設拒絕。純 Claude 與可攜模式仍維持 instruction-enforced。
 
-v0.8.0 新增 A1 語料加厚的 metadata 基礎建設:`retrieve.py` 可從可攜的
+v0.8.0 已新增 A1 語料加厚的 metadata 基礎建設:`retrieve.py` 可從可攜的
 `presentation.json` sidecar 合併 curated `representation_kind`、`rendering_mode`、
 `provenance` 與 `rights`,並為既有古蘭經中文釋義片段建立種子標註。大量新增公有領域摘錄仍屬
 需來源與 rights review 的人工 curation 工作。
+
+v0.9.0 加入混合 controller 的 strict-finalization capstone。`profile="strict"` 要求完整的
+structured → verify → fail-closed 圖與 evidence envelope，並把 finalization 設成獨立、明確的
+步驟。詳見 [ADR 0004](docs/adr/0004-renderer-trust-boundary.md) 與
+[v0.9.0 變更紀錄](CHANGELOG.md#v090--2026-06-21--strict-finalization--traceable-authority)。
+
+### Strict finalization：保證邊界
+
+strict run 的生命週期如下：
+
+```text
+debate_start(profile="strict", evidence_envelope=…)
+→ collect
+→ finalization_required=true / finalized=false
+→ debate_finalize
+→ finalized=true
+```
+
+`debate_finalize` 產生兩個刻意分離的 answer surface：
+
+- **Surface A — textual authority。** `AuthorityRenderUnit` 只能由 canonical builder mint，
+  經獨立 trace validation 後才 deterministic serialization。quotation 文字取自 canonical snapshot
+  span；representation metadata 以系統資料為準。
+- **Surface B — interpretation。** 議員的分析與推論會被框定為 non-authoritative interpretation。
+  被拒絕的 claim 留在 audit input，絕不傳入一般 answer render input。
+
+> Strict-finalized responses provide end-to-end machine-enforced construction and traceability of
+> the textual-authority surface (Surface A). Interpretation prose (Surface B) remains explicitly
+> non-authoritative and instruction-bounded.
+
+這不代表所有文字都已由機器驗證。Surface B 仍可能誤導；完整答案不是 semantic fail-closed；沒有
+`debate_finalize` 的預設 hybrid 路徑不變且未 finalized；capability-token mint guard 也不是 Python
+sandbox。strict mode 是 opt-in，不會改變預設 hybrid workflow。
+
+可執行且離線、deterministic 的完整路徑見
+[strict end-to-end example](examples/strict-finalization/README.md)。
 
 ## 有何不同?
 
@@ -452,6 +530,7 @@ persona 與引用紀律不必更動。
 | **B1 — 結構化 claim + 證據接縫**(已完成,v0.5.0) | 混合模式可 opt-in 解析 `religion-council/claim/v1`,對格式錯誤 payload 執行 retry → repair → drop,並把有效 claim 綁定至 `RetrievalEvidenceAdapterV1` evidence seeds。initial verification 恆為 `unverified`。 | 僅 schema 拒絕;不是 B2 驗證,也不是 B3 fail-closed。 |
 | **B2 — claim 層驗證**(已完成,v0.6.0) | 混合模式可 opt-in `verify_claims=true`,對已綁定〔據典〕quotation edge 做 curated snapshot 驗證,source-bound summary 以 evidence edge 驗證;失敗 support edge 會移除,全失敗〔據典〕降為〔未驗證引用〕,議會仍可完成。 | claim 層執行期驗證;不是 B3 fail-closed。 |
 | **B3 — fail-closed 邊界**(已完成,v0.7.0) | 混合模式可 opt-in `fail_closed=true`,在 B2 之後執行 response-boundary gate:未知 claim type、未驗證〔據典〕、renderer bypass 與 unsupported protocol 會在 render 前預設拒絕。 | 混合模式 runtime-enforced / fail-closed。 |
+| **ADR 0004 capstone — strict finalization**(已完成,v0.9.0) | `profile="strict"` 要求完整圖；`debate_finalize` 只從 admitted claim 建立 deterministic、trace-validated 的 Surface A，附有不可移除的 Surface B frame 與分離 audit input。 | 僅 strict-finalized responses 的 Surface A 具有端到端 machine-enforced construction 與 traceability。 |
 
 **強制力梯度**把三種「拒絕」分清楚:**B1** 拒絕格式不良的結構(retry/repair/drop)·**B2** 移除失敗
 〔據典〕的 support edge(可保留 non-supporting〔未驗證引用〕)後續行·**B3** 在 response 邊界預設拒絕。

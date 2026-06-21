@@ -8,10 +8,9 @@ future local-vector and service-backed implementations.
 
 import argparse
 import json
-from pathlib import Path
 import re
 import sys
-
+from pathlib import Path
 
 # Envelope-level contract version for retrieve_envelope(). This is the API/shape
 # contract that the B1 evidence adapter negotiates on, distinct from each record's

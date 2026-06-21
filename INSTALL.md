@@ -116,6 +116,7 @@ The controller exposes:
 
 - `debate_start`: create one independent Codex thread per panelist and wait at the Round 1 barrier;
 - `debate_collect`: read responses in bounded batches;
+- `debate_finalize`: construct the strict textual-authority surface after collection;
 - `debate_reply`: send an anonymized issue matrix to the same `threadId` values;
 - `debate_retry`: retry only failed panelists;
 - `debate_status`: inspect barriers and persisted state.
@@ -130,6 +131,72 @@ source-bound summaries validate by evidence edge, and per-claim outcomes are wri
 controller is still not fail-closed. To enable B3, also pass `fail_closed=true`; the
 controller writes a `boundary_decision` that default-denies unknown claim types,
 unvalidated `[Text]`, missing verification, and unsupported protocols before rendering.
+
+### Strict finalization (v0.9.0)
+
+Strict mode is an opt-in hybrid-controller workflow. It requires Python 3.9+, an authenticated
+Codex CLI (`codex login`), and an approved `religion-council-controller` project MCP server in
+Claude Code. It also requires a `religion-council/retrieval/v1` `evidence_envelope`; there is no
+degraded strict path without one.
+
+Obtain the envelope from the retrieval seam. It must include `contract_version` and a `records`
+array; each record must at least provide `text`, with source metadata such as `work`, `locator`,
+`tradition`, `evidence_type`, `verbatim`, `source_file`, and `source_line` when available:
+
+```json
+{
+  "contract_version": "religion-council/retrieval/v1",
+  "records": [
+    {
+      "text": "克己復禮為仁",
+      "tradition": "confucianism",
+      "work": "論語",
+      "locator": "顏淵",
+      "evidence_type": "quotation",
+      "verbatim": true,
+      "source_file": "references/confucianism.md",
+      "source_line": 1
+    }
+  ]
+}
+```
+
+In the moderator session, invoke the public MCP tools in this order (replace the roster and
+question as needed):
+
+```text
+debate_start({
+  question: "What does Confucius mean by ren?",
+  panelists_file: "orchestrator/panelists/religion-8.json",
+  profile: "strict",
+  evidence_envelope: <the retrieval envelope above>
+})
+
+debate_collect({ run_id: <run_id>, limit: 50 })
+
+debate_finalize({ run_id: <run_id> })
+```
+
+Immediately after strict `debate_start` and after `debate_collect`, the state reports
+`finalization_required=true` and `finalized=false`; collection has no finalized Surface A. A
+successful `debate_finalize` returns deterministic Surface A, a non-removable Surface B frame,
+separate audit data, and `finalized=true`. Surface A contains only admitted, verified claims and
+uses canonical snapshot text rather than panelist-supplied quotation text.
+
+`profile="strict"` turns on `structured_claims`, `verify_claims`, and `fail_closed`. Omit those
+three flags when using strict mode; omitted flags are enabled by the profile. An explicit
+`structured_claims=false`, `verify_claims=false`, or `fail_closed=false` is a configuration error.
+Supplying strict without an `evidence_envelope` also fails fast. If the profile is not strict,
+`debate_finalize` still requires a fail-closed run and the default hybrid path remains unchanged
+and unfinalized.
+
+For an offline, deterministic [strict finalization example](examples/strict-finalization/README.md)
+that asserts the state transitions, canonical quotation source, representation metadata, Surface B
+frame, denied-payload separation, and atomic failure, run:
+
+```bash
+python3 examples/strict-finalization/run_example.py
+```
 
 Run:
 
@@ -288,8 +355,8 @@ Claude 主持人
     → 多條持久 Codex thread
 ```
 
-Controller 提供 `debate_start`、`debate_collect`、`debate_reply`、`debate_retry`、
-`debate_status` 五個 MCP tools。它會保存 `panelist ID ↔ threadId`、等待全員完成才跨過
+Controller 提供 `debate_start`、`debate_collect`、`debate_finalize`、`debate_reply`、`debate_retry`、
+`debate_status` 六個 MCP tools。它會保存 `panelist ID ↔ threadId`、等待全員完成才跨過
 round barrier,並把紀錄寫到 `.religion-council/runs/<run-id>/state.json`。
 
 `debate_start` 另有 opt-in B1b 結構化路徑:同時傳入 `structured_claims=true` 與
@@ -301,6 +368,70 @@ evidence edge 驗證,每個 claim 的結果寫在 `claim_verification`。B1b bin
 `verification_state = "unverified"`。若要啟用 B3,再傳入 `fail_closed=true`;controller 會寫入
 `boundary_decision`,並在 render 前預設拒絕未知 claim type、未驗證〔據典〕、缺驗證與不支援
 protocol。
+
+### Strict finalization（v0.9.0）
+
+strict mode 是 opt-in 的 hybrid-controller workflow。它需要 Python 3.9+、已用 `codex login`
+登入的 Codex CLI，以及在 Claude Code 中已批准的 `religion-council-controller` project MCP server。
+它也必須提供 `religion-council/retrieval/v1` 的 `evidence_envelope`；沒有 evidence envelope 時不會
+降級執行 strict。
+
+envelope 由 retrieval seam 取得，必須包含 `contract_version` 與 `records` array；每筆 record 至少要
+有 `text`，並應帶 `work`、`locator`、`tradition`、`evidence_type`、`verbatim`、`source_file`、
+`source_line` 等來源 metadata：
+
+```json
+{
+  "contract_version": "religion-council/retrieval/v1",
+  "records": [
+    {
+      "text": "克己復禮為仁",
+      "tradition": "confucianism",
+      "work": "論語",
+      "locator": "顏淵",
+      "evidence_type": "quotation",
+      "verbatim": true,
+      "source_file": "references/confucianism.md",
+      "source_line": 1
+    }
+  ]
+}
+```
+
+在 moderator session 依序呼叫公開 MCP tools（可按需要更換 roster 與問題）：
+
+```text
+debate_start({
+  question: "What does Confucius mean by ren?",
+  panelists_file: "orchestrator/panelists/religion-8.json",
+  profile: "strict",
+  evidence_envelope: <上面的 retrieval envelope>
+})
+
+debate_collect({ run_id: <run_id>, limit: 50 })
+
+debate_finalize({ run_id: <run_id> })
+```
+
+strict `debate_start` 後及 `debate_collect` 後，state 都是 `finalization_required=true`、
+`finalized=false`；collect 不會產生 finalized 的 Surface A。`debate_finalize` 成功後回傳
+deterministic Surface A、不可移除的 Surface B frame、分離的 audit data，且 `finalized=true`。
+Surface A 只含 admitted、verified claim，quotation 文字取自 canonical snapshot，不取 panelist
+提供的文字。
+
+`profile="strict"` 會自行開啟 `structured_claims`、`verify_claims`、`fail_closed`。strict mode 時
+不要傳這三個 flags；省略時由 profile 啟用。明確傳入 `structured_claims=false`、
+`verify_claims=false` 或 `fail_closed=false` 會是 configuration error。strict 缺少
+`evidence_envelope` 亦會 fail fast。非 strict run 的 `debate_finalize` 仍要求 fail-closed run，預設
+hybrid path 不變且未 finalized。
+
+要離線、deterministic 地檢查 state transitions、canonical quotation source、representation metadata、
+Surface B frame、denied payload 分離與 atomic failure，見
+[strict finalization example](examples/strict-finalization/README.md)，再執行：
+
+```bash
+python3 examples/strict-finalization/run_example.py
+```
 
 ```bash
 codex login

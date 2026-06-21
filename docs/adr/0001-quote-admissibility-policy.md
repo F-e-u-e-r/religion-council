@@ -1,14 +1,14 @@
 # ADR 0001 — Quote Admissibility Policy (v1)
 
 - Status: Accepted
-- Priority: P0
-- Scope: policy-only (PR1). No runtime evidence schema or citation validator is
+- Priority: highest
+- Scope: policy-only initial delivery. No runtime evidence schema or citation validator is
   introduced or implied by this ADR.
 - Supersedes: the portable skill's "another source that was explicitly consulted"
   allowance.
 - Superseded-by: [ADR 0002](0002-roadmap-stage-nomenclature.md) partially supersedes this
-  ADR **for roadmap-stage terminology only** (decisions 9–10 named stages "P0" and
-  "P3–P4"; stages are now A0–A3 / B0–B3). The substantive quote-admissibility policy below
+  ADR **for roadmap-stage terminology only** (decisions 9–10 used retired delivery labels;
+  stages are now A0–A3 / B0–B3). The substantive quote-admissibility policy below
   is unchanged and remains in force.
 
 ## Context
@@ -26,7 +26,7 @@ runtime validation.
 
 This ADR unifies the **admissibility** rule for `[Text]` claims as a normative
 policy. It does **not** add runtime enforcement. The hybrid controller remains
-instruction-enforced and is **not fail-closed** after PR1.
+instruction-enforced and is **not fail-closed** after this policy delivery.
 
 ## Decision
 
@@ -56,10 +56,10 @@ council guidance (both `SKILL.md` distributions and both controller prompts):
 8. **Genuine, independently authored `[Interpretation]` may exist without an evidence
    reference.** Interpretation is not required to cite a source; it must only be
    honestly marked as interpretation.
-9. **P0 (PR1) aligns instructions and reduces exposure; it does not provide runtime
-   enforcement.** PR1 does not parse labels, verify citations, validate spans, or
+9. **This policy delivery aligns instructions and reduces exposure; it does not provide runtime
+   enforcement.** It does not parse labels, verify citations, validate spans, or
    reject non-conforming panelist output.
-10. **Hybrid fail-closed enforcement is deferred to P3–P4.** Runtime validation,
+10. **Hybrid fail-closed enforcement is deferred to later enforcement stages.** Runtime validation,
     structured claims, and rejection of non-conforming output are future work.
 
 ## Source taxonomy
@@ -70,8 +70,8 @@ method*, the *assurance* level, and the *verification* state are independent):
 
 - **Bundled / retrieved artifacts** — material shipped in the repository's curated
   references or returned by the retrieval seam. Artifact-backed.
-- **Runtime-captured artifacts** — artifacts captured during a run (reserved; the
-  runtime capture path is PR2+).
+- **Runtime-captured artifacts** — artifacts captured during a run (reserved for a later
+  delivery).
 - **Merely consulted or model-asserted sources** — a source the model claims to have
   consulted, or recalls, with no artifact behind it. Not admissible for `[Text]` on
   its own.
@@ -94,15 +94,15 @@ The default classification of a user-supplied packet is
   (`policies/quote-admissibility.v1.json`) and generated into all four surfaces, so
   the surfaces cannot silently drift.
 
-## Non-goals (explicitly out of scope for PR1)
+## Non-goals (explicitly out of scope for the initial policy delivery)
 
 - No `Artifact` / `Span` / `Claim` / `ClaimEvidenceEdge` / `VerificationResult`
-  runtime model. Those belong to PR2.
+  runtime model. Those belong to later enforcement deliveries.
 - No `quote_admissible` property on any artifact. Admissibility will later be a
   validator decision derived under this named policy, not a stored flag.
 - No runtime label parsing, citation validation, or output rejection.
 
-## Status of the modes after PR1
+## Status of the modes after the initial policy delivery
 
 > Quote-admissibility policy unified across all modes; hybrid mode remains
 > instruction-enforced and is not fail-closed.
