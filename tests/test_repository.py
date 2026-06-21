@@ -9,14 +9,14 @@ FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 
 
 class RepositoryValidationTest(unittest.TestCase):
-    def test_release_version_is_v090(self):
-        self.assertEqual((ROOT / "VERSION").read_text(encoding="utf-8").strip(), "v0.9.0")
+    def test_release_version_is_v0100(self):
+        self.assertEqual((ROOT / "VERSION").read_text(encoding="utf-8").strip(), "v0.10.0")
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        self.assertIn("version-v0.9.0", readme)
+        self.assertIn("version-v0.10.0", readme)
         controller = (ROOT / "orchestrator" / "debate_controller.py").read_text(
             encoding="utf-8"
         )
-        self.assertIn('CONTROLLER_VERSION = "0.9.0"', controller)
+        self.assertIn('CONTROLLER_VERSION = "0.10.0"', controller)
 
     def test_markdown_relative_links_exist(self):
         missing = []
@@ -75,6 +75,16 @@ class RepositoryValidationTest(unittest.TestCase):
             self.assertEqual(path.stem, name)
             names.append(name)
         self.assertEqual(len(names), len(set(names)))
+
+    def test_moderator_can_complete_the_strict_finalization_workflow(self):
+        moderator = ROOT / ".claude" / "agents" / "council-moderator.md"
+        text = moderator.read_text(encoding="utf-8")
+        match = FRONTMATTER_RE.match(text)
+        self.assertIsNotNone(match)
+        self.assertIn(
+            "mcp__religion-council-controller__debate_finalize", match.group(1)
+        )
+        self.assertIn("`assurance_footer`", text)
 
     def test_portable_skill_frontmatter_and_references(self):
         skill = ROOT / "skills" / "religion-council" / "SKILL.md"

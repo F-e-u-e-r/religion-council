@@ -48,7 +48,9 @@
 > 第二輪必須回到原本相同 threadId,最後再綜合。」
 
 主持人會依序使用 `debate_start`、`debate_collect`、`debate_reply`;失敗時先用
-`debate_retry`,並以 `debate_status` 檢查 barrier。八家名冊位於
+`debate_retry`,並以 `debate_status` 檢查 barrier。若使用 `profile="strict"`,最後一輪完成後還必須
+使用 `debate_finalize`;只有其回傳的 finalized Surface A 與 `assurance_footer` 可作 strict-finalized
+答案的一部分。八家名冊位於
 `orchestrator/panelists/religion-8.json`;通用 30 人範例位於
 `orchestrator/panelists/thirty-member-example.json`。
 

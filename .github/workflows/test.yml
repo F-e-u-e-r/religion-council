@@ -27,6 +27,8 @@ jobs:
         run: python -m compileall orchestrator tests scripts examples
       - name: Check generated quote policy surfaces
         run: python scripts/generate_quote_policy.py --check
+      - name: Check corpus inventory (structural/policy violations only)
+        run: python scripts/corpus_inventory.py --check
       - name: Run strict finalization example
         run: python examples/strict-finalization/run_example.py
       - name: Run test suite

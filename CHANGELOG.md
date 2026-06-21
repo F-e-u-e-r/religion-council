@@ -17,6 +17,25 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
   deprecation window.
 
+## [v0.10.0] — 2026-06-22 · Safety routing, corpus inventory & assurance footer
+
+### Added
+- **Canonical crisis-first safety routing (S1):** `policies/safety-routing.v1.json` is the single
+  source for crisis-first handling, with a conformance test (`tests/test_safety_routing.py`) that
+  every distribution surface (DISCLAIMER, README, both skills, the moderator agent) carries the
+  rule and none silently omits it. The controller enforces the one machine guarantee — a request
+  already classified crisis-first cannot enter the council pipeline (`guard_crisis_routing`;
+  `DebateController.start(crisis_classification=...)`) — without claiming any natural-language
+  crisis *detection*, which stays a distinct, fallible, out-of-scope boundary.
+- **Reproducible corpus inventory (S2):** `scripts/corpus_inventory.py` (`--format text|json`,
+  `--check`) reports deterministic per-tradition and overall metadata counts from the same records
+  the portable retriever returns, and flags structural/policy-invalid records. `--check` fails only
+  on violations, never on count changes, and runs in CI.
+- **Deterministic assurance footer (S4):** `orchestrator/assurance_footer.py` renders a
+  user-visible authority-assurance summary counted only from finalized state (curated-snapshot vs
+  edition-backed vs source-bound, denied claims, always-visible interpretation limitation); never
+  labels a curated span as edition-backed. Exposed additively on each `debate_finalize` result.
+
 ## [v0.9.0] — 2026-06-21 · Strict finalization & traceable authority
 
 ### Added

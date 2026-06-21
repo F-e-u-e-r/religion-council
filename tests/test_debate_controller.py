@@ -787,6 +787,10 @@ class DebateControllerTest(unittest.TestCase):
         self.assertEqual(units[0]["render_as"], "quotation")
         self.assertIn("克己復禮為仁", entry["finalized"]["surface_a"])
         self.assertIsNone(entry.get("finalization_error"))
+        # S4: the deterministic assurance footer is exposed and reflects the one rendered unit.
+        self.assertIn("Authority assurance", entry["assurance_footer"])
+        self.assertIn("Textual claims rendered: 1", entry["assurance_footer"])
+        self.assertIn("Curated snapshot-span verified: 1", entry["assurance_footer"])
 
     def test_strict_is_not_finalized_until_debate_finalize(self):
         # Workflow invariant: a strict run carries finalization_required and is NOT finalized
