@@ -1,0 +1,78 @@
+{
+  "policy_id": "safety-routing",
+  "policy_version": "v1",
+  "status": "instruction-enforced-surfaces + boundary-enforced-routing",
+  "summary": {
+    "en": "Crisis-first safety routing. Defined once here and required, consistently, across every distribution surface. The council is reflective study, never emergency help; once a request is classified crisis-first it must not be run as a theological debate.",
+    "zh-Hant": "危機優先(crisis-first)安全路由。於此單一來源定義一次,並要求一致地存在於每個發佈面。議會是反思性研究,絕非緊急協助;一旦請求被判定為 crisis-first,即不得當作神學辯論進行。"
+  },
+  "crisis_first_classification": "crisis-first",
+  "crisis_first_contract": {
+    "en": [
+      "do not start the religion council",
+      "do not frame the issue as a theological debate",
+      "prioritize immediate safety",
+      "encourage appropriate local professional or emergency support",
+      "do not present religious reflection as a replacement for medical, legal, safeguarding, or emergency help",
+      "religious support may only be offered as a clearly secondary supplement"
+    ],
+    "zh-Hant": [
+      "不啟動議會",
+      "不把問題當作神學辯論",
+      "以即時安全為先",
+      "鼓勵尋求在地、適切的專業或緊急協助",
+      "不把宗教反思當作醫療、法律、保護或緊急協助的替代",
+      "宗教支持僅能作為明確次要的補充提供"
+    ]
+  },
+  "canonical_rule": {
+    "en": "When a request has already been classified as crisis-first, do not start the council or frame the issue as a theological debate; prioritize immediate safety, point to appropriate local professional or emergency help first, and offer religious reflection only as a clearly secondary supplement — never as a replacement for medical, legal, safeguarding, or emergency help.",
+    "zh-Hant": "當請求已被判定為 crisis-first(危機優先)時,不啟動議會、不把問題當作神學辯論;以即時安全為先,優先指向在地、適切的專業或緊急協助,宗教反思僅作明確次要的補充,絕不取代醫療、法律、保護或緊急協助。"
+  },
+  "guarantee_boundary": {
+    "machine_guarantees": [
+      "Once a request is classified as crisis-first, it cannot enter the council pipeline."
+    ],
+    "not_claimed": [
+      "The system deterministically detects every crisis from keywords."
+    ],
+    "classification_nature": "Natural-language safety classification is a distinct, fallible boundary. Normal academic discussion of self-harm and religion is NOT automatically a confirmed live crisis, and crisis detection is not keyword-deterministic. The controller enforces only the routing invariant over a classification supplied to it; it performs no crisis detection of its own. Runtime detection / automatic routing remains out of scope until a later architecture explicitly addresses it (would require its own ADR; see deferrals).",
+    "enforced_by": "orchestrator/debate_controller.py:guard_crisis_routing (DebateController.start refuses a crisis-first classification before any run dir, snapshot, or panelist job)."
+  },
+  "required_surfaces": [
+    {
+      "path": "DISCLAIMER.md",
+      "role": "disclaimer",
+      "locales": ["en", "zh-Hant"],
+      "must_contain": ["qualified professional help", "合格專業協助"]
+    },
+    {
+      "path": "README.md",
+      "role": "user-facing documentation",
+      "locales": ["en", "zh-Hant"],
+      "must_contain": ["supplementary reflection", "輔助性反思"]
+    },
+    {
+      "path": "skills/religion-council/SKILL.md",
+      "role": "portable skill",
+      "locales": ["en"],
+      "must_contain": ["address immediate safety and professional guidance first"]
+    },
+    {
+      "path": ".claude/skills/religion-council/SKILL.md",
+      "role": "Claude project skill",
+      "locales": ["zh-Hant"],
+      "must_contain": ["crisis-first", "不啟動議會", "即時安全"]
+    },
+    {
+      "path": ".claude/agents/council-moderator.md",
+      "role": "moderator/controller instructions",
+      "locales": ["zh-Hant"],
+      "must_contain": ["crisis-first", "不啟動議會", "即時安全"]
+    }
+  ],
+  "deferrals": [
+    "Semantic / keyword crisis detection and any automatic runtime routing decision (would require a dedicated ADR and a separate fallibility review).",
+    "Wiring the crisis_classification input through the MCP debate_start schema (kept out of the public tool surface until routing is approved)."
+  ]
+}

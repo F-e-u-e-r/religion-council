@@ -22,6 +22,7 @@ import time
 import uuid
 from pathlib import Path
 
+import assurance_footer
 import claim_binding
 import claim_protocol
 import claim_verification
@@ -33,9 +34,16 @@ from evidence_snapshot import EvidenceStore
 from generated_quote_policy import QUOTE_ADMISSIBILITY_POLICY_EN
 
 PROTOCOL_VERSION = "2025-06-18"
-CONTROLLER_VERSION = "0.9.0"
+CONTROLLER_VERSION = "0.10.0"
 PANELIST_ID_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
 CONTRAST_MAX_CHARS = 2000
+
+# Canonical crisis-first classification id (single source: policies/safety-routing.v1.json;
+# a conformance test asserts this constant equals the policy's crisis_first_classification).
+# The controller enforces the ONE machine guarantee the policy makes — a request already
+# classified crisis-first cannot enter the council pipeline — without itself performing any
+# natural-language crisis DETECTION (that remains a distinct, fallible, out-of-scope boundary).
+CRISIS_FIRST_CLASSIFICATION = "crisis-first"
 
 
 def sanitize_contrast_proposition(value):
@@ -89,6 +97,28 @@ def _render_structured_contract(catalog):
 
 class ControllerError(RuntimeError):
     pass
+
+
+class CrisisRoutingError(ControllerError):
+    """Raised when a crisis-first-classified request is asked to enter the council pipeline.
+
+    Subclasses ControllerError so existing ``except ControllerError`` handlers still fail
+    closed; callers that care can catch this specifically.
+    """
+
+
+def guard_crisis_routing(classification):
+    """Enforce the safety-routing invariant: a crisis-first request cannot start a council run.
+
+    This is a boundary check over a classification supplied by the caller, NOT crisis
+    detection. Any value other than the canonical crisis-first id (including ``None``)
+    proceeds untouched, so normal academic discussion is never auto-routed as a live crisis.
+    """
+    if classification == CRISIS_FIRST_CLASSIFICATION:
+        raise CrisisRoutingError(
+            "crisis-first request must not enter the council pipeline; prioritize immediate "
+            "safety and local professional/emergency help (policies/safety-routing.v1.json)."
+        )
 
 
 def utc_now():
@@ -866,7 +896,11 @@ Return:
         timeout_seconds=900,
         retries=1,
         cwd=None,
+        crisis_classification=None,
     ):
+        # Safety-routing boundary (S1) runs FIRST: a request already classified crisis-first
+        # cannot enter the pipeline at all — no run dir, no snapshots, no panelist jobs.
+        guard_crisis_routing(crisis_classification)
         if not isinstance(question, str) or not question.strip():
             raise ControllerError("question is required.")
         # Strict profile is a configuration invariant (ADR 0004 §8) — it turns on the whole
@@ -1233,6 +1267,11 @@ Return:
                         result, catalog, read_snapshot, speaker_id=panelist_id
                     )
                     entry["finalized"] = render_finalizer.finalized_to_state(finalized)
+                    # S4: a deterministic, user-visible assurance summary counted from the
+                    # finalized state (never inferred from prose). Additive; the LLM is not in it.
+                    entry["assurance_footer"] = assurance_footer.render_assurance_footer(
+                        entry["finalized"]
+                    )
                 except render_finalizer.FinalizationError as exc:
                     # Atomic for this panelist: no Surface A produced; the bypass is reported.
                     entry["finalized"] = None
