@@ -1,7 +1,9 @@
 # ADR 0006 — Retriever Fork and Shared Retrieval-Contract Conformance
 
 - Status: Accepted
-- Implementation: Pending (lands across the PRs in [Migration](#7-migration-byte-parity--contract-conformance); this ADR is the contract of record).
+- Implementation: Implemented — migration phases 1–4 below have landed (the contract suite, the
+  project retriever, and the retirement of byte-parity as the cross-implementation gate); phase 5
+  (the retrieval benchmark) is deferred to a separate ADR. This ADR is the contract of record.
 - Scope: replaces the **byte-identical `retrieve.py`** invariant with a **shared retrieval-envelope
   contract** and a conformance suite that both a *portable* and a *project* retriever must pass.
   Fixes identity (ADR [0005](0005-stable-occurrence-identity.md)) and artifact lifecycle
@@ -232,7 +234,8 @@ need not change when such a backend lands — reserving the name is not building
 
 ## Migration: byte-parity → contract-conformance
 
-The swap is staged so each step is independently green:
+The swap is staged so each step is independently green. **Status: phases 1–4 are implemented; phase
+5 is deferred to a separate benchmark ADR.**
 
 1. **ADR only** *(this document)* — no runtime change.
 2. **Contract fixtures + suite** — add `tests/retrieval_contract/`; the existing retriever passes

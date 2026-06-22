@@ -328,8 +328,10 @@ retrieve_envelope() → RetrievalEvidenceAdapterV1 → Artifact + Span → Claim
 instruction-enforced — the demo anyone can clone and run. The project-integrated
 **`.claude/` + `orchestrator/` + retrieval service** grows the full corpus, structured
 protocol, validator, and hybrid fail-closed enforcement. Both share the core policy, not
-dependencies or enforcement guarantees. Byte-parity of the two `retrieve.py` copies is an
-A0–A1 invariant; A2 forks them and replaces parity with a shared contract-conformance suite.
+dependencies or enforcement guarantees. The portable and project retrievers are now intentionally
+forked ([ADR 0006](docs/adr/0006-retriever-fork-contract.md)): they share one **retrieval-envelope
+contract**, proven by a conformance suite (`tests/retrieval_contract/`) rather than by byte-parity.
+Byte-parity is kept only as a narrow same-artifact check between the two portable `retrieve.py` copies.
 
 **Rights gate (tiered).** A1 requires excerpt-level provenance + a rights note per snippet;
 A2 requires full operational redistribution clearance (`redistributable = true`,
@@ -556,8 +558,10 @@ retrieve_envelope() → RetrievalEvidenceAdapterV1 → Artifact + Span → Claim
 
 **發行分工。** 可攜的 **`skills/`** 維持片段式、檔案式、instruction-enforced——人人 clone 後即可跑
 的 demo。專案整合版 **`.claude/` + `orchestrator/` + 檢索服務**則養成完整語料、結構化 protocol、
-validator 與混合 fail-closed 強制力。兩者共用核心政策,但不共用依賴或強制力保證。兩份
-`retrieve.py` 的位元組 parity 是 A0–A1 invariant;A2 分叉時改以共用的 contract-conformance suite 取代。
+validator 與混合 fail-closed 強制力。兩者共用核心政策,但不共用依賴或強制力保證。可攜版與專案版檢索器
+現已依 [ADR 0006](docs/adr/0006-retriever-fork-contract.md) 正式分叉:兩者共用同一份**檢索 envelope 契約**
+(由 `tests/retrieval_contract/` 的 conformance suite 保證),而非位元組 parity;位元組 parity 僅保留為
+兩份可攜 `retrieve.py` 副本之間的窄同源檢查。
 
 **Rights gate(分層)。** A1 要求每個片段具 excerpt 層 provenance + rights note;A2 要求完整的
 operational redistribution clearance(`redistributable = true`、jurisdiction notes、review record),

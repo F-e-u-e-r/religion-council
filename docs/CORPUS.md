@@ -73,16 +73,22 @@ spans as byte offsets — so identity is backend-independent and needs no `sourc
 (`byte_offset` + `byte_length`, since an `artifact_ref` unit can be larger than the quote
 and the same wording can recur) for the edition-backed tier (see
 [ADR 0003](adr/0003-retrieval-evidence-adapter.md)).
-Byte-identical parity of the two `retrieve.py` copies is an **A0–A1 invariant**: at A2 the
-project copy forks to an index/RAG backend while the portable copy stays file-based, and
-parity is replaced by a shared contract-conformance suite over the envelope. See
-[ADR 0003](adr/0003-retrieval-evidence-adapter.md).
+Per [ADR 0006](adr/0006-retriever-fork-contract.md) the portable and project retrievers are now
+**forked**: they share one retrieval-envelope contract — proven by the conformance suite in
+`tests/retrieval_contract/` — rather than byte-parity. Byte-identical parity is retained only as a
+narrow same-artifact check between the two **portable** `retrieve.py` copies (`skills/` ↔
+`.claude/skills/`); the project retriever (`orchestrator/project_retrieve.py`) is bound by the
+contract, not by byte-parity, and MAY later use an index/RAG backend over the same envelope. See
+[ADR 0003](adr/0003-retrieval-evidence-adapter.md) and
+[ADR 0006](adr/0006-retriever-fork-contract.md).
 
 ### Retrieval field contract
 
 Every record returned by `retrieve.retrieve(...)` carries the fields below. Classifying
-them does **not** change the return shape; it only records what future phases may rely on. The two `retrieve.py` copies stay byte-identical (enforced by
-the parity test in `tests/test_retrieve.py`).
+them does **not** change the return shape; it only records what future phases may rely on. The two
+**portable** `retrieve.py` copies stay byte-identical (a narrow same-artifact check in
+`tests/test_retrieve.py`); cross-implementation consistency with the project retriever is enforced
+by the contract suite in `tests/retrieval_contract/` ([ADR 0006](adr/0006-retriever-fork-contract.md)).
 
 | Field | Classification | Notes |
 |---|---|---|
@@ -216,16 +222,20 @@ adapter content-address 成不可變 snapshot 的 canonical bytes(`artifact_id =
 sha256(UTF-8(NFC(text)))`,換行正規化為 LF,span 為 byte offset),故 identity 與後端無關、不需
 `source_file`(A3 下不存在);A2/A3 可另帶 `artifact_ref` + `content_hash` + `span`
 (`byte_offset` + `byte_length`,因 `artifact_ref` 單元可大於引文且相同文字可能重複出現)供 edition-backed
-層(見 [ADR 0003](adr/0003-retrieval-evidence-adapter.md))。兩份 `retrieve.py` 的位元組
-parity 是 **A0–A1 invariant**:A2 時專案端分叉為 index/RAG 後端、可攜端維持檔案式,parity 由
-envelope 的共用 contract-conformance suite 取代。見
-[ADR 0003](adr/0003-retrieval-evidence-adapter.md)。
+層(見 [ADR 0003](adr/0003-retrieval-evidence-adapter.md))。依
+[ADR 0006](adr/0006-retriever-fork-contract.md),可攜版與專案版檢索器現已**分叉**:兩者共用同一份
+檢索 envelope 契約(由 `tests/retrieval_contract/` 的 conformance suite 保證),而非位元組 parity。
+位元組 parity 僅保留為兩份**可攜** `retrieve.py` 副本(`skills/` ↔ `.claude/skills/`)之間的窄同源檢查;
+專案版檢索器(`orchestrator/project_retrieve.py`)受契約約束而非位元組 parity,日後可在同一 envelope 上
+改用 index/RAG 後端。見 [ADR 0003](adr/0003-retrieval-evidence-adapter.md) 與
+[ADR 0006](adr/0006-retriever-fork-contract.md)。
 
 ### 檢索欄位契約
 
 `retrieve.retrieve(...)` 回傳的每筆紀錄都帶有下列欄位。此分類**不**更動回傳形狀,只為每個
-欄位分類,讓後續階段知道哪些可依賴。兩份 `retrieve.py` 保持位元組相同(由
-`tests/test_retrieve.py` 的 parity test 保證)。
+欄位分類,讓後續階段知道哪些可依賴。兩份**可攜** `retrieve.py` 保持位元組相同(`tests/test_retrieve.py`
+的窄同源檢查);與專案版檢索器的跨實作一致性則由 `tests/retrieval_contract/` 的契約 suite 保證
+([ADR 0006](adr/0006-retriever-fork-contract.md))。
 
 | 欄位 | 分類 | 說明 |
 |---|---|---|

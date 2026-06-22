@@ -43,6 +43,12 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   B1/B2/B3/P1 guarantees. No index/RAG/network backend is selected.
 
 ### Changed
+- **Byte-parity retired as the cross-implementation retriever gate (ADR 0006 phase 4):**
+  `tests/test_retrieve.py`'s parity test is reframed as a **narrow same-artifact** check between the
+  two *portable* `retrieve.py` copies only; cross-implementation consistency (portable ↔ project) is
+  now guaranteed by the contract suite, and a new test asserts the project retriever shares the
+  contract (not bytes). README and `docs/CORPUS.md` parity language updated (EN + ZH) to point at
+  the conformance suite and ADR 0006.
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
   deprecation window.

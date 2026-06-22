@@ -22,14 +22,32 @@ class RetrieveTest(unittest.TestCase):
         )
         self.module = load_retriever(self.portable_path)
 
-    def test_retriever_distributions_are_byte_identical(self):
-        # Byte parity is an A0-A1 invariant. At A2 the project-integrated copy
-        # forks to an index/RAG backend while the portable copy stays file-based,
-        # and this parity check is replaced by a shared contract-conformance suite
-        # over retrieve_envelope()'s contract_version. See ADR 0002 / docs/CORPUS.md.
+    def test_portable_distribution_copies_are_byte_identical(self):
+        # NARROW same-artifact check (ADR 0006): the two PORTABLE copies are the same file shipped
+        # to two install locations, so they must stay byte-identical. This is no longer the
+        # retriever seam's cross-implementation guarantee — that is the shared contract suite in
+        # tests/retrieval_contract/, which both the portable AND the project retriever pass. The
+        # project retriever (orchestrator/project_retrieve.py) is a separate implementation and is
+        # deliberately NOT byte-checked against the portable one. See ADR 0006 / docs/CORPUS.md.
         self.assertEqual(
             self.portable_path.read_bytes(),
             self.claude_path.read_bytes(),
+        )
+
+    def test_project_retriever_shares_the_contract_not_bytes(self):
+        # ADR 0006 migration phase 4: byte-parity is retired as the cross-implementation invariant.
+        # The project retriever is bound by the retrieval-envelope contract, not by byte-parity with
+        # the portable copy: it re-exports the same contract_version and reports its own kind.
+        project_path = ROOT / "orchestrator" / "project_retrieve.py"
+        self.assertTrue(project_path.is_file())
+        project = load_retriever(project_path)
+        self.assertEqual(
+            project.capabilities()["contract_version"], self.module.RETRIEVAL_CONTRACT_VERSION
+        )
+        self.assertEqual(project.capabilities()["retriever_kind"], "project-file")
+        self.assertEqual(
+            project.retrieve_envelope("buddhism", "空", 1)["contract_version"],
+            self.module.RETRIEVAL_CONTRACT_VERSION,
         )
 
     def test_presentation_sidecars_are_byte_identical(self):
