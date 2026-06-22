@@ -12,6 +12,27 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Added
+- **ADR 0005 — stable occurrence identity (A1):** the adapter now mints occurrence ids under three
+  explicit, versioned schemes (`occ/v1-corpus-stable` / `-network-stable` / `-index-fallback`),
+  records the scheme on each seed and in the origins log, and **fails closed**
+  (`StableIdentityError`) when a network/dynamic acquisition (`runtime-captured`) lacks stable
+  identity inputs (`record_key`, or `work`+`locator`, or `source_file`+`source_line`) — refusing an
+  order-dependent id before persistence and before claim binding. Origin hints must be a non-empty
+  path AND a positive line number, so degenerate values (`""` / `0`) cannot bypass the gate.
+  Existing corpus-stable and index-fallback id bytes are unchanged (no silent migration);
+  file-based retrieval is unaffected. `docs/CORPUS.md` corrected: `source_file` / `source_line`
+  are not Artifact identity but DO seed the legacy occurrence scheme.
+- **A1 public-domain corpus enrichment (S3):** every tradition raised to a uniform baseline of 7
+  records (38 → 56), fixing balance (no tradition below the project median). Every new record
+  carries a per-snippet provenance + rights-basis note in `presentation.json`: classical-Chinese
+  and `和合本` 1919 excerpts assert a public-domain basis (by age / publication date), Qur'an (馬堅
+  釋義) and Sanskrit→Chinese additions are marked renderings, and none is labeled edition-backed.
+  The public-domain basis is **asserted, not independently audited** per edition/jurisdiction —
+  every note defers to redistribution review. New curation tests cover per-snippet rights presence
+  + honest scoping, enum validation, NFC/LF, span integrity, snapshot + occurrence-id
+  reproducibility, no orphan curation, and dual-copy (portable / `.claude`) parity.
+
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a

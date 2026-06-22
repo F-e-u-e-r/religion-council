@@ -123,12 +123,13 @@ class RetrieveTest(unittest.TestCase):
         self.assertIn("copyright", rendering["rights"])
 
     def test_uncurated_records_have_no_presentation_fields(self):
-        # The summary entry (not curated) and a whole non-curated tradition stay untouched.
+        # A record with no sidecar entry stays untouched: the islam summary, and a baseline
+        # Confucian quotation whose chapter-in-work key (論語·顏淵) is not curated.
         islam = self.module.parse_reference("islam")
         summary = next(r for r in islam if not r["verbatim"])
-        for field in self.module.PRESENTATION_FIELDS:
-            self.assertNotIn(field, summary)
-        for record in self.module.parse_reference("confucianism"):
+        confucian = self.module.parse_reference("confucianism")
+        baseline = next(r for r in confucian if r["work"] == "論語·顏淵")  # 己所不欲, not curated
+        for record in (summary, baseline):
             for field in self.module.PRESENTATION_FIELDS:
                 self.assertNotIn(field, record)
 
