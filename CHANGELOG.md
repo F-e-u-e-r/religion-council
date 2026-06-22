@@ -17,6 +17,22 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
   deprecation window.
 
+## [v0.12.1] — 2026-06-23 · Retrieval Benchmark Definition
+
+### Added
+- **Retrieval benchmark v1 definition (`docs/benchmarks/retrieval-v1.md`):** the A2→A3 gate
+  [ADR 0006](docs/adr/0006-retriever-fork-contract.md) §6 defers to (its migration phase 5). Defines
+  the evidence bar a non-lexical backend (local index / hybrid / dense-vector / RAG service) must
+  clear before the *project* retriever may adopt it — the hard constraints any candidate must
+  preserve (envelope contract, ADR 0005 stable occurrence identity, the stdlib-only portable
+  retriever staying lexical, artifact lifecycle, the A2 rights gate, no edition-backed-assurance
+  claim), the evaluation design (curated/full-text corpus tiers, a frozen query set + graded
+  relevance judgments, candidate families, retrieval + operational + a citation-fidelity metric, a
+  reproducible protocol), and the decision gates (beat the lexical baseline by a pre-registered
+  margin *and* pass every hard constraint, else the file-based lexical retriever stays). It **selects
+  no backend** and runs nothing; running it and the backend-selection ADR that cites the run remain
+  deferred.
+
 ## [v0.12.0] — 2026-06-23 · Retriever Contract Fork & A2 Readiness
 
 ### Added

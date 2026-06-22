@@ -8,7 +8,7 @@
 ![code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)
 ![content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)
 ![runs on: Codex · Claude Code · any agent](https://img.shields.io/badge/runs%20on-Codex%20·%20Claude%20Code%20·%20any%20agent-green.svg)
-![version: v0.12.0](https://img.shields.io/badge/version-v0.12.0-orange.svg)
+![version: v0.12.1](https://img.shields.io/badge/version-v0.12.1-orange.svg)
 
 **English** · [繁體中文](#繁體中文)
 
@@ -25,7 +25,7 @@ argue from **its own texts**. Every claim is tagged as either a **[Text]** quota
 (with a real locator) or an **[Interpretation]**, and the moderator surfaces the
 genuine tensions instead of forcing agreement.
 
-Version **v0.12.0** supports three execution modes:
+Version **v0.12.1** supports three execution modes:
 
 1. **Claude Code only** — 37 specialized Claude agents (1 moderator + 36 voices).
 2. **Codex only** — a portable Codex skill, with native Codex subagents when requested.
@@ -66,6 +66,11 @@ stdlib-only and file-based, while the project retriever has the same versioned r
 and shared conformance suite. It does not select an index, vector store, RAG backend, or
 edition-backed assurance; those remain gated on benchmark evidence. See
 [ADR 0006](docs/adr/0006-retriever-fork-contract.md).
+
+v0.12.1 defines that benchmark and its adoption gates: a candidate must both beat the lexical
+baseline and preserve stable occurrence identity, the retrieval contract, artifact lifecycle,
+rights boundaries, and assurance honesty. It runs no benchmark and selects no backend. See
+[Retrieval Benchmark v1](docs/benchmarks/retrieval-v1.md).
 
 ### Strict finalization: the guarantee boundary
 
@@ -243,7 +248,7 @@ religion/
 ├── DISCLAIMER.md                 # sourcing rules + religious-sensitivity statement
 ├── LICENSE                       # MIT — skill logic, agents, scripts, config
 ├── LICENSE-CONTENT               # CC BY 4.0 — references & corpus
-├── VERSION                       # current release: v0.12.0
+├── VERSION                       # current release: v0.12.1
 ├── .mcp.json                     # Claude → deterministic Codex controller
 │
 ├── skills/religion-council/      # ▸ PORTABLE skill (Codex & any agent)
@@ -391,7 +396,7 @@ Quoted primary scriptures are public-domain source texts in their original langu
 標注為**〔據典〕**(引文+真實出處)或**〔詮釋〕**;主持人負責把真正的張力點攤開,而非強行
 調和。
 
-目前 **v0.12.0** 支援三種執行方式:
+目前 **v0.12.1** 支援三種執行方式:
 
 1. **純 Claude Code**——附 37 個專屬 agent(1 位主持人 + 36 個聲音)。
 2. **純 Codex**——可攜 Codex skill;明確要求時可用 Codex 原生 subagent。
@@ -422,6 +427,10 @@ v0.12.0 建立下一階段所需的 retriever fork：portable retriever 仍是 s
 project retriever 則以同一份 versioned retrieval envelope 與 shared conformance suite 為約束。這並未
 選定 index、vector store、RAG backend 或 edition-backed assurance；它們仍須先有 benchmark evidence。
 詳見 [ADR 0006](docs/adr/0006-retriever-fork-contract.md)。
+
+v0.12.1 定義該 benchmark 與採用門檻：候選後端必須同時勝過 lexical baseline，並保住 stable
+occurrence identity、retrieval contract、artifact lifecycle、rights 邊界與 assurance honesty。它不執行
+benchmark，也不選定後端。詳見 [Retrieval Benchmark v1](docs/benchmarks/retrieval-v1.md)。
 
 ### Strict finalization：保證邊界
 
