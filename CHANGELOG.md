@@ -12,6 +12,19 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Added
+- **ADR 0006 — retriever fork + shared contract (A2 readiness):**
+  `docs/adr/0006-retriever-fork-contract.md` retires the byte-identical `retrieve.py` invariant in
+  favor of a shared **retrieval-envelope contract** that a *portable* (stdlib-only, file-based) and a
+  *project* retriever must both pass via a conformance suite. It fixes the load-bearing split between
+  what the **retriever** emits (the `religion-council/retrieval/v1` envelope + stable-identity inputs +
+  carried provenance) and what the **adapter** mints downstream (`artifact_id` / `span` /
+  `occurrence_id`, ADR 0003/0005), so a future index/RAG backend cannot weaken B1/B2/B3/P1. Adds a
+  declared `capabilities()` block with the invariant `supports_network_acquisition ⇒
+  supports_stable_occurrence_identity`, keeps `contract_version` unchanged (it is the adapter's
+  accepted version), and forbids backend selection / edition-backed assurance / dropping the portable
+  retriever until a later benchmark ADR.
+
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
