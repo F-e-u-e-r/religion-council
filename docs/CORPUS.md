@@ -103,7 +103,7 @@ the parity test in `tests/test_retrieve.py`).
 | `provenance` | optional contractual (A1 curated) | Object: translator / edition / source-language note for a rendering. |
 | `rights` | optional contractual (A1 curated) | Per-snippet rights note (satisfies the A1 rights gate). |
 | `source_file` | implementation metadata | Absolute path; may change. Do not depend on it. |
-| `source_line` | implementation metadata | Parse position; used for stable tie-breaking only. |
+| `source_line` | implementation metadata | Parse position; seeds the file-based legacy occurrence id (`occ/v1-corpus-stable`, ADR 0005) and stable tie-breaking. Not Artifact identity. |
 
 The A1 curated fields (introduced in v0.8.0) come from an optional
 `references/presentation.json` sidecar, merged by `retrieve.py` onto a record by exact
@@ -119,10 +119,13 @@ still shows a rendering marker.
 keep. **Optional contractual** fields are additive and stable but supplementary — safe
 to use, not load-bearing for the persona contract. **Implementation metadata** is
 internal to the A0 file parser and may change without notice; downstream code must
-not depend on it. In particular, `source_file` / `source_line` are ingest hints only and
-never persistent identity: the B1 adapter mints stable Artifact/Span identity from
-immutable, content-addressed snapshots, not from live line numbers (see
-[ADR 0003](adr/0003-retrieval-evidence-adapter.md)).
+not depend on it. In particular, `source_file` / `source_line` never participate in
+**Artifact** identity — the B1 adapter mints that from immutable, content-addressed snapshots,
+not from live line numbers (see [ADR 0003](adr/0003-retrieval-evidence-adapter.md)). They DO,
+however, seed the file-based legacy **occurrence**-identity scheme (`occ/v1-corpus-stable`), so
+for a given snapshot they must stay stable; network/dynamic retrieval must not depend on them and
+mints an order-independent occurrence id instead — or fails closed (see
+[ADR 0005](adr/0005-stable-occurrence-identity.md)).
 
 `label` is an evidence-usage marker (see [ADR 0001](adr/0001-quote-admissibility-policy.md)),
 not an authority or quality score, and a present-in-record value does not by itself
@@ -243,7 +246,7 @@ envelope 的共用 contract-conformance suite 取代。見
 | `provenance` | 可選契約(A1 curated) | 物件:譯者/版本/來源語言備註。 |
 | `rights` | 可選契約(A1 curated) | 每片段的權利備註(滿足 A1 rights gate)。 |
 | `source_file` | 實作 metadata | 絕對路徑,可能變動,不應依賴。 |
-| `source_line` | 實作 metadata | 解析位置,僅用於穩定排序。 |
+| `source_line` | 實作 metadata | 解析位置;為檔案式 legacy occurrence id(`occ/v1-corpus-stable`,ADR 0005)的輸入並用於穩定排序;非 Artifact identity。 |
 
 A1 curated 欄位(v0.8.0 引入)來自選用的 `references/presentation.json` sidecar,由
 `retrieve.py` 依精確 `(tradition, work, locator)` merge;為附加性質:檔案缺漏、無法解析或
@@ -254,9 +257,12 @@ span 驗證,renderer 仍顯示釋義標記。
 
 **契約**欄位是每個 persona 與未來檢索器都必須守住的穩定介面;**可選契約**欄位為附加且穩定的
 補充欄位,可用但非 persona 契約的承重點;**實作 metadata** 屬 A0 階段檔案解析器的內部細節,
-可能隨時變動,下游不得依賴。尤其 `source_file` / `source_line` 只是 ingest hint,絕非永久
-identity:B1 adapter 由不可變、content-addressed 的 snapshot 鑄造穩定 Artifact/Span identity,
-而非依賴 live 行號(見 [ADR 0003](adr/0003-retrieval-evidence-adapter.md))。
+可能隨時變動,下游不得依賴。尤其 `source_file` / `source_line` 不參與 **Artifact** identity
+——B1 adapter 由不可變、content-addressed 的 snapshot 鑄造,而非依賴 live 行號(見
+[ADR 0003](adr/0003-retrieval-evidence-adapter.md));但它們確實是檔案式 legacy **occurrence**
+identity scheme(`occ/v1-corpus-stable`)的輸入,故對同一 snapshot 須維持穩定。網路/動態檢索
+不得依賴它們,改鑄造與順序無關的 occurrence id,否則 fail closed(見
+[ADR 0005](adr/0005-stable-occurrence-identity.md))。
 
 `label` 是證據使用標記(見 [ADR 0001](adr/0001-quote-admissibility-policy.md)),不是權威
 或品質分數;欄位中有值本身並不使該用語成為可引用。

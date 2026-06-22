@@ -1,5 +1,5 @@
 {
-  "_note": "A1 curated presentation/provenance/rights sidecar (optional, additive). retrieve.py merges these per-record presentation dimensions onto matching records by (work, locator). representation_kind / rendering_mode are curator-declared, carried-not-trusted metadata (ADR 0003 §2): downstream still span-verifies (B2) and presents renderings with a marker (B3/renderer). Absent/unparseable/structurally-invalid -> no curation; a wrong-typed value is dropped at merge (enum-membership is checked in the test suite). Only entries already marked as renderings in the reference prose are curated here; do not infer values.",
+  "_note": "A1 curated presentation/provenance/rights sidecar (optional, additive). retrieve.py merges these per-record fields onto matching records by (tradition, work, locator). representation_kind / rendering_mode are curator-declared, carried-not-trusted metadata (ADR 0003 §2): downstream still span-verifies (B2) and presents renderings with a marker (B3/renderer). Absent/unparseable/structurally-invalid -> no curation; a wrong-typed value is dropped at merge (enum-membership is checked in the test suite). rights/provenance carry the per-snippet rights review the corpus requires; the public-domain basis is asserted by age/publication date and was NOT independently audited per edition/jurisdiction (review: not-independently-audited) — confirm before redistribution. Modern translations (e.g. 馬堅 Qur'an) and newly generated renderings (e.g. Sanskrit->Chinese) are marked as renderings and never presented as published quotations.",
   "islam": [
     {
       "work": "古蘭經",
@@ -36,6 +36,217 @@
         "note": "Chinese rendering per 馬堅 translation; the Qur'an canon is Arabic. Confirm edition/script before relying on verbatim fidelity."
       },
       "rights": "Short excerpt of a 20th-century published Chinese translation (馬堅). Modern translations are typically in copyright; confirm licensing before redistribution (see DISCLAIMER.md)."
+    },
+    {
+      "work": "古蘭經",
+      "locator": "1:1(開端章)",
+      "representation_kind": "published-translation",
+      "rendering_mode": "meaning-rendering",
+      "provenance": {
+        "translator": "馬堅",
+        "source_language": "ar",
+        "note": "Chinese rendering per 馬堅 translation; the Qur'an canon is Arabic. Confirm edition/script before relying on verbatim fidelity."
+      },
+      "rights": "Short excerpt of a 20th-century published Chinese translation (馬堅). Modern translations are typically in copyright; confirm licensing before redistribution (see DISCLAIMER.md)."
+    },
+    {
+      "work": "古蘭經",
+      "locator": "2:256",
+      "representation_kind": "published-translation",
+      "rendering_mode": "meaning-rendering",
+      "provenance": {
+        "translator": "馬堅",
+        "source_language": "ar",
+        "note": "Chinese rendering per 馬堅 translation; the Qur'an canon is Arabic. Confirm edition/script before relying on verbatim fidelity."
+      },
+      "rights": "Short excerpt of a 20th-century published Chinese translation (馬堅). Modern translations are typically in copyright; confirm licensing before redistribution (see DISCLAIMER.md)."
+    }
+  ],
+  "hinduism": [
+    {
+      "work": "廣林奧義書",
+      "locator": "1.4.10",
+      "representation_kind": "generated-rendering",
+      "rendering_mode": "meaning-rendering",
+      "provenance": {
+        "source_language": "sa",
+        "basis": "public-domain-original (ancient Sanskrit)",
+        "review": "not-independently-audited",
+        "note": "Chinese meaning-rendering of a public-domain Sanskrit original (Bṛhadāraṇyaka Upaniṣad 1.4.10, the mahāvākya 'aham brahmāsmi'); not a published edition. Confirm against a scholarly edition before relying on verbatim fidelity."
+      },
+      "rights": "Underlying Sanskrit original is public domain by age; the Chinese is a generated meaning-rendering (not a published edition) and must not be presented as a published quotation. Per-edition/jurisdiction status not independently audited; confirm against a scholarly edition before redistribution."
+    },
+    {
+      "work": "薄伽梵歌",
+      "locator": "2:48",
+      "representation_kind": "generated-rendering",
+      "rendering_mode": "meaning-rendering",
+      "provenance": {
+        "source_language": "sa",
+        "basis": "public-domain-original (ancient Sanskrit)",
+        "review": "not-independently-audited",
+        "note": "Chinese meaning-rendering of a public-domain Sanskrit original (Bhagavad Gītā 2.48, 'yoga-sthaḥ kuru karmāṇi'); not a published edition. Confirm against a scholarly edition."
+      },
+      "rights": "Underlying Sanskrit original is public domain by age; the Chinese is a generated meaning-rendering (not a published edition) and must not be presented as a published quotation. Per-edition/jurisdiction status not independently audited; confirm against a scholarly edition before redistribution."
+    },
+    {
+      "work": "薄伽梵歌",
+      "locator": "4:7",
+      "representation_kind": "generated-rendering",
+      "rendering_mode": "meaning-rendering",
+      "provenance": {
+        "source_language": "sa",
+        "basis": "public-domain-original (ancient Sanskrit)",
+        "review": "not-independently-audited",
+        "note": "Chinese meaning-rendering of a public-domain Sanskrit original (Bhagavad Gītā 4.7, 'yadā yadā hi dharmasya'); not a published edition. Confirm against a scholarly edition."
+      },
+      "rights": "Underlying Sanskrit original is public domain by age; the Chinese is a generated meaning-rendering (not a published edition) and must not be presented as a published quotation. Per-edition/jurisdiction status not independently audited; confirm against a scholarly edition before redistribution."
+    }
+  ],
+  "christianity": [
+    {
+      "work": "約翰福音",
+      "locator": "1:1",
+      "provenance": {
+        "translator": "和合本 (Chinese Union Version)",
+        "year": "1919",
+        "source_language": "el, he",
+        "basis": "public-domain-by-publication-date",
+        "review": "not-independently-audited"
+      },
+      "rights": "《和合本》(Chinese Union Version, 1919); understood to be public domain by publication date in most jurisdictions. Per-jurisdiction status not independently audited; confirm before redistribution (see DISCLAIMER.md)."
+    },
+    {
+      "work": "希伯來書",
+      "locator": "11:1",
+      "provenance": {
+        "translator": "和合本 (Chinese Union Version)",
+        "year": "1919",
+        "source_language": "el, he",
+        "basis": "public-domain-by-publication-date",
+        "review": "not-independently-audited"
+      },
+      "rights": "《和合本》(Chinese Union Version, 1919); understood to be public domain by publication date in most jurisdictions. Per-jurisdiction status not independently audited; confirm before redistribution (see DISCLAIMER.md)."
+    }
+  ],
+  "buddhism": [
+    {
+      "work": "雜阿含經",
+      "locator": "(緣起法)",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern Chinese canon)",
+        "review": "not-independently-audited"
+      },
+      "rights": "Pre-modern Chinese Buddhist-canon text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
+    },
+    {
+      "work": "法句經",
+      "locator": "183",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern Chinese canon)",
+        "review": "not-independently-audited"
+      },
+      "rights": "Pre-modern Chinese Buddhist-canon text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
+    }
+  ],
+  "taoism": [
+    {
+      "work": "道德經",
+      "locator": "48",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern classical Chinese)",
+        "review": "not-independently-audited"
+      },
+      "rights": "Pre-modern classical Chinese text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
+    },
+    {
+      "work": "道德經",
+      "locator": "58",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern classical Chinese)",
+        "review": "not-independently-audited"
+      },
+      "rights": "Pre-modern classical Chinese text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
+    }
+  ],
+  "confucianism": [
+    {
+      "work": "論語",
+      "locator": "為政",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern classical Chinese)",
+        "review": "not-independently-audited"
+      },
+      "rights": "Pre-modern classical Chinese text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
+    },
+    {
+      "work": "論語",
+      "locator": "里仁",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern classical Chinese)",
+        "review": "not-independently-audited"
+      },
+      "rights": "Pre-modern classical Chinese text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
+    }
+  ],
+  "legalism": [
+    {
+      "work": "韓非子",
+      "locator": "有度",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern classical Chinese)",
+        "review": "not-independently-audited"
+      },
+      "rights": "Pre-modern classical Chinese text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
+    },
+    {
+      "work": "韓非子",
+      "locator": "五蠹",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern classical Chinese)",
+        "review": "not-independently-audited"
+      },
+      "rights": "Pre-modern classical Chinese text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
+    },
+    {
+      "work": "韓非子",
+      "locator": "難三",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern classical Chinese)",
+        "review": "not-independently-audited"
+      },
+      "rights": "Pre-modern classical Chinese text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
+    }
+  ],
+  "mohism": [
+    {
+      "work": "墨子",
+      "locator": "尚賢上",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern classical Chinese)",
+        "review": "not-independently-audited"
+      },
+      "rights": "Pre-modern classical Chinese text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
+    },
+    {
+      "work": "墨子",
+      "locator": "非樂上",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern classical Chinese)",
+        "review": "not-independently-audited"
+      },
+      "rights": "Pre-modern classical Chinese text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
     }
   ]
 }
