@@ -12,6 +12,13 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Changed
+- Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
+  `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
+  deprecation window.
+
+## [v0.12.0] — 2026-06-23 · Retriever Contract Fork & A2 Readiness
+
 ### Added
 - **ADR 0006 — retriever fork + shared contract (A2 readiness):**
   `docs/adr/0006-retriever-fork-contract.md` retires the byte-identical `retrieve.py` invariant in
@@ -49,9 +56,6 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   now guaranteed by the contract suite, and a new test asserts the project retriever shares the
   contract (not bytes). README and `docs/CORPUS.md` parity language updated (EN + ZH) to point at
   the conformance suite and ADR 0006.
-- Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
-  `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
-  deprecation window.
 
 ## [v0.11.0] — 2026-06-22 · Stable Evidence Identity & Corpus Baseline
 
