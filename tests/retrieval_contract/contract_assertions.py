@@ -33,6 +33,15 @@ from evidence_snapshot import EvidenceStore, canonical_bytes  # noqa: E402
 
 CONTRACT_VERSION = "religion-council/retrieval/v1"
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
+PORTABLE_RETRIEVER = ROOT / "skills" / "religion-council" / "scripts" / "retrieve.py"
+
+
+def load_module_from_path(name, path):
+    """Import a Python module by file path (used to load retrievers that are not installed)."""
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 # Required record fields a conforming envelope must carry (ADR 0006 §2 / docs/CORPUS.md).
 REQUIRED_RECORD_FIELDS = (

@@ -34,6 +34,13 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   behavior). The portable retriever gains an additive `capabilities()` function and `--capabilities`
   CLI (both distribution copies stay byte-identical); existing `retrieve()` / `retrieve_envelope()`
   behavior is unchanged.
+- **Project retriever entry point (`orchestrator/project_retrieve.py`):** the project-side retriever
+  the orchestrated council uses, still file-based — a thin wrapper over the portable retriever that
+  emits the same `religion-council/retrieval/v1` envelope and stable-identity inputs, reports
+  `retriever_kind=project-file`, and passes the same contract suite (plus an explicit
+  semantic-equivalence check against the portable retriever). It MAY later grow a local index / RAG
+  client, changing only its internals and `retriever_kind`, never the contract or the downstream
+  B1/B2/B3/P1 guarantees. No index/RAG/network backend is selected.
 
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
