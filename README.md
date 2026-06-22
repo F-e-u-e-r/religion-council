@@ -8,7 +8,7 @@
 ![code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)
 ![content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)
 ![runs on: Codex · Claude Code · any agent](https://img.shields.io/badge/runs%20on-Codex%20·%20Claude%20Code%20·%20any%20agent-green.svg)
-![version: v0.11.0](https://img.shields.io/badge/version-v0.11.0-orange.svg)
+![version: v0.12.0](https://img.shields.io/badge/version-v0.12.0-orange.svg)
 
 **English** · [繁體中文](#繁體中文)
 
@@ -25,7 +25,7 @@ argue from **its own texts**. Every claim is tagged as either a **[Text]** quota
 (with a real locator) or an **[Interpretation]**, and the moderator surfaces the
 genuine tensions instead of forcing agreement.
 
-Version **v0.11.0** supports three execution modes:
+Version **v0.12.0** supports three execution modes:
 
 1. **Claude Code only** — 37 specialized Claude agents (1 moderator + 36 voices).
 2. **Codex only** — a portable Codex skill, with native Codex subagents when requested.
@@ -60,6 +60,12 @@ and the [v0.9.0 changelog](CHANGELOG.md#v090--2026-06-21--strict-finalization--t
 v0.11.0 adds stable occurrence identity and a rights-scoped corpus baseline as **A2/A3
 readiness only**. It does not add an index, vector store, or RAG backend; that work remains gated
 on the retriever-fork contract and benchmark decisions.
+
+v0.12.0 establishes the retriever fork for that next stage: the portable retriever remains
+stdlib-only and file-based, while the project retriever has the same versioned retrieval envelope
+and shared conformance suite. It does not select an index, vector store, RAG backend, or
+edition-backed assurance; those remain gated on benchmark evidence. See
+[ADR 0006](docs/adr/0006-retriever-fork-contract.md).
 
 ### Strict finalization: the guarantee boundary
 
@@ -237,7 +243,7 @@ religion/
 ├── DISCLAIMER.md                 # sourcing rules + religious-sensitivity statement
 ├── LICENSE                       # MIT — skill logic, agents, scripts, config
 ├── LICENSE-CONTENT               # CC BY 4.0 — references & corpus
-├── VERSION                       # current release: v0.11.0
+├── VERSION                       # current release: v0.12.0
 ├── .mcp.json                     # Claude → deterministic Codex controller
 │
 ├── skills/religion-council/      # ▸ PORTABLE skill (Codex & any agent)
@@ -328,8 +334,10 @@ retrieve_envelope() → RetrievalEvidenceAdapterV1 → Artifact + Span → Claim
 instruction-enforced — the demo anyone can clone and run. The project-integrated
 **`.claude/` + `orchestrator/` + retrieval service** grows the full corpus, structured
 protocol, validator, and hybrid fail-closed enforcement. Both share the core policy, not
-dependencies or enforcement guarantees. Byte-parity of the two `retrieve.py` copies is an
-A0–A1 invariant; A2 forks them and replaces parity with a shared contract-conformance suite.
+dependencies or enforcement guarantees. The portable and project retrievers are now intentionally
+forked ([ADR 0006](docs/adr/0006-retriever-fork-contract.md)): they share one **retrieval-envelope
+contract**, proven by a conformance suite (`tests/retrieval_contract/`) rather than by byte-parity.
+Byte-parity is kept only as a narrow same-artifact check between the two portable `retrieve.py` copies.
 
 **Rights gate (tiered).** A1 requires excerpt-level provenance + a rights note per snippet;
 A2 requires full operational redistribution clearance (`redistributable = true`,
@@ -383,7 +391,7 @@ Quoted primary scriptures are public-domain source texts in their original langu
 標注為**〔據典〕**(引文+真實出處)或**〔詮釋〕**;主持人負責把真正的張力點攤開,而非強行
 調和。
 
-目前 **v0.11.0** 支援三種執行方式:
+目前 **v0.12.0** 支援三種執行方式:
 
 1. **純 Claude Code**——附 37 個專屬 agent(1 位主持人 + 36 個聲音)。
 2. **純 Codex**——可攜 Codex skill;明確要求時可用 Codex 原生 subagent。
@@ -409,6 +417,11 @@ structured → verify → fail-closed 圖與 evidence envelope，並把 finaliza
 
 v0.11.0 新增 stable occurrence identity 與附權利範圍說明的語料基線,僅為 **A2/A3 readiness**;並未
 加入 index、vector store 或 RAG backend。後續工作仍受 retriever-fork contract 與 benchmark 決策把關。
+
+v0.12.0 建立下一階段所需的 retriever fork：portable retriever 仍是 stdlib-only、file-based；
+project retriever 則以同一份 versioned retrieval envelope 與 shared conformance suite 為約束。這並未
+選定 index、vector store、RAG backend 或 edition-backed assurance；它們仍須先有 benchmark evidence。
+詳見 [ADR 0006](docs/adr/0006-retriever-fork-contract.md)。
 
 ### Strict finalization：保證邊界
 
@@ -556,8 +569,10 @@ retrieve_envelope() → RetrievalEvidenceAdapterV1 → Artifact + Span → Claim
 
 **發行分工。** 可攜的 **`skills/`** 維持片段式、檔案式、instruction-enforced——人人 clone 後即可跑
 的 demo。專案整合版 **`.claude/` + `orchestrator/` + 檢索服務**則養成完整語料、結構化 protocol、
-validator 與混合 fail-closed 強制力。兩者共用核心政策,但不共用依賴或強制力保證。兩份
-`retrieve.py` 的位元組 parity 是 A0–A1 invariant;A2 分叉時改以共用的 contract-conformance suite 取代。
+validator 與混合 fail-closed 強制力。兩者共用核心政策,但不共用依賴或強制力保證。可攜版與專案版檢索器
+現已依 [ADR 0006](docs/adr/0006-retriever-fork-contract.md) 正式分叉:兩者共用同一份**檢索 envelope 契約**
+(由 `tests/retrieval_contract/` 的 conformance suite 保證),而非位元組 parity;位元組 parity 僅保留為
+兩份可攜 `retrieve.py` 副本之間的窄同源檢查。
 
 **Rights gate(分層)。** A1 要求每個片段具 excerpt 層 provenance + rights note;A2 要求完整的
 operational redistribution clearance(`redistributable = true`、jurisdiction notes、review record),

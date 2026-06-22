@@ -17,6 +17,46 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
   deprecation window.
 
+## [v0.12.0] — 2026-06-23 · Retriever Contract Fork & A2 Readiness
+
+### Added
+- **ADR 0006 — retriever fork + shared contract (A2 readiness):**
+  `docs/adr/0006-retriever-fork-contract.md` retires the byte-identical `retrieve.py` invariant in
+  favor of a shared **retrieval-envelope contract** that a *portable* (stdlib-only, file-based) and a
+  *project* retriever must both pass via a conformance suite. It fixes the load-bearing split between
+  what the **retriever** emits (the `religion-council/retrieval/v1` envelope + stable-identity inputs +
+  carried provenance) and what the **adapter** mints downstream (`artifact_id` / `span` /
+  `occurrence_id`, ADR 0003/0005), so a future index/RAG backend cannot weaken B1/B2/B3/P1. Adds a
+  declared `capabilities()` block with the invariant `supports_network_acquisition ⇒
+  supports_stable_occurrence_identity`, keeps `contract_version` unchanged (it is the adapter's
+  accepted version), and forbids backend selection / edition-backed assurance / dropping the portable
+  retriever until a later benchmark ADR.
+- **Shared contract-conformance suite (`tests/retrieval_contract/`):** a single battery
+  (`contract_assertions.py`) run against a retriever exercises the retriever-level contract over the
+  live curated corpus (envelope shape + `contract_version`, required fields, NFC/LF-canonical text,
+  capability metadata, determinism, provenance/rights preservation, stdlib-only imports) and the
+  identity-level contract over six fixtures fed through the real B1 adapter (deterministic ids,
+  duplicate-text distinctness vs. correct same-locator collapse, NFC/NFD + CRLF/LF identity
+  stability, fail-closed on underspecified dynamic acquisition, empty-envelope and malformed-record
+  behavior). The portable retriever gains an additive `capabilities()` function and `--capabilities`
+  CLI (both distribution copies stay byte-identical); existing `retrieve()` / `retrieve_envelope()`
+  behavior is unchanged.
+- **Project retriever entry point (`orchestrator/project_retrieve.py`):** the project-side retriever
+  the orchestrated council uses, still file-based — a thin wrapper over the portable retriever that
+  emits the same `religion-council/retrieval/v1` envelope and stable-identity inputs, reports
+  `retriever_kind=project-file`, and passes the same contract suite (plus an explicit
+  semantic-equivalence check against the portable retriever). It MAY later grow a local index / RAG
+  client, changing only its internals and `retriever_kind`, never the contract or the downstream
+  B1/B2/B3/P1 guarantees. No index/RAG/network backend is selected.
+
+### Changed
+- **Byte-parity retired as the cross-implementation retriever gate (ADR 0006 phase 4):**
+  `tests/test_retrieve.py`'s parity test is reframed as a **narrow same-artifact** check between the
+  two *portable* `retrieve.py` copies only; cross-implementation consistency (portable ↔ project) is
+  now guaranteed by the contract suite, and a new test asserts the project retriever shares the
+  contract (not bytes). README and `docs/CORPUS.md` parity language updated (EN + ZH) to point at
+  the conformance suite and ADR 0006.
+
 ## [v0.11.0] — 2026-06-22 · Stable Evidence Identity & Corpus Baseline
 
 ### Added

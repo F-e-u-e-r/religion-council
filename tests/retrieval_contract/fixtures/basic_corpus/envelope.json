@@ -1,0 +1,43 @@
+{
+  "contract_version": "religion-council/retrieval/v1",
+  "records": [
+    {
+      "text": "道可道,非常道",
+      "tradition": "taoism",
+      "school": "道家/道教",
+      "work": "道德經",
+      "locator": "1",
+      "language": "zh-Hant",
+      "version": "通行本",
+      "category": "宗教經典",
+      "label": "Text",
+      "evidence_type": "quotation",
+      "verbatim": true,
+      "topic": "道",
+      "source_file": "/corpus/05-道教.md",
+      "source_line": 3
+    },
+    {
+      "text": "上善若水",
+      "tradition": "taoism",
+      "school": "道家/道教",
+      "work": "道德經",
+      "locator": "8",
+      "language": "zh-Hant",
+      "version": "通行本",
+      "category": "宗教經典",
+      "label": "Text",
+      "evidence_type": "quotation",
+      "verbatim": true,
+      "topic": "水",
+      "source_file": "/corpus/05-道教.md",
+      "source_line": 7,
+      "representation_kind": "original-text",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern classical Chinese)"
+      },
+      "rights": "Pre-modern classical Chinese text; understood public domain by age. Confirm before redistribution."
+    }
+  ]
+}

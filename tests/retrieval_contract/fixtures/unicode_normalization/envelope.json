@@ -1,0 +1,31 @@
+{
+  "contract_version": "religion-council/retrieval/v1",
+  "records": [
+    {
+      "text": "café\nsecond line",
+      "tradition": "christianity",
+      "school": "基督宗教",
+      "work": "TestWork",
+      "locator": "1:1",
+      "language": "und",
+      "version": "fixture",
+      "category": "宗教經典",
+      "label": "Text",
+      "source_file": "/corpus/fixture.md",
+      "source_line": 1
+    },
+    {
+      "text": "café\r\nsecond line",
+      "tradition": "christianity",
+      "school": "基督宗教",
+      "work": "TestWork",
+      "locator": "1:1",
+      "language": "und",
+      "version": "fixture",
+      "category": "宗教經典",
+      "label": "Text",
+      "source_file": "/corpus/fixture.md",
+      "source_line": 1
+    }
+  ]
+}

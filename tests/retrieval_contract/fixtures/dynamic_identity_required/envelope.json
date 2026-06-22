@@ -1,0 +1,17 @@
+{
+  "contract_version": "religion-council/retrieval/v1",
+  "records": [
+    {
+      "text": "某段以動態方式取得、缺乏穩定定位的經文",
+      "language": "zh-Hant",
+      "evidence_type": "quotation",
+      "verbatim": true
+    },
+    {
+      "text": "另一段沒有 work / locator / record_key 的動態文字",
+      "language": "zh-Hant",
+      "evidence_type": "quotation",
+      "verbatim": true
+    }
+  ]
+}

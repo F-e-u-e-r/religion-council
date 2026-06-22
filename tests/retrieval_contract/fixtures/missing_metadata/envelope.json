@@ -1,0 +1,35 @@
+{
+  "contract_version": "religion-council/retrieval/v1",
+  "records": [
+    {
+      "text": "兼相愛,交相利",
+      "tradition": "mohism",
+      "school": "墨家",
+      "work": "墨子",
+      "locator": "兼愛上",
+      "language": "zh-Hant",
+      "version": "通行本",
+      "category": "哲學思想著作",
+      "label": "Text",
+      "evidence_type": "quotation",
+      "verbatim": true,
+      "source_file": "/corpus/08-墨家.md",
+      "source_line": 2
+    },
+    {
+      "text": "尚賢者,政之本也",
+      "tradition": "mohism",
+      "school": "墨家",
+      "work": "墨子",
+      "locator": "尚賢上",
+      "language": "zh-Hant",
+      "version": "通行本",
+      "category": "哲學思想著作",
+      "label": "Text",
+      "evidence_type": "quotation",
+      "verbatim": true,
+      "source_file": "/corpus/08-墨家.md",
+      "source_line": 6
+    }
+  ]
+}
