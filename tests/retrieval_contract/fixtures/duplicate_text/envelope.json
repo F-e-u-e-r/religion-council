@@ -1,0 +1,53 @@
+{
+  "contract_version": "religion-council/retrieval/v1",
+  "records": [
+    {
+      "text": "克己復禮為仁",
+      "tradition": "confucianism",
+      "school": "儒家",
+      "work": "論語",
+      "locator": "顏淵",
+      "language": "zh-Hant",
+      "version": "通行本",
+      "category": "哲學思想著作",
+      "label": "Text",
+      "evidence_type": "quotation",
+      "verbatim": true,
+      "topic": "仁與禮",
+      "source_file": "/corpus/07-儒家.md",
+      "source_line": 5
+    },
+    {
+      "text": "克己復禮為仁",
+      "tradition": "confucianism",
+      "school": "儒家",
+      "work": "論語",
+      "locator": "里仁",
+      "language": "zh-Hant",
+      "version": "通行本",
+      "category": "哲學思想著作",
+      "label": "Text",
+      "evidence_type": "quotation",
+      "verbatim": true,
+      "topic": "仁與禮",
+      "source_file": "/corpus/07-儒家.md",
+      "source_line": 9
+    },
+    {
+      "text": "克己復禮為仁",
+      "tradition": "confucianism",
+      "school": "儒家",
+      "work": "論語",
+      "locator": "顏淵",
+      "language": "zh-Hant",
+      "version": "通行本",
+      "category": "哲學思想著作",
+      "label": "Text",
+      "evidence_type": "quotation",
+      "verbatim": true,
+      "topic": "仁與禮",
+      "source_file": "/corpus/07-儒家.md",
+      "source_line": 5
+    }
+  ]
+}

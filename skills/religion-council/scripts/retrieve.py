@@ -17,6 +17,13 @@ from pathlib import Path
 # "version" field (which is the source edition, e.g. "通行本").
 RETRIEVAL_CONTRACT_VERSION = "religion-council/retrieval/v1"
 
+# Backend capability metadata (ADR 0006 §3). This portable retriever is file-based and
+# standard-library only: it acquires no bytes over the network and emits stable file-based
+# occurrence-identity inputs (source_file + source_line) on every record, so it reports stable
+# identity and NO network acquisition. The "project" retriever may later report a richer kind
+# (project-index / project-service) without changing RETRIEVAL_CONTRACT_VERSION.
+RETRIEVER_KIND = "portable-file"
+
 TRADITIONS = {
     "christianity": {
         "file": "01-基督宗教.md",
@@ -239,12 +246,39 @@ def retrieve_envelope(tradition, query, k=5):
     }
 
 
+def capabilities():
+    """Declared backend capability metadata (ADR 0006 §3); checkable without retrieving.
+
+    The portable retriever is file-based and stdlib-only, so it supports stable occurrence
+    identity (corpus-stable inputs on every record) and does NOT acquire bytes over the network.
+    The invariant ``supports_network_acquisition`` implies ``supports_stable_occurrence_identity``
+    holds trivially here (False implies anything). ``contract_version`` mirrors the envelope's.
+    """
+    return {
+        "retriever_kind": RETRIEVER_KIND,
+        "contract_version": RETRIEVAL_CONTRACT_VERSION,
+        "supports_stable_occurrence_identity": True,
+        "supports_network_acquisition": False,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description="Religion Council lexical retrieval")
-    parser.add_argument("--tradition", required=True, choices=sorted(TRADITIONS))
-    parser.add_argument("--query", required=True)
+    parser.add_argument("--tradition", choices=sorted(TRADITIONS))
+    parser.add_argument("--query")
     parser.add_argument("--k", type=int, default=5)
+    parser.add_argument(
+        "--capabilities",
+        action="store_true",
+        help="Print this retriever's capability metadata (ADR 0006) and exit.",
+    )
     args = parser.parse_args()
+    if args.capabilities:
+        json.dump(capabilities(), sys.stdout, ensure_ascii=False, indent=2)
+        sys.stdout.write("\n")
+        return
+    if not args.tradition or args.query is None:
+        parser.error("--tradition and --query are required (or pass --capabilities)")
     try:
         result = retrieve(args.tradition, args.query, args.k)
     except ValueError as exc:

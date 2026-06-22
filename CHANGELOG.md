@@ -24,6 +24,16 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   supports_stable_occurrence_identity`, keeps `contract_version` unchanged (it is the adapter's
   accepted version), and forbids backend selection / edition-backed assurance / dropping the portable
   retriever until a later benchmark ADR.
+- **Shared contract-conformance suite (`tests/retrieval_contract/`):** a single battery
+  (`contract_assertions.py`) run against a retriever exercises the retriever-level contract over the
+  live curated corpus (envelope shape + `contract_version`, required fields, NFC/LF-canonical text,
+  capability metadata, determinism, provenance/rights preservation, stdlib-only imports) and the
+  identity-level contract over six fixtures fed through the real B1 adapter (deterministic ids,
+  duplicate-text distinctness vs. correct same-locator collapse, NFC/NFD + CRLF/LF identity
+  stability, fail-closed on underspecified dynamic acquisition, empty-envelope and malformed-record
+  behavior). The portable retriever gains an additive `capabilities()` function and `--capabilities`
+  CLI (both distribution copies stay byte-identical); existing `retrieve()` / `retrieve_envelope()`
+  behavior is unchanged.
 
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
