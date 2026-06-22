@@ -1,0 +1,172 @@
+# Retrieval Benchmark v1 — the gate before a backend is chosen
+
+- Status: **Defined, not yet run.** No backend is selected by this document.
+- Owner stage: the **A2→A3** decision gate ([ADR 0002](../adr/0002-roadmap-stage-nomenclature.md) §1):
+  whether to move retrieval beyond today's file-based lexical ranking to a local index, a hybrid, or
+  a dense/vector backend — and, separately, to a networked RAG service.
+- Relationship: this is the benchmark [ADR 0006](../adr/0006-retriever-fork-contract.md) §6 and its
+  migration phase 5 defer to. ADR 0006 fixed the **contract** (one retrieval envelope, two
+  retrievers, stable identity minted downstream); this document fixes the **evidence bar** a backend
+  must clear before the project retriever may adopt it. The two are deliberately separate: the
+  contract must exist before the benchmark, and the benchmark must exist before a backend.
+
+## Why this gate exists
+
+The roadmap has always said retrieval *may* grow from file-based lexical ranking to a local index or
+a vector store "without touching the personas." That freedom is real only if the project refuses to
+adopt a heavier backend on intuition. Dense retrieval is not automatically better than lexical
+retrieval — especially on a small, multilingual, classical-Chinese corpus where exact-term and
+locator matching already do most of the work — and it is strictly more expensive, more dependency-
+heavy, and harder to make reproducible. Adopting it without measured justification would trade the
+project's portability and determinism for an unproven quality gain.
+
+So: **no local index, hybrid ranker, dense/vector backend, or RAG service is justified until a
+candidate beats the lexical baseline on this benchmark *and* preserves every hard constraint below.**
+If no candidate clears the bar, the file-based lexical retriever stays — that is an acceptable,
+expected outcome, not a failure of the benchmark.
+
+## What the benchmark must decide
+
+For the **project** retriever (`orchestrator/project_retrieve.py`), rank these candidate families and
+decide which, if any, is justified:
+
+1. **Lexical baseline** — today's deterministic file parse + lexical scoring (the incumbent; the bar).
+2. **Local lexical index** — the same lexical signal behind a built index (e.g. an inverted index /
+   BM25-style ranker) for scale, still offline and in-repo.
+3. **Hybrid** — lexical signal fused with a dense signal.
+4. **Dense / vector** — embedding-based semantic retrieval.
+
+A separate, later question — putting the chosen index *behind a network service* (A3) — is **out of
+scope here**; it is gated on this benchmark plus an operational/rights review, not decided by it.
+
+## Hard constraints (a candidate that violates any is disqualified regardless of score)
+
+Retrieval quality is **necessary but not sufficient.** A candidate must also preserve the contracts
+the enforcement axis depends on:
+
+1. **Envelope contract ([ADR 0006](../adr/0006-retriever-fork-contract.md)).** Output the same
+   `religion-council/retrieval/v1` envelope and required record fields. A backend change is an
+   internals change, never a contract change. Must pass `tests/retrieval_contract/`.
+2. **Stable occurrence identity ([ADR 0005](../adr/0005-stable-occurrence-identity.md)).** A reorderable
+   or dynamically-acquired backend must still supply stable-identity inputs (`record_key`, or
+   `work`+`locator`, or `source_file`+`source_line`) so the adapter mints an order-independent
+   occurrence id — or it must fail closed. A candidate whose ranking makes evidence identity
+   order-dependent is disqualified. This is measured directly (the citation-fidelity metric below),
+   not assumed.
+3. **Artifact lifecycle ([ADR 0003](../adr/0003-retrieval-evidence-adapter.md)).** Identity is the
+   content hash of canonical bytes (`UTF-8(NFC(LF(text)))`); a candidate must not require a different
+   canonicalization or hash-on-the-fly from a live file.
+4. **Portable retriever stays stdlib-only and lexical.** Any index/embedding/vector dependency lives
+   in the **project** retriever only. The portable `skills/` retriever does **not** adopt a backend
+   from this benchmark; it remains install-free, file-based, and lexical (ADR 0006 §4.4). A "win"
+   that can only be delivered by adding a dependency to the portable retriever is not adoptable.
+5. **Rights gate.** Any candidate that requires storing **full text** beyond the curated excerpts
+   triggers the A2 operational rights review (`docs/CORPUS.md` → Rights gate): rights basis,
+   jurisdiction notes, `redistributable = true`, and a review date before material enters the
+   distributable corpus. The benchmark may run over a restricted/private store, but adoption cannot
+   ship un-cleared text.
+6. **No edition-backed-assurance claim.** Beating the benchmark does not upgrade the span-assurance
+   tier. `edition-backed-span-verified` remains tied to edition provenance (A2 corpus work), not to
+   retrieval quality.
+7. **Determinism where required.** For a fixed `(corpus, query, k)` the candidate must return a
+   deterministic result (ADR 0006 §4.6); a nondeterministic ranker must be pinned (fixed seed /
+   tie-break) before it is benchmarkable.
+
+## Evaluation design
+
+### Corpus under test
+
+Two tiers, reported separately:
+
+- **Tier C0 — curated references (available now).** The records the portable retriever returns over
+  `references/` (the same set `scripts/corpus_inventory.py` inventories). Small (tens of records),
+  multilingual (`zh-Hant`, `lzh`, plus renderings), with real locators. This is what exists today and
+  is fully reproducible.
+- **Tier C1 — full-text corpus (A2, when it exists).** The chunked open scriptures of A2. The
+  benchmark is *defined* for C1 but cannot be *run* on it until that corpus + its rights clearance
+  exist. C1 results, when available, do not retroactively change a C0 decision; they are a separate
+  gate for the larger corpus.
+
+### Query set
+
+A versioned, in-repo set of information needs, each tagged with tradition(s) and need-type
+(definitional / cross-tradition-contrast / locator-lookup / thematic). It must include:
+
+- single-tradition needs that the lexical baseline already serves (guarding against regressions);
+- cross-lingual needs (a query in modern Chinese against a classical-Chinese or rendered source),
+  the case dense retrieval is most likely to help;
+- paraphrase/synonymy needs (the query shares meaning but not surface terms with the source);
+- needs with **no good answer in the corpus** (to measure false-positive / over-retrieval behavior).
+
+The query set is data, not code, and is frozen per benchmark version (`retrieval-v1`); changing it
+mints `retrieval-v2`.
+
+### Relevance judgments
+
+Graded relevance (e.g. 0/1/2) per `(query, record)` pair, with:
+
+- judgments recorded in-repo alongside the query set, with a short rationale per positive label;
+- **≥ 2 independent judges** on a sampled subset with an inter-annotator agreement figure reported
+  (judgments are subjective; the benchmark must disclose how subjective);
+- judgments keyed to **stable occurrence identity**, not list position, so they survive reordering
+  and backend changes.
+
+### Metrics
+
+Reported per candidate, per corpus tier, with the lexical baseline as the reference column:
+
+- **Retrieval quality:** Recall@k and nDCG@k for the operating `k` (and a small sweep), plus MRR for
+  locator-lookup needs.
+- **Citation fidelity (the enforcement-critical metric):** the fraction of returned, relevant records
+  that yield a **stable, reproducible occurrence id** across two runs and across a reordering of the
+  result list. A candidate below 100% here is disqualified by constraint 2 above — this metric exists
+  to make that failure visible and quantified, not negotiable.
+- **Operational cost:** index build time + size, query latency (p50/p95), dependency footprint, and
+  whether the candidate is offline. These are first-class: a marginal quality win that triples
+  latency or adds a heavy dependency is not automatically justified.
+
+### Protocol
+
+- A reproducible harness (fixed seeds, pinned candidate configs, the frozen query set + judgments)
+  that emits a single report; rerunning it on the same inputs reproduces the numbers.
+- The harness reuses the **real** envelope → adapter path for the citation-fidelity metric (it must
+  measure the actual identity the enforcement axis would persist, not a proxy).
+- Results are committed as a dated report under this directory so a future backend-selection ADR can
+  cite a specific, reproducible run.
+
+## Decision gates
+
+A candidate is **justified for adoption by the project retriever** only if **all** hold:
+
+1. it passes every hard constraint (above) — including 100% citation fidelity and the contract suite;
+2. it beats the lexical baseline by a pre-registered, meaningful margin on the **primary** metric
+   (nDCG@k on C0), not merely within noise;
+3. its operational cost is within a stated budget (offline; no portable-retriever dependency; latency
+   and footprint acceptable for the orchestrated council);
+4. if it needs full text, the C1 rights review has cleared the material it depends on.
+
+If two candidates both clear the bar, prefer the **simpler / cheaper / more portable** one (a local
+lexical index over a dense backend, a dense backend over a networked service), because the project's
+default is the least machinery that meets the need.
+
+If **no** candidate clears the bar on C0, the file-based lexical retriever remains the project
+retriever, and this document records that outcome with the run that produced it.
+
+## Non-goals
+
+- **Running the benchmark** or publishing results — this document defines it; a dated report and a
+  backend-selection ADR come later.
+- **Choosing an embedding model, a vector database, a chunking strategy, or a ranking algorithm** —
+  those are candidate-configuration details decided by the run, not pre-judged here.
+- **Designing the A3 network retrieval service or any API** — that is a separate, later gate.
+- **Changing the retrieval envelope contract, the identity schemes, or the portable retriever** — all
+  three are fixed inputs to the benchmark, not its outputs.
+
+## Honest limitations
+
+- C0 is small; absolute metric values are noisy, so the gate is a **margin over the baseline**, not an
+  absolute threshold, and the primary decision is reported with its uncertainty.
+- Relevance is subjective; the inter-annotator figure is part of the result, and a thin margin over an
+  uncertain judgment set is treated as "not justified," not "justified."
+- Offline retrieval metrics are a proxy for debate quality, not debate quality itself; a backend that
+  wins the benchmark still ships behind the same B-axis enforcement and the same assurance honesty.
