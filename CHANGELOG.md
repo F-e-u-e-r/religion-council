@@ -12,6 +12,13 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Changed
+- Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
+  `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
+  deprecation window.
+
+## [v0.11.0] — 2026-06-22 · Stable Evidence Identity & Corpus Baseline
+
 ### Added
 - **ADR 0005 — stable occurrence identity (A1):** the adapter now mints occurrence ids under three
   explicit, versioned schemes (`occ/v1-corpus-stable` / `-network-stable` / `-index-fallback`),
@@ -32,11 +39,6 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   every note defers to redistribution review. New curation tests cover per-snippet rights presence
   + honest scoping, enum validation, NFC/LF, span integrity, snapshot + occurrence-id
   reproducibility, no orphan curation, and dual-copy (portable / `.claude`) parity.
-
-### Changed
-- Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
-  `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
-  deprecation window.
 
 ## [v0.10.0] — 2026-06-22 · Safety routing, corpus inventory & assurance footer
 
