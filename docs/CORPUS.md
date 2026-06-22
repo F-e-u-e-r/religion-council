@@ -139,6 +139,11 @@ make wording quote-admissible.
 
 ### RAG ingestion notes (for A2–A3)
 
+> **Gate:** no index/hybrid/vector/RAG backend is adopted until a candidate clears the retrieval
+> benchmark in [benchmarks/retrieval-v1.md](benchmarks/retrieval-v1.md) *and* preserves the ADR 0006
+> envelope contract + ADR 0005 stable identity. The notes below are ingestion guidance for that work,
+> not a decision to do it.
+
 1. **Pin a version/translation first.** The same text in different translations diverges
    wildly; mixing them wrecks retrieval quality.
 2. **Use existing structure to chunk.** The Bible (book/chapter/verse) and Qur'an
@@ -278,6 +283,10 @@ identity scheme(`occ/v1-corpus-stable`)的輸入,故對同一 snapshot 須維持
 或品質分數;欄位中有值本身並不使該用語成為可引用。
 
 ### RAG 收錄實務(A2–A3 用)
+
+> **Gate:** 在候選後端通過 [benchmarks/retrieval-v1.md](benchmarks/retrieval-v1.md) 的檢索 benchmark
+> 並保住 ADR 0006 envelope 契約與 ADR 0005 穩定 identity 之前,不採用任何 index/hybrid/vector/RAG 後端。
+> 以下為該工作的收錄指引,而非「要做」的決定。
 
 1. **先固定版本/譯本。** 同一典籍不同譯本用語差異極大,混用會嚴重影響檢索品質。
 2. **善用既有結構切分。** 聖經(書/章/節)、古蘭經(章/節)天然適合 chunk;佛典、道藏、諸子需

@@ -1,9 +1,11 @@
 # ADR 0006 — Retriever Fork and Shared Retrieval-Contract Conformance
 
 - Status: Accepted
-- Implementation: Implemented — migration phases 1–4 below have landed (the contract suite, the
-  project retriever, and the retirement of byte-parity as the cross-implementation gate); phase 5
-  (the retrieval benchmark) is deferred to a separate ADR. This ADR is the contract of record.
+- Implementation: Implemented — migration phases 1–5 below have landed (the contract suite, the
+  project retriever, the retirement of byte-parity as the cross-implementation gate, and the
+  retrieval-benchmark **definition**,
+  [docs/benchmarks/retrieval-v1.md](../benchmarks/retrieval-v1.md)); **running** that benchmark and
+  **selecting** a backend remain deferred to a decision ADR. This ADR is the contract of record.
 - Scope: replaces the **byte-identical `retrieve.py`** invariant with a **shared retrieval-envelope
   contract** and a conformance suite that both a *portable* and a *project* retriever must pass.
   Fixes identity (ADR [0005](0005-stable-occurrence-identity.md)) and artifact lifecycle
@@ -234,8 +236,9 @@ need not change when such a backend lands — reserving the name is not building
 
 ## Migration: byte-parity → contract-conformance
 
-The swap is staged so each step is independently green. **Status: phases 1–4 are implemented; phase
-5 is deferred to a separate benchmark ADR.**
+The swap is staged so each step is independently green. **Status: phases 1–5 are implemented — phase
+5 *defines* the benchmark ([docs/benchmarks/retrieval-v1.md](../benchmarks/retrieval-v1.md)); running
+it and choosing a backend remain deferred to a decision ADR.**
 
 1. **ADR only** *(this document)* — no runtime change.
 2. **Contract fixtures + suite** — add `tests/retrieval_contract/`; the existing retriever passes
@@ -246,9 +249,11 @@ The swap is staged so each step is independently green. **Status: phases 1–4 a
    shared suite, the cross-implementation byte-parity test is replaced by contract conformance. A
    **narrow** byte-parity check is *retained* only for the two intentionally-shared portable copies
    (`skills/` ↔ `.claude/skills/`), which remain the same artifact.
-5. **Open benchmark work** *(separate ADR)* — only after the above does the project define
-   `docs/benchmarks/retrieval-v1.md`, which decides whether lexical / local-index / hybrid / vector
-   retrieval is justified. No backend is chosen here.
+5. **Open benchmark work** — only after the above does the project define the retrieval benchmark
+   ([docs/benchmarks/retrieval-v1.md](../benchmarks/retrieval-v1.md)), the gate that decides whether
+   lexical / local-index / hybrid / vector retrieval is justified. The benchmark is now **defined**;
+   **running** it and the backend-selection **decision ADR** that cites the run remain deferred, and
+   no backend is chosen here.
 
 ## Consequences
 
