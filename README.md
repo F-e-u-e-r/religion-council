@@ -8,7 +8,7 @@
 ![code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)
 ![content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)
 ![runs on: Codex · Claude Code · any agent](https://img.shields.io/badge/runs%20on-Codex%20·%20Claude%20Code%20·%20any%20agent-green.svg)
-![version: v0.10.0](https://img.shields.io/badge/version-v0.10.0-orange.svg)
+![version: v0.11.0](https://img.shields.io/badge/version-v0.11.0-orange.svg)
 
 **English** · [繁體中文](#繁體中文)
 
@@ -25,7 +25,7 @@ argue from **its own texts**. Every claim is tagged as either a **[Text]** quota
 (with a real locator) or an **[Interpretation]**, and the moderator surfaces the
 genuine tensions instead of forcing agreement.
 
-Version **v0.10.0** supports three execution modes:
+Version **v0.11.0** supports three execution modes:
 
 1. **Claude Code only** — 37 specialized Claude agents (1 moderator + 36 voices).
 2. **Codex only** — a portable Codex skill, with native Codex subagents when requested.
@@ -56,6 +56,10 @@ v0.9.0 adds the strict-finalization capstone for the hybrid controller. `profile
 requires the structured → verify → fail-closed graph and an evidence envelope, then makes
 finalization a separate, explicit step. See [ADR 0004](docs/adr/0004-renderer-trust-boundary.md)
 and the [v0.9.0 changelog](CHANGELOG.md#v090--2026-06-21--strict-finalization--traceable-authority).
+
+v0.11.0 adds stable occurrence identity and a rights-scoped corpus baseline as **A2/A3
+readiness only**. It does not add an index, vector store, or RAG backend; that work remains gated
+on the retriever-fork contract and benchmark decisions.
 
 ### Strict finalization: the guarantee boundary
 
@@ -233,7 +237,7 @@ religion/
 ├── DISCLAIMER.md                 # sourcing rules + religious-sensitivity statement
 ├── LICENSE                       # MIT — skill logic, agents, scripts, config
 ├── LICENSE-CONTENT               # CC BY 4.0 — references & corpus
-├── VERSION                       # current release: v0.10.0
+├── VERSION                       # current release: v0.11.0
 ├── .mcp.json                     # Claude → deterministic Codex controller
 │
 ├── skills/religion-council/      # ▸ PORTABLE skill (Codex & any agent)
@@ -379,7 +383,7 @@ Quoted primary scriptures are public-domain source texts in their original langu
 標注為**〔據典〕**(引文+真實出處)或**〔詮釋〕**;主持人負責把真正的張力點攤開,而非強行
 調和。
 
-目前 **v0.10.0** 支援三種執行方式:
+目前 **v0.11.0** 支援三種執行方式:
 
 1. **純 Claude Code**——附 37 個專屬 agent(1 位主持人 + 36 個聲音)。
 2. **純 Codex**——可攜 Codex skill;明確要求時可用 Codex 原生 subagent。
@@ -402,6 +406,9 @@ v0.9.0 加入混合 controller 的 strict-finalization capstone。`profile="stri
 structured → verify → fail-closed 圖與 evidence envelope，並把 finalization 設成獨立、明確的
 步驟。詳見 [ADR 0004](docs/adr/0004-renderer-trust-boundary.md) 與
 [v0.9.0 變更紀錄](CHANGELOG.md#v090--2026-06-21--strict-finalization--traceable-authority)。
+
+v0.11.0 新增 stable occurrence identity 與附權利範圍說明的語料基線,僅為 **A2/A3 readiness**;並未
+加入 index、vector store 或 RAG backend。後續工作仍受 retriever-fork contract 與 benchmark 決策把關。
 
 ### Strict finalization：保證邊界
 
