@@ -12,6 +12,40 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Added
+- **Retrieval benchmark v1 — lexical baseline measured (`scripts/run_retrieval_benchmark.py`):** the
+  first reproducible run of the [retrieval-v1](docs/benchmarks/retrieval-v1.md) benchmark against the
+  project (file-based, lexical) retriever. Adds a frozen 18-query set across 8 categories
+  (`docs/benchmarks/queries/`), graded relevance judgments keyed on the stable
+  `(tradition, work, locator)` identity (`docs/benchmarks/judgments/`), a standard-library-only,
+  offline, deterministic runner, and the committed baseline report
+  (`docs/benchmarks/results/retrieval-v1-lexical-baseline.{md,json}`). It measures retrieval
+  (Recall/Precision/nDCG@1/3/5, MRR, exact-span hit rate, no-answer correctness, false-support),
+  contract, and operational metrics. Findings: exact-lookup and character-overlapping paraphrase are
+  strong (exact-span hit 1.0, MRR 0.94, recall@5 0.94); broad thematic queries and no-answer
+  discrimination are weak (no relevance threshold, so off-corpus queries surface noise-floor false
+  positives). **Selects no backend** — backend selection stays deferred to a future decision ADR
+  comparing candidates against this baseline. CI gains `--check-fixtures`;
+  `tests/test_retrieval_benchmark.py` pins the fixtures, runner determinism, and baseline freshness.
+  - **Measured through the contract, not internals.** Candidates are acquired via the retriever's
+    per-tradition `retrieve_envelope()` (ADR 0006 §2) and fed — as the **real** envelope, carrying
+    the retriever's own `contract_version` — through the **real** B1 adapter, so the contract metrics
+    measure what the contract emits (every retrieved record mints a stable `occ/v1-corpus-stable` id;
+    required envelope fields; deterministic repeat), not a hand-built parse. The harness is the
+    **lexical baseline** and refuses any non-`*-file` `retriever_kind`, so a future index/hybrid/
+    dense/service backend (which satisfies the contract but has no comparable `score()`) is measured
+    by the deferred backend-selection harness rather than silently mismeasured here.
+  - **Citation fidelity is measured, not assumed:** the occurrence id of every returned+relevant
+    record is compared across two adapter runs **and** a reordering of the result list (1.0 on the
+    baseline; a backend that made identity order-dependent would score below 1.0 and be disqualified).
+  - **Concrete span-assurance status** (no tier minted at retrieval; the artifact-backed
+    `source_assurance` floor is; edition-backed explicitly false) replaces the prior prose note.
+  - **Judging provenance disclosed** (`judgments/…json` → `judging`, surfaced in every report): the
+    baseline is a single-curator pass (`independent_judge_count: 1`, IAA `n/a` — disclosed, not
+    fabricated); ≥2 independent judges + an inter-annotator-agreement (κ) figure are scoped to the
+    deferred decision gate where a candidate is compared against the baseline.
+  - CLI rejects non-positive `--k` (no more `ZeroDivisionError`).
+
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a

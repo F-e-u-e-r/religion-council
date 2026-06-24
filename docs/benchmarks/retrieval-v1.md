@@ -1,6 +1,10 @@
 # Retrieval Benchmark v1 — the gate before a backend is chosen
 
-- Status: **Defined, not yet run.** No backend is selected by this document.
+- Status: **Defined; the lexical baseline is measured.** No backend is selected by this document.
+  The first run — the file-based lexical baseline — is committed at
+  [results/retrieval-v1-lexical-baseline.md](results/retrieval-v1-lexical-baseline.md) (runner:
+  `scripts/run_retrieval_benchmark.py`; frozen query set + judgments under `queries/` and
+  `judgments/`). Candidate backends are still unmeasured and unselected.
 - Owner stage: the **A2→A3** decision gate ([ADR 0002](../adr/0002-roadmap-stage-nomenclature.md) §1):
   whether to move retrieval beyond today's file-based lexical ranking to a local index, a hybrid, or
   a dense/vector backend — and, separately, to a networked RAG service.
@@ -106,8 +110,18 @@ mints `retrieval-v2`.
 Graded relevance (e.g. 0/1/2) per `(query, record)` pair, with:
 
 - judgments recorded in-repo alongside the query set, with a short rationale per positive label;
-- **≥ 2 independent judges** on a sampled subset with an inter-annotator agreement figure reported
-  (judgments are subjective; the benchmark must disclose how subjective);
+- a disclosed **judging provenance** block (`judgments/retrieval-v1.json` → `judging`, surfaced in
+  every report): judge identities, the independent-judge count, the inter-annotator-agreement figure
+  (or an explicit `n/a`), and the agreement method. The benchmark must *disclose* how subjective the
+  judgments are; it must not silently omit provenance;
+- **≥ 2 independent judges** on a sampled subset with an inter-annotator-agreement figure (Cohen's κ)
+  reported **when a candidate backend is compared against the baseline at the decision gate** — that
+  is the point where a subjective margin decides adoption, so the disagreement among judges must be
+  quantified there. The **baseline measurement itself** is a single-curator pass: it is reported with
+  `independent_judge_count: 1` and `inter_annotator_agreement: n/a` (disclosed, never fabricated),
+  and the labels are kept deliberately objective (exact quotes, locators, source-grounded paraphrase
+  with rationales) to bound that subjectivity. Adding the second judge + κ is a prerequisite of the
+  deferred backend-selection ADR, not of establishing the lexical baseline;
 - judgments keyed to **stable occurrence identity**, not list position, so they survive reordering
   and backend changes.
 
@@ -127,12 +141,31 @@ Reported per candidate, per corpus tier, with the lexical baseline as the refere
 
 ### Protocol
 
-- A reproducible harness (fixed seeds, pinned candidate configs, the frozen query set + judgments)
-  that emits a single report; rerunning it on the same inputs reproduces the numbers.
-- The harness reuses the **real** envelope → adapter path for the citation-fidelity metric (it must
-  measure the actual identity the enforcement axis would persist, not a proxy).
-- Results are committed as a dated report under this directory so a future backend-selection ADR can
-  cite a specific, reproducible run.
+- A reproducible harness — `scripts/run_retrieval_benchmark.py`, standard-library only, offline,
+  deterministic — over the frozen query set (`queries/retrieval-v1.json`) + judgments
+  (`judgments/retrieval-v1.json`) emits a single report; rerunning it on the same inputs reproduces
+  the JSON byte-for-byte (wall-clock timing is reported only in the Markdown snapshot, never in the
+  reproducible JSON, and occurrence-id hashes — which embed an absolute path under ADR 0005 — are
+  deliberately excluded so the report is checkout-portable).
+- The harness measures through the **contract**, not internals: it acquires candidates via the
+  retriever's per-tradition `retrieve_envelope()` (ADR 0006 §2) and feeds those real envelopes —
+  carrying the retriever's own `contract_version` — through the **real** B1 adapter, so the
+  identity/contract metrics measure what the contract emits, not a hand-built parse. It confirms a
+  stable `occ/v1-corpus-stable` occurrence id is minted (the actual identity the enforcement axis
+  would use, not a proxy), and reports a concrete span-assurance status (no tier is minted at
+  retrieval; the artifact-backed `source_assurance` floor is). It is the **lexical-baseline** harness
+  and refuses any non-`*-file` `retriever_kind`, so a future index/hybrid/dense/service backend is
+  measured by the backend-selection harness, never silently mismeasured here.
+- **Citation fidelity is measured, not assumed:** the harness mints the occurrence id of every
+  returned+relevant record across two independent adapter runs **and** a reordering of the result
+  list, and reports the fraction that agree (1.0 for the corpus-stable scheme; a backend that made
+  identity order-dependent would score below 1.0 and be disqualified by hard constraint 2).
+- Each report carries the **judging provenance** (`judging` block): judge count, IAA (or `n/a`), and
+  the disclosure scoping the ≥2-judge requirement to the decision gate.
+- Results are committed under `results/`
+  ([lexical baseline](results/retrieval-v1-lexical-baseline.md)) so a future backend-selection ADR
+  can cite a specific, reproducible run; `tests/test_retrieval_benchmark.py` fails if the committed
+  baseline drifts from the runner, and CI validates the fixtures (`--check-fixtures`).
 
 ## Decision gates
 
@@ -140,7 +173,9 @@ A candidate is **justified for adoption by the project retriever** only if **all
 
 1. it passes every hard constraint (above) — including 100% citation fidelity and the contract suite;
 2. it beats the lexical baseline by a pre-registered, meaningful margin on the **primary** metric
-   (nDCG@k on C0), not merely within noise;
+   (nDCG@k on C0), measured against a judgment set extended to **≥ 2 independent judges with a
+   reported inter-annotator agreement** (κ), not merely within noise or within one curator's
+   subjectivity;
 3. its operational cost is within a stated budget (offline; no portable-retriever dependency; latency
    and footprint acceptable for the orchestrated council);
 4. if it needs full text, the C1 rights review has cleared the material it depends on.
@@ -166,7 +201,10 @@ retriever, and this document records that outcome with the run that produced it.
 
 - C0 is small; absolute metric values are noisy, so the gate is a **margin over the baseline**, not an
   absolute threshold, and the primary decision is reported with its uncertainty.
-- Relevance is subjective; the inter-annotator figure is part of the result, and a thin margin over an
-  uncertain judgment set is treated as "not justified," not "justified."
+- Relevance is subjective. The baseline measurement discloses **single-curator** judging with no
+  inter-annotator figure (`independent_judge_count: 1`, IAA `n/a`); the second independent judge and
+  the κ figure are added at the decision gate, where a thin margin over an uncertain judgment set is
+  treated as "not justified," not "justified." The baseline bounds subjectivity by keeping labels
+  objective and rationale-backed, not by claiming an agreement figure it does not have.
 - Offline retrieval metrics are a proxy for debate quality, not debate quality itself; a backend that
   wins the benchmark still ships behind the same B-axis enforcement and the same assurance honesty.

@@ -29,6 +29,8 @@ jobs:
         run: python scripts/generate_quote_policy.py --check
       - name: Check corpus inventory (structural/policy violations only)
         run: python scripts/corpus_inventory.py --check
+      - name: Check retrieval benchmark fixtures
+        run: python scripts/run_retrieval_benchmark.py --check-fixtures
       - name: Run strict finalization example
         run: python examples/strict-finalization/run_example.py
       - name: Run test suite

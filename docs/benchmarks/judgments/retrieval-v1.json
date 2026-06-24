@@ -1,0 +1,164 @@
+{
+  "benchmark_version": "retrieval-v1",
+  "relevance_scale": {
+    "2": "direct support / exact target",
+    "1": "partial or contextual support",
+    "0": "not relevant"
+  },
+  "metrics_note": "relevance >= 1 counts as relevant for Recall/Precision/MRR/nDCG; exact-span metrics require relevance == 2. Judgments are keyed on the stable (tradition, work, locator) record identity, never on retrieval position, and are judged against source records, not generated prose.",
+  "judging": {
+    "judges": [
+      {"id": "curator-1", "role": "project maintainer", "independent": false}
+    ],
+    "independent_judge_count": 1,
+    "inter_annotator_agreement": null,
+    "agreement_method": "cohen_kappa",
+    "agreement_required_at": "backend-selection decision gate (candidate vs. baseline), deferred to ADR 0007",
+    "disclosure": "retrieval-v1 baseline judgments are a single-curator pass; no second independent judge exists for the baseline, so no inter-annotator-agreement figure is available (reported as n/a, not fabricated). Per docs/benchmarks/retrieval-v1.md, >=2 independent judges and an IAA figure are required when a candidate backend is compared against this baseline at the decision gate, not to establish the baseline measurement itself. The labels here are deliberately objective (exact quotes, locators, and source-grounded paraphrase/theme calls each carry a rationale) to bound that subjectivity for the baseline."
+  },
+  "judgments": [
+    {
+      "query_id": "q001",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "confucianism", "work": "論語·顏淵", "locator": "reference file entry", "relevance": 2, "rationale": "Canonical span is exactly the quoted phrase 己所不欲,勿施於人."}
+      ]
+    },
+    {
+      "query_id": "q002",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "taoism", "work": "道德經", "locator": "8", "relevance": 2, "rationale": "Canonical span begins with the exact phrase 上善若水."}
+      ]
+    },
+    {
+      "query_id": "q003",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "buddhism", "work": "般若波羅蜜多心經", "locator": "reference file entry", "relevance": 2, "rationale": "色即是空 is a verbatim substring of the 心經 canonical span."}
+      ]
+    },
+    {
+      "query_id": "q004",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "taoism", "work": "道德經", "locator": "48", "relevance": 2, "rationale": "Work + chapter + opening words 為學日益 identify this record."}
+      ]
+    },
+    {
+      "query_id": "q005",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "christianity", "work": "約翰福音", "locator": "3:16", "relevance": 2, "rationale": "Work + chapter:verse locator identify this record uniquely."}
+      ]
+    },
+    {
+      "query_id": "q006",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "islam", "work": "古蘭經", "locator": "1:1(開端章)", "relevance": 2, "rationale": "Work + named chapter + locator match this record."}
+      ]
+    },
+    {
+      "query_id": "q007",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "confucianism", "work": "論語·顏淵", "locator": "reference file entry", "relevance": 2, "rationale": "Exact semantic equivalent of the Golden Rule (己所不欲,勿施於人)."}
+      ]
+    },
+    {
+      "query_id": "q008",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "hinduism", "work": "薄伽梵歌", "locator": "2:47", "relevance": 2, "rationale": "Direct paraphrase: act without attachment to the results of action."},
+        {"tradition": "hinduism", "work": "薄伽梵歌", "locator": "2:48", "relevance": 1, "rationale": "Same teaching of acting while renouncing attachment (棄絕執著)."}
+      ]
+    },
+    {
+      "query_id": "q009",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "christianity", "work": "彌迦書", "locator": "6:8", "relevance": 2, "rationale": "Source enjoins 行公義,好憐憫,存謙卑 — exactly the paraphrase's content."}
+      ]
+    },
+    {
+      "query_id": "q010",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "buddhism", "work": "大般涅槃經", "locator": "偈(漢傳常引)", "relevance": 2, "rationale": "諸行無常,是生滅法;生滅滅已,寂滅為樂 directly addresses death and impermanence."},
+        {"tradition": "hinduism", "work": "薄伽梵歌", "locator": "2:20", "relevance": 2, "rationale": "靈魂不生亦不滅;身體被殺時它並不被殺 — directly on death."},
+        {"tradition": "confucianism", "work": "論語·里仁", "locator": "reference file entry", "relevance": 1, "rationale": "朝聞道,夕死可矣 — a contextual stance toward death."},
+        {"tradition": "hinduism", "work": "廣林奧義書", "locator": "1.3.28", "relevance": 1, "rationale": "引我從死亡至不朽 — a prayer to be led from death to immortality; contextual to facing death."}
+      ]
+    },
+    {
+      "query_id": "q011",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "christianity", "work": "馬太福音", "locator": "22:37-39", "relevance": 2, "rationale": "愛人如己 — love your neighbour as yourself."},
+        {"tradition": "mohism", "work": "墨子·兼愛中", "locator": "reference file entry", "relevance": 1, "rationale": "兼愛: regard others' persons as your own — universal love of others."},
+        {"tradition": "christianity", "work": "約翰福音", "locator": "3:16", "relevance": 1, "rationale": "神愛世人 — God's love for people; contextual to the theme of love."}
+      ]
+    },
+    {
+      "query_id": "q012",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "hinduism", "work": "歌者奧義書", "locator": "6.8.7", "relevance": 2, "rationale": "Span carries the romanization Tat tvam asi (彼即是你)."}
+      ]
+    },
+    {
+      "query_id": "q013",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "islam", "work": "布哈里聖訓實錄", "locator": "開卷傳述(附傳述鏈)", "relevance": 2, "rationale": "Span carries 舉意(niyyah) — actions are judged by intention."}
+      ]
+    },
+    {
+      "query_id": "q014",
+      "no_answer": true,
+      "relevant": [],
+      "irrelevant_notes": [
+        {"reason": "Off-corpus topic (modern finance / blockchain); no record provides direct support, and any lexical overlap is spurious."}
+      ]
+    },
+    {
+      "query_id": "q015",
+      "no_answer": true,
+      "relevant": [],
+      "irrelevant_notes": [
+        {"reason": "Off-corpus topic (consumer electronics); no record provides direct support."}
+      ]
+    },
+    {
+      "query_id": "q016",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "taoism", "work": "道德經", "locator": "1", "relevance": 2, "rationale": "道可道,非常道 — the primary Taoist sense of 道."},
+        {"tradition": "taoism", "work": "道德經", "locator": "25", "relevance": 1, "rationale": "道法自然 — also centrally about 道."},
+        {"tradition": "christianity", "work": "約翰福音", "locator": "1:1", "relevance": 1, "rationale": "道就是神 — Logos rendered 道; a different sense of the same term."},
+        {"tradition": "confucianism", "work": "論語·里仁", "locator": "reference file entry", "relevance": 1, "rationale": "朝聞道,夕死可矣 — the Confucian moral 道; another sense."}
+      ]
+    },
+    {
+      "query_id": "q017",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "taoism", "work": "道德經", "locator": "1", "relevance": 2, "rationale": "道可道,非常道 — directly on 道."},
+        {"tradition": "taoism", "work": "道德經", "locator": "25", "relevance": 2, "rationale": "道法自然 — directly on 道 and 自然, both in the query."},
+        {"tradition": "taoism", "work": "道德經", "locator": "48", "relevance": 1, "rationale": "為道日損 — about 道, contextual."}
+      ],
+      "irrelevant_notes": [
+        {"reason": "道德經 8 (上善若水) and 道德經 58 (禍福相倚) share the work but are not about 道/自然 specifically; they must still keep distinct occurrence identity from the relevant 道德經 records."}
+      ]
+    },
+    {
+      "query_id": "q018",
+      "no_answer": false,
+      "relevant": [
+        {"tradition": "buddhism", "work": "法句經", "locator": "1(南傳)", "relevance": 2, "rationale": "法句經 record; matches the requested work."},
+        {"tradition": "buddhism", "work": "法句經", "locator": "183", "relevance": 2, "rationale": "Second distinct 法句經 record; different locator, must be a distinct occurrence."}
+      ]
+    }
+  ]
+}
