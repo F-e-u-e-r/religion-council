@@ -1,0 +1,161 @@
+{
+  "benchmark_version": "retrieval-v1",
+  "corpus": "C0 — curated references (the records the project retriever returns over references/)",
+  "description": "Frozen query set for the retrieval-v1 lexical baseline (docs/benchmarks/retrieval-v1.md). Data, not code; frozen per benchmark version. Changing it mints retrieval-v2. Each query is judged against source records in judgments/retrieval-v1.json, never against generated prose.",
+  "categories": [
+    "exact_quote",
+    "exact_locator",
+    "paraphrased",
+    "cross_tradition",
+    "cross_lingual",
+    "no_answer",
+    "ambiguous",
+    "duplicate_near_duplicate"
+  ],
+  "queries": [
+    {
+      "query_id": "q001",
+      "category": "exact_quote",
+      "query": "己所不欲,勿施於人",
+      "traditions": ["confucianism"],
+      "expected_behavior": "Retrieve the exact canonical span at rank 1.",
+      "notes": "Exact source-text lookup; the phrase is verbatim in the corpus."
+    },
+    {
+      "query_id": "q002",
+      "category": "exact_quote",
+      "query": "上善若水",
+      "traditions": ["taoism"],
+      "expected_behavior": "Retrieve the exact 道德經 8 span at rank 1.",
+      "notes": "Exact source-text lookup."
+    },
+    {
+      "query_id": "q003",
+      "category": "exact_quote",
+      "query": "色即是空",
+      "traditions": ["buddhism"],
+      "expected_behavior": "Retrieve the 心經 span containing the phrase at rank 1.",
+      "notes": "Exact source-text lookup; phrase is a substring of the canonical span."
+    },
+    {
+      "query_id": "q004",
+      "category": "exact_locator",
+      "query": "道德經 第48章 為學日益",
+      "traditions": ["taoism"],
+      "expected_behavior": "Retrieve 道德經 48 at rank 1.",
+      "notes": "Work + chapter + opening words; locator lookup."
+    },
+    {
+      "query_id": "q005",
+      "category": "exact_locator",
+      "query": "約翰福音 3:16",
+      "traditions": ["christianity"],
+      "expected_behavior": "Retrieve 約翰福音 3:16 at rank 1.",
+      "notes": "Work + chapter:verse locator with no quoted words."
+    },
+    {
+      "query_id": "q006",
+      "category": "exact_locator",
+      "query": "古蘭經 開端章 1:1",
+      "traditions": ["islam"],
+      "expected_behavior": "Retrieve 古蘭經 1:1(開端章) at rank 1.",
+      "notes": "Work + named chapter + locator."
+    },
+    {
+      "query_id": "q007",
+      "category": "paraphrased",
+      "query": "不要把自己不想要的事強加給別人",
+      "traditions": ["confucianism"],
+      "expected_behavior": "Ideally retrieve 己所不欲,勿施於人; a lexical retriever may miss it (few shared characters).",
+      "notes": "Paraphrase of the Golden Rule; probes lexical paraphrase weakness."
+    },
+    {
+      "query_id": "q008",
+      "category": "paraphrased",
+      "query": "行動的時候不要執著於成果",
+      "traditions": ["hinduism"],
+      "expected_behavior": "Ideally retrieve 薄伽梵歌 2:47 / 2:48 (non-attachment to results).",
+      "notes": "Paraphrase of karma-yoga; semantic, not verbatim."
+    },
+    {
+      "query_id": "q009",
+      "category": "paraphrased",
+      "query": "做人應當謙卑並且行公義",
+      "traditions": ["christianity"],
+      "expected_behavior": "Ideally retrieve 彌迦書 6:8 (行公義,好憐憫,存謙卑).",
+      "notes": "Paraphrase sharing some characters (公義, 謙卑) with the source."
+    },
+    {
+      "query_id": "q010",
+      "category": "cross_tradition",
+      "query": "人應該如何面對死亡",
+      "traditions": ["buddhism", "hinduism", "confucianism"],
+      "expected_behavior": "Surface death/impermanence material from more than one tradition.",
+      "notes": "Cross-tradition thematic need; relevant records span 3 traditions."
+    },
+    {
+      "query_id": "q011",
+      "category": "cross_tradition",
+      "query": "愛人",
+      "traditions": ["christianity", "mohism"],
+      "expected_behavior": "Surface love-of-others material from Christianity and Mohism.",
+      "notes": "Short thematic query; 愛人如己 (Christian) and 兼愛 (Mohist) are both relevant."
+    },
+    {
+      "query_id": "q012",
+      "category": "cross_lingual",
+      "query": "Tat tvam asi",
+      "traditions": ["hinduism"],
+      "expected_behavior": "Retrieve 歌者奧義書 6.8.7 via the embedded romanization.",
+      "notes": "Romanized Sanskrit query against a record whose locator/text carries the romanization."
+    },
+    {
+      "query_id": "q013",
+      "category": "cross_lingual",
+      "query": "niyyah 舉意",
+      "traditions": ["islam"],
+      "expected_behavior": "Retrieve 布哈里聖訓實錄 (一切行為全憑舉意 / niyyah).",
+      "notes": "Mixed romanized-Arabic + Chinese query against embedded romanization."
+    },
+    {
+      "query_id": "q014",
+      "category": "no_answer",
+      "query": "區塊鏈與加密貨幣的投資策略",
+      "traditions": [],
+      "expected_behavior": "Return no record as direct support; ideally no lexical signal at all.",
+      "notes": "Off-corpus topic; measures false-support / over-retrieval."
+    },
+    {
+      "query_id": "q015",
+      "category": "no_answer",
+      "query": "最新智慧型手機的硬體規格比較",
+      "traditions": [],
+      "expected_behavior": "Return no record as direct support.",
+      "notes": "Off-corpus topic; second no-answer probe."
+    },
+    {
+      "query_id": "q016",
+      "category": "ambiguous",
+      "query": "道",
+      "traditions": ["taoism", "christianity", "confucianism"],
+      "expected_behavior": "Surface the Taoist 道 first, but the term is genuinely ambiguous across traditions.",
+      "notes": "Single character with different senses: Taoist Way, Johannine Logos (道就是神), Confucian moral 道."
+    },
+    {
+      "query_id": "q017",
+      "category": "duplicate_near_duplicate",
+      "query": "道德經 論道與自然",
+      "traditions": ["taoism"],
+      "expected_behavior": "Surface several distinct 道德經 records; they must NOT collapse into one identity.",
+      "notes": "Multiple records share the work 道德經 but differ by locator; stable occurrence identity must keep them distinct."
+    },
+    {
+      "query_id": "q018",
+      "category": "duplicate_near_duplicate",
+      "query": "法句經",
+      "traditions": ["buddhism"],
+      "expected_behavior": "Surface both 法句經 records (different locators) as distinct occurrences.",
+      "notes": "Two records from the same work with similar provenance; identity must not collapse on work similarity."
+    }
+  ]
+}

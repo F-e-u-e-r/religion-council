@@ -57,6 +57,17 @@ def retrieve_envelope(tradition, query, k=5):
     return _portable.retrieve_envelope(tradition, query, k)
 
 
+def score(query, record):
+    """Lexical relevance score for one record (re-exported from the wrapped backend).
+
+    This is the *lexical* scoring of today's file-based backend, not part of the retrieval
+    envelope contract (ADR 0006 §2) — a future index/dense backend would replace it. The
+    retrieval-v1 benchmark uses it to rank the whole corpus for a query; that benchmark is
+    explicitly the lexical-baseline measurement (docs/benchmarks/retrieval-v1.md).
+    """
+    return _portable.score(query, record)
+
+
 def capabilities():
     """Project retriever capability metadata (ADR 0006 §3).
 
