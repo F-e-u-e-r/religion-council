@@ -202,6 +202,57 @@ class RetrievalBenchmarkTest(unittest.TestCase):
                 imported.add(node.module.split(".")[0])
         self.assertEqual(imported & NETWORK_MODULES, set())
 
+    # ---- candidate: lexical-threshold ----
+
+    def test_threshold_filter_removes_low_confidence(self):
+        ranked = [({}, 3), ({}, 1)]
+        self.assertEqual(self.bm._threshold_filter(ranked, 5), [])
+        self.assertEqual(self.bm._threshold_filter(ranked, 3), ranked)
+        self.assertEqual(self.bm._threshold_filter(ranked, 1), ranked)
+        self.assertEqual(self.bm._threshold_filter([], 1), [])
+
+    def test_candidate_does_not_change_baseline(self):
+        baseline_view = self.bm.reproducible_view(self.result)
+        self.assertNotIn("candidate", baseline_view)
+        self.assertNotIn("candidate", self.result)
+
+    def test_candidate_threshold_improves_no_answer(self):
+        cand = self.bm.run_benchmark("project", self.bm.DEFAULT_KS,
+                                     candidate={"type": "lexical-threshold", "threshold": 2})
+        self.assertIn("candidate", cand)
+        self.assertEqual(cand["candidate"]["threshold"], 2)
+        no_answer = [q for q in cand["per_query"] if q["no_answer"]]
+        for q in no_answer:
+            self.assertTrue(q["threshold_filtered"], q["query_id"])
+            self.assertEqual(q["outcome"], "no_answer_ok")
+        answerable = [q for q in cand["per_query"] if not q["no_answer"]]
+        for q in answerable:
+            self.assertFalse(q.get("threshold_filtered", False), q["query_id"])
+
+    def test_candidate_threshold_is_deterministic(self):
+        cand_a = self.bm.run_benchmark("project", self.bm.DEFAULT_KS,
+                                       candidate={"type": "lexical-threshold", "threshold": 2})
+        cand_b = self.bm.run_benchmark("project", self.bm.DEFAULT_KS,
+                                       candidate={"type": "lexical-threshold", "threshold": 2})
+        self.assertEqual(self.bm.reproducible_view(cand_a), self.bm.reproducible_view(cand_b))
+        self.assertTrue(cand_a["contract"]["deterministic_repeat"])
+
+    def test_candidate_cli_validation(self):
+        with self.assertRaises(SystemExit):
+            self.bm.main(["--candidate", "lexical-threshold"])
+        with self.assertRaises(SystemExit):
+            self.bm.main(["--threshold", "2"])
+
+    def test_committed_threshold_t2_is_reproducible(self):
+        t2_path = ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-threshold-t2.json"
+        if not t2_path.exists():
+            self.skipTest("threshold t=2 result not yet committed")
+        committed = json.loads(t2_path.read_text(encoding="utf-8"))
+        fresh = self.bm.reproducible_view(self.bm.run_benchmark(
+            "project", self.bm.DEFAULT_KS,
+            candidate={"type": "lexical-threshold", "threshold": 2}))
+        self.assertEqual(committed, fresh)
+
     # ---- committed baseline ----
 
     def test_committed_baseline_report_is_reproducible(self):
