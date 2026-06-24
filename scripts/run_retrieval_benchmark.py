@@ -145,6 +145,13 @@ def search(retriever, query, k):
     return [(record, value) for value, record in scored[:k]]
 
 
+def _threshold_filter(ranked, threshold):
+    """Post-retrieval confidence cutoff: if the top score is below *threshold*, return no support."""
+    if not ranked or ranked[0][1] < threshold:
+        return []
+    return ranked
+
+
 # -------------------------------------------------------------------------------------- metrics
 
 def _dcg(relevances):
@@ -329,7 +336,7 @@ def contract_metrics(unique_records, relevant_retrieved, contract_version):
 
 # ------------------------------------------------------------------------------------- run + view
 
-def run_benchmark(retriever_kind, ks):
+def run_benchmark(retriever_kind, ks, candidate=None):
     retriever = get_retriever(retriever_kind)
     _require_lexical_baseline(retriever)
     contract_version = retriever.capabilities()["contract_version"]
@@ -338,6 +345,7 @@ def run_benchmark(retriever_kind, ks):
     judgments_doc = load_json(JUDGMENTS_PATH)
     judgments = {item["query_id"]: item for item in judgments_doc["judgments"]}
     max_k = max(ks)
+    threshold = candidate.get("threshold") if candidate else None
 
     per_query = []
     latencies = []
@@ -348,8 +356,9 @@ def run_benchmark(retriever_kind, ks):
         qid = query["query_id"]
         judgment = judgments.get(qid, {"no_answer": False, "relevant": []})
         start = time.perf_counter()
-        ranked = search(retriever, query["query"], max_k)
+        ranked_raw = search(retriever, query["query"], max_k)
         latencies.append(time.perf_counter() - start)
+        ranked = _threshold_filter(ranked_raw, threshold) if threshold is not None else ranked_raw
         ranked_signature[qid] = [record_key(rec) for rec, _ in ranked]
 
         rel_map = {
@@ -383,12 +392,18 @@ def run_benchmark(retriever_kind, ks):
         else:
             metrics, _ = evaluate_answerable(judgment, ranked, ks)
             entry.update(metrics)
+        if threshold is not None:
+            entry["threshold_filtered"] = len(ranked) < len(ranked_raw)
+            entry["pre_threshold_top_score"] = ranked_raw[0][1] if ranked_raw else 0
         per_query.append(entry)
 
     # Determinism repeat check: a second pass must reproduce every ranking exactly.
+    def _repeat(q):
+        raw = search(retriever, q, max_k)
+        return _threshold_filter(raw, threshold) if threshold is not None else raw
     repeat_ok = all(
         ranked_signature[query["query_id"]]
-        == [record_key(rec) for rec, _ in search(retriever, query["query"], max_k)]
+        == [record_key(rec) for rec, _ in _repeat(query["query"])]
         for query in queries
     )
 
@@ -404,7 +419,7 @@ def run_benchmark(retriever_kind, ks):
         "avg_query_ms": round(1000 * sum(latencies) / len(latencies), 4) if latencies else 0.0,
         "max_query_ms": round(1000 * max(latencies), 4) if latencies else 0.0,
     }
-    return {
+    result = {
         "benchmark": "retrieval-v1",
         "retriever_kind": retriever.capabilities()["retriever_kind"],
         "contract_version": contract_version,
@@ -420,6 +435,9 @@ def run_benchmark(retriever_kind, ks):
         "operational": operational,
         "per_query": per_query,
     }
+    if candidate:
+        result["candidate"] = candidate
+    return result
 
 
 def judging_disclosure(judgments_doc):
@@ -548,17 +566,27 @@ def _fmt(value):
     return "n/a" if value is None else "{:.3f}".format(value)
 
 
-def render_markdown(result):
+def render_markdown(result, baseline=None):
     s = result["summary"]
     ks = [str(k) for k in result["k_values"]]
+    cand = result.get("candidate")
     lines = []
-    lines.append("# Retrieval Benchmark v1 — Lexical Baseline")
+    if cand:
+        lines.append("# Retrieval Benchmark v1 — Candidate: {} (threshold={})".format(
+            cand["type"], cand["threshold"]))
+    else:
+        lines.append("# Retrieval Benchmark v1 — Lexical Baseline")
     lines.append("")
     lines.append("## Status")
     lines.append("")
-    lines.append("Baseline **measured**. **No backend selected.** This report is measurement only "
-                 "(see [retrieval-v1.md](../retrieval-v1.md)); running it does not adopt any index, "
-                 "BM25, hybrid, vector, or RAG backend.")
+    if cand:
+        lines.append("**Experiment only.** This report evaluates a post-retrieval lexical confidence "
+                     "threshold (top\\_score < {} → no support) against the v0.12.2 lexical baseline. "
+                     "**No default behavior changed.** **No backend selected.**".format(cand["threshold"]))
+    else:
+        lines.append("Baseline **measured**. **No backend selected.** This report is measurement only "
+                     "(see [retrieval-v1.md](../retrieval-v1.md)); running it does not adopt any index, "
+                     "BM25, hybrid, vector, or RAG backend.")
     lines.append("")
     lines.append("## Retriever")
     lines.append("")
@@ -701,7 +729,96 @@ def render_markdown(result):
                  "Backend selection remains deferred to a future decision ADR that compares "
                  "candidates against this baseline (docs/benchmarks/retrieval-v1.md §decision gates).")
     lines.append("")
+
+    if baseline and cand:
+        lines.extend(_render_comparison(result, baseline))
+
     return "\n".join(lines)
+
+
+def _delta_str(new, old):
+    if new is None or old is None:
+        return "—"
+    d = new - old
+    if abs(d) < 0.0005:
+        return "—"
+    return "{:+.3f}".format(d)
+
+
+def _render_comparison(result, baseline):
+    bs = baseline["summary"]
+    cs = result["summary"]
+    ks = [str(k) for k in result["k_values"]]
+    cand = result["candidate"]
+    lines = []
+    lines.append("## Comparison vs. v0.12.2 lexical baseline")
+    lines.append("")
+    lines.append("### Summary metrics")
+    lines.append("")
+    lines.append("| metric | baseline | threshold={} | Δ |".format(cand["threshold"]))
+    lines.append("|---|---|---|---|")
+    for label, bk, ck in [
+        ("Recall", "recall_at_k", "recall_at_k"),
+        ("Precision", "precision_at_k", "precision_at_k"),
+        ("nDCG", "ndcg_at_k", "ndcg_at_k"),
+    ]:
+        for k in ks:
+            bv, cv = bs[bk][k], cs[ck][k]
+            lines.append("| {}@{} | {} | {} | {} |".format(
+                label, k, _fmt(bv), _fmt(cv), _delta_str(cv, bv)))
+    for label, key in [
+        ("MRR", "mrr"),
+        ("Exact-span hit", "exact_span_hit_rate"),
+        ("No-answer correct", "no_answer_correct_rate"),
+        ("False-support", "false_support_rate"),
+    ]:
+        bv, cv = bs[key], cs[key]
+        lines.append("| {} | {} | {} | {} |".format(label, _fmt(bv), _fmt(cv), _delta_str(cv, bv)))
+    lines.append("")
+
+    lines.append("### Per-query changes")
+    lines.append("")
+    b_outcomes = {q["query_id"]: q for q in baseline["per_query"]}
+    improved = []
+    regressed = []
+    unchanged = 0
+    for q in result["per_query"]:
+        qid = q["query_id"]
+        bq = b_outcomes.get(qid, {})
+        b_out = bq.get("outcome", "?")
+        c_out = q.get("outcome", "?")
+        if b_out != c_out:
+            is_better = (
+                (b_out == "false_support" and c_out == "no_answer_ok")
+                or (b_out == "miss" and c_out == "hit")
+            )
+            detail = "`{}` ({}): {} → {} (top score {})".format(
+                qid, q.get("category", "?"), b_out, c_out,
+                q.get("pre_threshold_top_score", "?"))
+            if is_better:
+                improved.append(detail)
+            else:
+                regressed.append(detail)
+        else:
+            unchanged += 1
+
+    if improved:
+        lines.append("**Improved:**")
+        for line in improved:
+            lines.append("- {}".format(line))
+    else:
+        lines.append("**Improved:** none.")
+    lines.append("")
+    if regressed:
+        lines.append("**Regressed:**")
+        for line in regressed:
+            lines.append("- {}".format(line))
+    else:
+        lines.append("**Regressed:** none.")
+    lines.append("")
+    lines.append("**Unchanged:** {} queries.".format(unchanged))
+    lines.append("")
+    return lines
 
 
 # ------------------------------------------------------------------------------------------- cli
@@ -717,6 +834,12 @@ def main(argv=None):
     parser.add_argument("--md-out", type=Path)
     parser.add_argument("--check-fixtures", action="store_true",
                         help="validate the query/judgment fixtures and exit non-zero on any error.")
+    parser.add_argument("--candidate", choices=("lexical-threshold",),
+                        help="candidate to evaluate against the baseline (experiment only).")
+    parser.add_argument("--threshold", type=int,
+                        help="confidence threshold (requires --candidate lexical-threshold).")
+    parser.add_argument("--baseline-json", type=Path,
+                        help="baseline JSON report for the comparison section in Markdown output.")
     args = parser.parse_args(argv)
 
     if args.check_fixtures:
@@ -735,14 +858,29 @@ def main(argv=None):
             if k < 1:
                 parser.error("--k must be a positive integer (got {})".format(k))
 
+    if args.candidate == "lexical-threshold" and args.threshold is None:
+        parser.error("--candidate lexical-threshold requires --threshold")
+    if args.threshold is not None and args.candidate != "lexical-threshold":
+        parser.error("--threshold requires --candidate lexical-threshold")
+    if args.threshold is not None and args.threshold < 1:
+        parser.error("--threshold must be a positive integer (got {})".format(args.threshold))
+
     errors = validate_fixtures(args.retriever)
     if errors:
         sys.stderr.write("refusing to run: fixtures invalid (use --check-fixtures for detail)\n")
         return 1
 
+    candidate = None
+    if args.candidate == "lexical-threshold":
+        candidate = {"type": "lexical-threshold", "threshold": args.threshold}
+
     ks = tuple(sorted(set(args.ks))) if args.ks else DEFAULT_KS
-    result = run_benchmark(args.retriever, ks)
+    result = run_benchmark(args.retriever, ks, candidate=candidate)
     view = reproducible_view(result)
+
+    baseline = None
+    if args.baseline_json and args.baseline_json.exists():
+        baseline = load_json(args.baseline_json)
 
     if args.json_out:
         args.json_out.parent.mkdir(parents=True, exist_ok=True)
@@ -750,10 +888,10 @@ def main(argv=None):
             json.dumps(view, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if args.md_out:
         args.md_out.parent.mkdir(parents=True, exist_ok=True)
-        args.md_out.write_text(render_markdown(result), encoding="utf-8")
+        args.md_out.write_text(render_markdown(result, baseline=baseline), encoding="utf-8")
     if not args.json_out and not args.md_out:
         if args.format == "markdown":
-            sys.stdout.write(render_markdown(result))
+            sys.stdout.write(render_markdown(result, baseline=baseline))
         else:
             sys.stdout.write(json.dumps(view, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
     return 0
