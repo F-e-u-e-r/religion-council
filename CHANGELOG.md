@@ -12,6 +12,13 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Changed
+- Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
+  `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
+  deprecation window.
+
+## [v0.12.2] — 2026-06-24 · Retrieval Benchmark Lexical Baseline
+
 ### Added
 - **Retrieval benchmark v1 — lexical baseline measured (`scripts/run_retrieval_benchmark.py`):** the
   first reproducible run of the [retrieval-v1](docs/benchmarks/retrieval-v1.md) benchmark against the
@@ -45,11 +52,6 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
     fabricated); ≥2 independent judges + an inter-annotator-agreement (κ) figure are scoped to the
     deferred decision gate where a candidate is compared against the baseline.
   - CLI rejects non-positive `--k` (no more `ZeroDivisionError`).
-
-### Changed
-- Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
-  `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
-  deprecation window.
 
 ## [v0.12.1] — 2026-06-23 · Retrieval Benchmark Definition
 
