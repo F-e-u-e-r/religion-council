@@ -1,10 +1,14 @@
 # Retrieval Benchmark v1 — the gate before a backend is chosen
 
-- Status: **Defined; the lexical baseline is measured.** No backend is selected by this document.
-  The first run — the file-based lexical baseline — is committed at
-  [results/retrieval-v1-lexical-baseline.md](results/retrieval-v1-lexical-baseline.md) (runner:
-  `scripts/run_retrieval_benchmark.py`; frozen query set + judgments under `queries/` and
-  `judgments/`). Candidate backends are still unmeasured and unselected.
+- Status:
+  - Benchmark definition: **complete** (v0.12.1).
+  - Lexical baseline execution: **complete** (v0.12.2). The first run — the file-based lexical
+    baseline — is committed at
+    [results/retrieval-v1-lexical-baseline.md](results/retrieval-v1-lexical-baseline.md) (runner:
+    `scripts/run_retrieval_benchmark.py`; frozen query set + judgments under `queries/` and
+    `judgments/`).
+  - Backend selection: **deferred.** Candidate backends are unmeasured and unselected. No backend is
+    selected by this document.
 - Owner stage: the **A2→A3** decision gate ([ADR 0002](../adr/0002-roadmap-stage-nomenclature.md) §1):
   whether to move retrieval beyond today's file-based lexical ranking to a local index, a hybrid, or
   a dense/vector backend — and, separately, to a networked RAG service.
