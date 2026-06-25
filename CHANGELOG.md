@@ -12,10 +12,36 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Added
+- Experiment-only **BM25-style lexical re-ranking** candidate for the retrieval-v1 benchmark
+  (`--candidate lexical-bm25`, with configurable `--k1` / `--b`). It re-ranks the same file corpus
+  over the **same tokenization** as the lexical baseline — so the comparison isolates term weighting
+  (TF saturation + length normalization + IDF) from tokenization — and is computed entirely in the
+  benchmark harness; the portable/project retriever is unchanged. Committed Markdown + JSON reports
+  under `docs/benchmarks/results/retrieval-v1-lexical-bm25.{md,json}`, plus benchmark tests for
+  tokenization parity with the retriever, identity / citation-fidelity preservation, cross-process
+  determinism, CLI validation, and committed-report reproducibility.
+
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
   deprecation window.
+
+### Findings
+- On C0, BM25 (Lucene-style defaults: k1=1.2, b=0.75) improves some ranking metrics over the
+  lexical baseline (MRR 0.938 → 0.969; nDCG@5 0.902 → 0.919) and preserves exact-span hit rate
+  (1.000).
+- BM25 does **not** fix the targeted broad-thematic weakness (q010 stays recall@5 = 0.25) or
+  no-answer discrimination (false-support remains 1.0). Threshold t2/t3 remain better for
+  no-answer because they return no support for the two no-answer probes.
+- The candidate preserves stable occurrence identity and 100% citation fidelity (hard constraints
+  1–2), and the run is byte-reproducible across processes.
+- No backend is selected; the retrieval backend decision (ADR 0007) stays deferred, now informed by
+  three reference runs (baseline, threshold, BM25).
+
+### Non-goals
+- No RAG, vector store, dense/hybrid, local index, or backend adoption; no default behavior change;
+  no edition-backed assurance; ADR 0007 is **not** written.
 
 ## [v0.12.3] — 2026-06-25 · Threshold Experiment & Community Feedback Intake
 

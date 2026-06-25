@@ -34,6 +34,9 @@ class RetrievalBenchmarkTest(unittest.TestCase):
         cls.judgments_doc = cls.bm.load_json(cls.bm.JUDGMENTS_PATH)
         cls.result = cls.bm.run_benchmark("project", cls.bm.DEFAULT_KS)
 
+    def _query(self, result, query_id):
+        return next(q for q in result["per_query"] if q["query_id"] == query_id)
+
     # ---- fixtures ----
 
     def test_check_fixtures_passes_for_both_retrievers(self):
@@ -251,6 +254,117 @@ class RetrievalBenchmarkTest(unittest.TestCase):
         fresh = self.bm.reproducible_view(self.bm.run_benchmark(
             "project", self.bm.DEFAULT_KS,
             candidate={"type": "lexical-threshold", "threshold": 2}))
+        self.assertEqual(committed, fresh)
+
+    # ---- candidate: lexical-bm25 ----
+
+    BM25 = {"type": "lexical-bm25", "k1": 1.2, "b": 0.75}
+
+    def test_lexical_terms_matches_query_features(self):
+        # The BM25 candidate must tokenize identically to the retriever it re-ranks, or the
+        # comparison would conflate weighting with a different tokenizer. _lexical_terms is a
+        # multiset; its SET must equal the retriever's query_features for any input.
+        retriever = self.bm.get_retriever("portable")
+        for sample in ("道", "愛人如己", "約翰福音 3:16", "the Dao 之道", "人生意義", "了的與和是", ""):
+            self.assertEqual(
+                set(self.bm._lexical_terms(sample)), retriever.query_features(sample), repr(sample))
+
+    def test_bm25_index_and_score_are_well_formed(self):
+        def rec(work, locator, topic, text):
+            return {"tradition": "x", "work": work, "locator": locator, "topic": topic,
+                    "text": text, "school": "", "source_line": 1}
+        records = [rec("A", "1", "道", "道 可 道"), rec("B", "2", "仁", "仁 者 愛 人"),
+                   rec("C", "3", "道", "道")]
+        index = self.bm._build_bm25_index(records)
+        self.assertEqual(index["n"], 3)
+        self.assertGreater(index["avgdl"], 0)
+        k1, b = self.bm.BM25_K1, self.bm.BM25_B
+        # A matched term scores positive; an absent term contributes nothing.
+        self.assertGreater(self.bm._bm25_score(["道"], ("x", "A", "1"), index, k1, b), 0.0)
+        self.assertEqual(self.bm._bm25_score(["仁"], ("x", "A", "1"), index, k1, b), 0.0)
+        # Non-negative (Lucene-style) IDF: even a majority-corpus term never goes negative.
+        self.assertGreaterEqual(self.bm._bm25_score(["道"], ("x", "C", "3"), index, k1, b), 0.0)
+
+    def test_bm25_preserves_identity_and_contract(self):
+        # Hard constraints 1-2: a candidate that breaks identity or drops below 100% citation
+        # fidelity is disqualified. BM25 only re-ranks real records, so both must hold.
+        cand = self.bm.run_benchmark("project", self.bm.DEFAULT_KS, candidate=dict(self.BM25))
+        contract = cand["contract"]
+        self.assertTrue(contract["stable_occurrence_identity_present"])
+        self.assertTrue(contract["deterministic_repeat"])
+        self.assertEqual(list(contract["occurrence_scheme_counts"]), ["occ/v1-corpus-stable"])
+        cf = contract["citation_fidelity"]
+        self.assertEqual(cf["fidelity"], 1.0)
+        self.assertEqual(cf["stable_records"], cf["records"])
+        self.assertEqual(cand["candidate"], self.BM25)
+
+    def test_bm25_returns_only_real_corpus_records(self):
+        retriever = self.bm.get_retriever("project")
+        corpus_keys = {self.bm.record_key(r) for r in self.bm.corpus_records(retriever)}
+        cand = self.bm.run_benchmark("project", self.bm.DEFAULT_KS, candidate=dict(self.BM25))
+        for q in cand["per_query"]:
+            for rec in q["retrieved"]:
+                self.assertIn((rec["tradition"], rec["work"], rec["locator"]), corpus_keys)
+
+    def test_bm25_is_deterministic(self):
+        a = self.bm.run_benchmark("project", self.bm.DEFAULT_KS, candidate=dict(self.BM25))
+        b = self.bm.run_benchmark("project", self.bm.DEFAULT_KS, candidate=dict(self.BM25))
+        self.assertEqual(self.bm.reproducible_view(a), self.bm.reproducible_view(b))
+        self.assertTrue(a["contract"]["deterministic_repeat"])
+
+    def test_bm25_does_not_change_the_baseline(self):
+        # The baseline run carries no candidate; BM25 is purely additive (experiment only).
+        self.assertNotIn("candidate", self.bm.reproducible_view(self.result))
+
+    def test_bm25_acceptance_metrics_are_explicit(self):
+        cand = self.bm.run_benchmark("project", self.bm.DEFAULT_KS, candidate=dict(self.BM25))
+        baseline = self.result["summary"]
+        summary = cand["summary"]
+        self.assertGreaterEqual(
+            summary["exact_span_hit_rate"], baseline["exact_span_hit_rate"])
+        self.assertLessEqual(
+            summary["false_support_rate"], baseline["false_support_rate"])
+        self.assertEqual(
+            self._query(cand, "q010")["recall_at_5"],
+            self._query(self.result, "q010")["recall_at_5"])
+        self.assertEqual(
+            self._query(cand, "q007")["recall_at_5"],
+            self._query(self.result, "q007")["recall_at_5"])
+
+    def test_bm25_markdown_compares_threshold_references(self):
+        cand = self.bm.run_benchmark("project", self.bm.DEFAULT_KS, candidate=dict(self.BM25))
+        refs = [
+            ("threshold t2", json.loads(
+                (ROOT / "docs/benchmarks/results/retrieval-v1-lexical-threshold-t2.json")
+                .read_text(encoding="utf-8"))),
+            ("threshold t3", json.loads(
+                (ROOT / "docs/benchmarks/results/retrieval-v1-lexical-threshold-t3.json")
+                .read_text(encoding="utf-8"))),
+        ]
+        report = self.bm.render_markdown(cand, baseline=self.result, references=refs)
+        self.assertIn("Comparison vs. v0.12.3 threshold candidates", report)
+        self.assertIn("threshold t2", report)
+        self.assertIn("threshold t3", report)
+        self.assertIn("broad cross-tradition: facing death", report)
+        self.assertIn("no-answer: crypto investment", report)
+
+    def test_bm25_cli_validation(self):
+        with self.assertRaises(SystemExit):
+            self.bm.main(["--k1", "1.2"])  # bm25 option without the bm25 candidate
+        with self.assertRaises(SystemExit):
+            self.bm.main(["--candidate", "lexical-bm25", "--threshold", "2"])  # mutually exclusive
+        with self.assertRaises(SystemExit):
+            self.bm.main(["--candidate", "lexical-bm25", "--b", "2.0"])  # b out of [0, 1]
+        with self.assertRaises(SystemExit):
+            self.bm.main(["--candidate", "lexical-bm25", "--k1", "-1"])  # negative k1
+
+    def test_committed_bm25_is_reproducible(self):
+        path = ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-bm25.json"
+        if not path.exists():
+            self.skipTest("bm25 result not yet committed")
+        committed = json.loads(path.read_text(encoding="utf-8"))
+        fresh = self.bm.reproducible_view(self.bm.run_benchmark(
+            "project", self.bm.DEFAULT_KS, candidate=dict(self.BM25)))
         self.assertEqual(committed, fresh)
 
     # ---- committed baseline ----
