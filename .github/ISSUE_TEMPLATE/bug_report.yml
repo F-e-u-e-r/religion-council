@@ -1,0 +1,46 @@
+name: Bug report
+description: Something is broken or behaving unexpectedly.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the bug. Include the command you ran or the prompt you used.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Retrieval / benchmark
+        - Debate controller (MCP)
+        - Personas / references
+        - Quote admissibility / enforcement
+        - CI / tests
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `cat VERSION` in the repo root.
+      placeholder: v0.12.2
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Execution mode
+      options:
+        - Claude Code only
+        - Codex only
+        - Hybrid (Claude + Codex MCP)
+        - Scripts / CLI
+        - Not applicable

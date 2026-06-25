@@ -1,0 +1,49 @@
+name: Corpus / source suggestion
+description: Suggest a new excerpt, tradition, or source text for the curated corpus.
+labels: ["corpus"]
+body:
+  - type: textarea
+    id: source
+    attributes:
+      label: What source?
+      description: |
+        Name the text, tradition, work, and locator (chapter/verse/section).
+        Example: Buddhism · 法句經 · verse 183 (南傳)
+    validations:
+      required: true
+  - type: textarea
+    id: text
+    attributes:
+      label: Excerpt text
+      description: The exact passage (original language preferred). Mark translations or renderings as such.
+  - type: dropdown
+    id: tradition
+    attributes:
+      label: Tradition
+      options:
+        - Christianity
+        - Islam
+        - Hinduism
+        - Buddhism
+        - Taoism
+        - Confucianism
+        - Mohism
+        - Legalism
+        - Other / new tradition
+    validations:
+      required: true
+  - type: textarea
+    id: rights
+    attributes:
+      label: Rights / provenance
+      description: |
+        Is the text public domain, openly licensed, or under copyright?
+        If it is a translation or rendering, name the translator and edition.
+        The project requires a rights basis before any excerpt enters the distributable corpus.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why add this?
+      description: What gap does it fill — a missing tradition, a key teaching, a benchmark query with no good answer?

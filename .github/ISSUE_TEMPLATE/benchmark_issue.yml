@@ -1,0 +1,31 @@
+name: Retrieval benchmark issue
+description: Report a problem with the retrieval benchmark — queries, judgments, the runner, or results.
+labels: ["benchmark"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Wrong or missing relevance judgment
+        - Query suggestion for a successor benchmark version
+        - Runner bug or crash
+        - Result discrepancy (committed report differs from a fresh run)
+        - Benchmark design / methodology concern
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: |
+        For judgment issues, name the query_id, the record (tradition, work, locator), and the
+        relevance you think is correct (0/1/2) with a rationale.
+        For runner issues, include the command and the error.
+    validations:
+      required: true
+  - type: input
+    id: query_id
+    attributes:
+      label: Query ID (if applicable)
+      placeholder: q010
