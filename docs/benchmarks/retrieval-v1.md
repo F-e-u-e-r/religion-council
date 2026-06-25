@@ -11,8 +11,19 @@
     committed under `results/`; thresholds 2 and 3 eliminate the two no-answer false-support cases
     without answerable-query regression, while threshold 5 regresses q007 and q010. This remains an
     experiment only: no default threshold and no backend is adopted.
+  - BM25-style lexical re-ranking experiment: **complete** (Unreleased). A BM25 re-ranking of the
+    same file corpus over the same tokenization (Lucene-style defaults: k1=1.2, b=0.75) is committed
+    under `results/` ([retrieval-v1-lexical-bm25.md](results/retrieval-v1-lexical-bm25.md)). On C0 it
+    improves some ranking metrics (MRR 0.938 → 0.969, nDCG@5 0.902 → 0.919) and preserves exact-span
+    hit rate (1.000), but it does not fix the broad-thematic weakness (q010 stays recall@5 = 0.25)
+    or no-answer discrimination (false-support stays 1.0; threshold t2/t3 remain better for
+    no-answer). This is candidate family 2 and remains an experiment only: no backend is adopted.
+    The result is consistent with "Why this gate exists" — on a small, multilingual,
+    classical-Chinese corpus, exact-term/locator matching already does much of the work and a ranker
+    alone is not a no-answer policy.
   - Backend selection: **deferred.** Candidate backends are unmeasured and unselected. No backend is
-    selected by this document.
+    selected by this document. The deferred decision ADR (0007) now has three reference runs to weigh
+    — lexical baseline, confidence threshold, and BM25 — but is **not** written here.
 - Owner stage: the **A2→A3** decision gate ([ADR 0002](../adr/0002-roadmap-stage-nomenclature.md) §1):
   whether to move retrieval beyond today's file-based lexical ranking to a local index, a hybrid, or
   a dense/vector backend — and, separately, to a networked RAG service.

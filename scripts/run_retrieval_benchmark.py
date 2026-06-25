@@ -31,6 +31,7 @@ import argparse
 import importlib.util
 import json
 import math
+import re
 import sys
 import tempfile
 import time
@@ -42,6 +43,10 @@ PROJECT_RETRIEVER = ROOT / "orchestrator" / "project_retrieve.py"
 QUERIES_PATH = ROOT / "docs" / "benchmarks" / "queries" / "retrieval-v1.json"
 JUDGMENTS_PATH = ROOT / "docs" / "benchmarks" / "judgments" / "retrieval-v1.json"
 VERSION_PATH = ROOT / "VERSION"
+BM25_REFERENCE_REPORTS = (
+    ("threshold t2", ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-threshold-t2.json"),
+    ("threshold t3", ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-threshold-t3.json"),
+)
 
 DEFAULT_KS = (1, 3, 5)
 RELEVANT_THRESHOLD = 1  # relevance >= 1 counts as relevant (exact-span metrics require 2)
@@ -54,6 +59,19 @@ REQUIRED_RECORD_FIELDS = (
     "language", "version", "category", "label",
 )
 EXACT_CATEGORIES = ("exact_quote", "exact_locator")
+
+# Candidate: lexical-bm25 (experiment only). A BM25-style re-ranking of the SAME file corpus over the
+# SAME lexical tokenization as the baseline, so the comparison isolates *weighting* (TF saturation +
+# length normalization + IDF) from tokenization. It is computed entirely in this harness as a
+# candidate signal — the portable/project retriever is unchanged and no backend is adopted (this is
+# candidate family 2, "local lexical index / BM25-style ranker", in docs/benchmarks/retrieval-v1.md;
+# adopting it would be a separate, deferred decision). Defaults match Lucene BM25Similarity.
+BM25_K1 = 1.2
+BM25_B = 0.75
+BM25_FIELDS = ("topic", "text", "work", "locator", "school")  # same haystack fields as score()
+_ASCII_WORD_RE = re.compile(r"[a-z0-9]+")
+_CJK_RE = re.compile(r"[㐀-鿿]+")
+_LEXICAL_STOPWORDS = frozenset("的了與和是")
 
 
 # --------------------------------------------------------------------------------------- loading
@@ -150,6 +168,104 @@ def _threshold_filter(ranked, threshold):
     if not ranked or ranked[0][1] < threshold:
         return []
     return ranked
+
+
+# --------------------------------------------------------------------- candidate: lexical-bm25
+
+def _lexical_terms(text):
+    """Lexical tokens for the BM25 candidate — the SAME rule as the retriever's ``query_features``
+    (ASCII words + CJK bigrams + non-stopword CJK singletons), but returned as a **multiset** (with
+    repeats) so document term frequencies are real. ``test_lexical_terms_matches_query_features``
+    pins ``set(_lexical_terms(s)) == retriever.query_features(s)`` so this cannot drift from the
+    lexical baseline it re-ranks; keeping tokenization identical is what makes the BM25 comparison a
+    clean test of *weighting* rather than of a different tokenizer.
+    """
+    lowered = text.casefold()
+    terms = list(_ASCII_WORD_RE.findall(lowered))
+    for chunk in _CJK_RE.findall(lowered):
+        terms.extend(chunk[index : index + 2] for index in range(len(chunk) - 1))
+        terms.extend(character for character in chunk if character not in _LEXICAL_STOPWORDS)
+    return [term for term in terms if term]
+
+
+def _build_bm25_index(records):
+    """Whole-corpus BM25 statistics (document-frequency, per-doc length, average length).
+
+    BM25 inherently needs corpus-wide statistics, so this **enumerates** the corpus (like
+    :func:`corpus_records`) rather than the per-query contract surface — only the IDF / length-norm
+    statistics come from enumeration. The ranked candidate *records* are still acquired through
+    ``retrieve_envelope()`` in :func:`search_bm25`, so what is measured and fed downstream stays the
+    contract's output. Stats are keyed on the stable ``record_key`` so enumeration and the contract
+    pool line up exactly.
+    """
+    doc_terms = {}
+    doc_len = {}
+    df = {}
+    for record in records:
+        key = record_key(record)
+        terms = _lexical_terms(" ".join(str(record.get(field, "")) for field in BM25_FIELDS))
+        freqs = {}
+        for term in terms:
+            freqs[term] = freqs.get(term, 0) + 1
+        doc_terms[key] = freqs
+        doc_len[key] = len(terms)
+        for term in freqs:
+            df[term] = df.get(term, 0) + 1
+    n = len(records)
+    avgdl = (sum(doc_len.values()) / n) if n else 0.0
+    return {"doc_terms": doc_terms, "doc_len": doc_len, "df": df, "n": n, "avgdl": avgdl}
+
+
+def _bm25_score(query_terms, key, index, k1, b):
+    """Okapi BM25 for one record. ``query_terms`` is a **sorted** sequence so the float summation
+    order is fixed regardless of set-hash seed (otherwise the committed JSON would not be byte-
+    reproducible across processes). Uses the non-negative Lucene-style IDF so a matched term never
+    scores negative (a term in > half the corpus would go negative under the textbook IDF).
+    """
+    freqs = index["doc_terms"].get(key)
+    if not freqs:
+        return 0.0
+    dl = index["doc_len"].get(key, 0)
+    n = index["n"]
+    avgdl = index["avgdl"] or 1.0
+    total = 0.0
+    for term in query_terms:
+        f = freqs.get(term, 0)
+        if not f:
+            continue
+        df = index["df"].get(term, 0)
+        idf = math.log(1.0 + (n - df + 0.5) / (df + 0.5))
+        total += idf * (f * (k1 + 1.0)) / (f + k1 * (1.0 - b + b * dl / avgdl))
+    return total
+
+
+def search_bm25(retriever, query, k, index, k1, b):
+    """Global top-``k`` by a BM25-style re-ranking of the SAME corpus the lexical baseline ranks.
+
+    Mirrors :func:`search`: candidates are acquired through the per-tradition ``retrieve_envelope()``
+    contract surface — here with ``k`` = corpus size so BM25 re-ranks the *whole* pool, not each
+    tradition's lexical top-``k`` — then ordered by the SAME deterministic total order
+    ``(-score, source_line, tradition, work, locator)``. Only the score differs from the baseline;
+    the records, the envelope, and occurrence identity are untouched, so the downstream contract
+    metrics are unaffected.
+    """
+    query_terms = sorted(set(_lexical_terms(query)))
+    pool_k = max(index["n"], 1)
+    scored = []
+    for tradition in sorted(retriever.TRADITIONS):
+        for record in retriever.retrieve_envelope(tradition, query, pool_k)["records"]:
+            value = round(_bm25_score(query_terms, record_key(record), index, k1, b), 6)
+            scored.append((value, record))
+    scored.sort(
+        key=lambda item: (
+            -item[0],
+            item[1].get("source_line", 0),
+            item[1]["tradition"],
+            item[1]["work"],
+            str(item[1]["locator"]),
+        )
+    )
+    return [(record, value) for value, record in scored[:k]]
 
 
 # -------------------------------------------------------------------------------------- metrics
@@ -346,6 +462,15 @@ def run_benchmark(retriever_kind, ks, candidate=None):
     judgments = {item["query_id"]: item for item in judgments_doc["judgments"]}
     max_k = max(ks)
     threshold = candidate.get("threshold") if candidate else None
+    cand_type = candidate.get("type") if candidate else None
+    bm25_index = _build_bm25_index(records) if cand_type == "lexical-bm25" else None
+    bm25_k1 = candidate.get("k1", BM25_K1) if cand_type == "lexical-bm25" else None
+    bm25_b = candidate.get("b", BM25_B) if cand_type == "lexical-bm25" else None
+
+    def _rank(text):
+        if bm25_index is not None:
+            return search_bm25(retriever, text, max_k, bm25_index, bm25_k1, bm25_b)
+        return search(retriever, text, max_k)
 
     per_query = []
     latencies = []
@@ -356,7 +481,7 @@ def run_benchmark(retriever_kind, ks, candidate=None):
         qid = query["query_id"]
         judgment = judgments.get(qid, {"no_answer": False, "relevant": []})
         start = time.perf_counter()
-        ranked_raw = search(retriever, query["query"], max_k)
+        ranked_raw = _rank(query["query"])
         latencies.append(time.perf_counter() - start)
         ranked = _threshold_filter(ranked_raw, threshold) if threshold is not None else ranked_raw
         ranked_signature[qid] = [record_key(rec) for rec, _ in ranked]
@@ -399,7 +524,7 @@ def run_benchmark(retriever_kind, ks, candidate=None):
 
     # Determinism repeat check: a second pass must reproduce every ranking exactly.
     def _repeat(q):
-        raw = search(retriever, q, max_k)
+        raw = _rank(q)
         return _threshold_filter(raw, threshold) if threshold is not None else raw
     repeat_ok = all(
         ranked_signature[query["query_id"]]
@@ -566,12 +691,15 @@ def _fmt(value):
     return "n/a" if value is None else "{:.3f}".format(value)
 
 
-def render_markdown(result, baseline=None):
+def render_markdown(result, baseline=None, references=None):
     s = result["summary"]
     ks = [str(k) for k in result["k_values"]]
     cand = result.get("candidate")
     lines = []
-    if cand:
+    if cand and cand["type"] == "lexical-bm25":
+        lines.append("# Retrieval Benchmark v1 — Candidate: lexical-bm25 (k1={}, b={})".format(
+            cand["k1"], cand["b"]))
+    elif cand:
         lines.append("# Retrieval Benchmark v1 — Candidate: {} (threshold={})".format(
             cand["type"], cand["threshold"]))
     else:
@@ -579,7 +707,14 @@ def render_markdown(result, baseline=None):
     lines.append("")
     lines.append("## Status")
     lines.append("")
-    if cand:
+    if cand and cand["type"] == "lexical-bm25":
+        lines.append("**Experiment only.** This report re-ranks the same file-based lexical corpus with a "
+                     "BM25-style scorer (k1={}, b={}) over the **same tokenization** as the baseline, so "
+                     "the comparison isolates term weighting (TF saturation + length normalization + IDF) "
+                     "from tokenization. **No default behavior changed.** **No backend selected.** The "
+                     "portable/project retriever is unchanged; BM25 is computed in the benchmark harness "
+                     "as a candidate signal only.".format(cand["k1"], cand["b"]))
+    elif cand:
         lines.append("**Experiment only.** This report evaluates a post-retrieval lexical confidence "
                      "threshold (top\\_score < {} → no support) against the v0.12.2 lexical baseline. "
                      "**No default behavior changed.** **No backend selected.**".format(cand["threshold"]))
@@ -732,6 +867,8 @@ def render_markdown(result, baseline=None):
 
     if baseline and cand:
         lines.extend(_render_comparison(result, baseline))
+    if cand and cand["type"] == "lexical-bm25" and references:
+        lines.extend(_render_bm25_reference_comparisons(result, references))
 
     return "\n".join(lines)
 
@@ -746,6 +883,12 @@ def _delta_str(new, old):
 
 
 def _render_comparison(result, baseline):
+    if result["candidate"]["type"] == "lexical-bm25":
+        return _render_comparison_bm25(result, baseline)
+    return _render_comparison_threshold(result, baseline)
+
+
+def _render_comparison_threshold(result, baseline):
     bs = baseline["summary"]
     cs = result["summary"]
     ks = [str(k) for k in result["k_values"]]
@@ -821,6 +964,164 @@ def _render_comparison(result, baseline):
     return lines
 
 
+def _render_comparison_bm25(result, baseline):
+    """Comparison for the BM25 candidate. Unlike the threshold candidate (which flips no-answer
+    outcomes), BM25 mostly *re-ranks*, so per-query changes are reported on the rank of the first
+    relevant record and recall@max-k, with no-answer queries compared on outcome.
+    """
+    bs = baseline["summary"]
+    cs = result["summary"]
+    ks = [str(k) for k in result["k_values"]]
+    cand = result["candidate"]
+    last_k = result["k_values"][-1]
+    lines = []
+    lines.append("## Comparison vs. v0.12.2 lexical baseline")
+    lines.append("")
+    lines.append("### Summary metrics")
+    lines.append("")
+    lines.append("| metric | baseline | bm25 (k1={}, b={}) | Δ |".format(cand["k1"], cand["b"]))
+    lines.append("|---|---|---|---|")
+    for label, key in [("Recall", "recall_at_k"), ("Precision", "precision_at_k"), ("nDCG", "ndcg_at_k")]:
+        for k in ks:
+            bv, cv = bs[key][k], cs[key][k]
+            lines.append("| {}@{} | {} | {} | {} |".format(label, k, _fmt(bv), _fmt(cv), _delta_str(cv, bv)))
+    for label, key in [
+        ("MRR", "mrr"),
+        ("Exact-span hit", "exact_span_hit_rate"),
+        ("No-answer correct", "no_answer_correct_rate"),
+        ("False-support", "false_support_rate"),
+    ]:
+        bv, cv = bs[key], cs[key]
+        lines.append("| {} | {} | {} | {} |".format(label, _fmt(bv), _fmt(cv), _delta_str(cv, bv)))
+    lines.append("")
+    lines.append("### Per-query changes (first-relevant rank · recall@{})".format(last_k))
+    lines.append("")
+    b_by_id = {q["query_id"]: q for q in baseline["per_query"]}
+    improved, regressed, unchanged = [], [], 0
+    for q in result["per_query"]:
+        bq = b_by_id.get(q["query_id"], {})
+        if q["no_answer"]:
+            b_out, c_out = bq.get("outcome"), q.get("outcome")
+            if b_out == c_out:
+                unchanged += 1
+            else:
+                detail = "`{}` (no_answer): {} → {}".format(q["query_id"], b_out, c_out)
+                (improved if c_out == "no_answer_ok" else regressed).append(detail)
+            continue
+        recall_key = "recall_at_{}".format(last_k)
+        b_rank, c_rank = bq.get("first_relevant_rank"), q.get("first_relevant_rank")
+        b_rec, c_rec = bq.get(recall_key), q.get(recall_key)
+        # Higher recall is better; among equal recall a lower (earlier) first-relevant rank is better.
+        b_quality = (b_rec if b_rec is not None else -1.0, -(b_rank if b_rank else 10 ** 9))
+        c_quality = (c_rec if c_rec is not None else -1.0, -(c_rank if c_rank else 10 ** 9))
+        if c_quality == b_quality:
+            unchanged += 1
+            continue
+        detail = "`{}` ({}): rank {} → {}, recall@{} {} → {}".format(
+            q["query_id"], q.get("category", "?"),
+            b_rank or "—", c_rank or "—", last_k, _fmt(b_rec), _fmt(c_rec))
+        (improved if c_quality > b_quality else regressed).append(detail)
+    for header, items in [("Improved", improved), ("Regressed", regressed)]:
+        if items:
+            lines.append("**{}:**".format(header))
+            for item in items:
+                lines.append("- {}".format(item))
+        else:
+            lines.append("**{}:** none.".format(header))
+        lines.append("")
+    lines.append("**Unchanged:** {} queries.".format(unchanged))
+    lines.append("")
+    return lines
+
+
+def _query_by_id(report, query_id):
+    return next(q for q in report["per_query"] if q["query_id"] == query_id)
+
+
+def _query_focus_cell(report, query_id):
+    q = _query_by_id(report, query_id)
+    if q["no_answer"]:
+        if not q["retrieved"]:
+            return "{}; top-1 —".format(q["outcome"])
+        top1 = q["retrieved"][0]
+        return "{}; top-1 {}·{} (score {})".format(
+            q["outcome"], top1["work"], top1["locator"], top1["score"])
+    last_k = report["k_values"][-1]
+    return "{}; rank {}; recall@{} {}".format(
+        q["outcome"], q.get("first_relevant_rank") or "—", last_k,
+        _fmt(q.get("recall_at_{}".format(last_k))))
+
+
+def _render_bm25_reference_comparisons(result, references):
+    """Direct BM25 comparison against committed threshold candidate reports."""
+    refs = [(label, report) for label, report in references if report]
+    if not refs:
+        return []
+    cs = result["summary"]
+    ks = [str(k) for k in result["k_values"]]
+    lines = []
+    lines.append("## Comparison vs. v0.12.3 threshold candidates")
+    lines.append("")
+    lines.append("The threshold candidates are not backend selections; they are reference experiments for "
+                 "no-answer discrimination. BM25 is compared against them here because BM25 changes "
+                 "ranking but does not add a low-confidence cutoff.")
+    lines.append("")
+    lines.append("### Summary metrics")
+    lines.append("")
+    headers = [label for label, _ in refs]
+    lines.append("| metric | {} | bm25 | {} |".format(
+        " | ".join(headers),
+        " | ".join("BM25 Δ vs. {}".format(label) for label, _ in refs)))
+    lines.append("|---|" + "---|" * (len(refs) + 1 + len(refs)))
+    for label, key in [("Recall", "recall_at_k"), ("Precision", "precision_at_k"), ("nDCG", "ndcg_at_k")]:
+        for k in ks:
+            ref_values = [report["summary"][key][k] for _, report in refs]
+            cv = cs[key][k]
+            lines.append("| {}@{} | {} | {} | {} |".format(
+                label, k,
+                " | ".join(_fmt(value) for value in ref_values),
+                _fmt(cv),
+                " | ".join(_delta_str(cv, value) for value in ref_values)))
+    for label, key in [
+        ("MRR", "mrr"),
+        ("Exact-span hit", "exact_span_hit_rate"),
+        ("No-answer correct", "no_answer_correct_rate"),
+        ("False-support", "false_support_rate"),
+    ]:
+        ref_values = [report["summary"][key] for _, report in refs]
+        cv = cs[key]
+        lines.append("| {} | {} | {} | {} |".format(
+            label,
+            " | ".join(_fmt(value) for value in ref_values),
+            _fmt(cv),
+            " | ".join(_delta_str(cv, value) for value in ref_values)))
+    lines.append("")
+    lines.append("### Targeted query comparison")
+    lines.append("")
+    lines.append("| focus | {} | bm25 |".format(" | ".join(headers)))
+    lines.append("|---|" + "---|" * (len(refs) + 1))
+    for query_id, focus in [
+        ("q005", "exact locator: John 3:16"),
+        ("q007", "paraphrase: do not impose on others"),
+        ("q010", "broad cross-tradition: facing death"),
+        ("q014", "no-answer: crypto investment"),
+        ("q015", "no-answer: smartphone specs"),
+    ]:
+        ref_cells = [_query_focus_cell(report, query_id) for _, report in refs]
+        lines.append("| {} (`{}`) | {} | {} |".format(
+            focus, query_id, " | ".join(ref_cells), _query_focus_cell(result, query_id)))
+    lines.append("")
+    lines.append("### Takeaway")
+    lines.append("")
+    lines.append("- BM25 preserves exact-span hit rate at the Lucene-style default (k1=1.2, b=0.75) but does "
+                 "not improve the benchmark's broad-thematic weakness (`q010` remains recall@5 = 0.250).")
+    lines.append("- BM25 does not improve no-answer discrimination; threshold t2/t3 remain better on the two "
+                 "no-answer probes because they return no support instead of false support.")
+    lines.append("- No backend or threshold behavior is adopted by this report.")
+    lines.append("")
+    return lines
+
+
 # ------------------------------------------------------------------------------------------- cli
 
 def main(argv=None):
@@ -834,10 +1135,16 @@ def main(argv=None):
     parser.add_argument("--md-out", type=Path)
     parser.add_argument("--check-fixtures", action="store_true",
                         help="validate the query/judgment fixtures and exit non-zero on any error.")
-    parser.add_argument("--candidate", choices=("lexical-threshold",),
+    parser.add_argument("--candidate", choices=("lexical-threshold", "lexical-bm25"),
                         help="candidate to evaluate against the baseline (experiment only).")
     parser.add_argument("--threshold", type=int,
                         help="confidence threshold (requires --candidate lexical-threshold).")
+    parser.add_argument("--k1", type=float,
+                        help="BM25 term-frequency saturation (requires --candidate lexical-bm25; "
+                             "default {}).".format(BM25_K1))
+    parser.add_argument("--b", type=float,
+                        help="BM25 length-normalization in [0, 1] (requires --candidate lexical-bm25; "
+                             "default {}).".format(BM25_B))
     parser.add_argument("--baseline-json", type=Path,
                         help="baseline JSON report for the comparison section in Markdown output.")
     args = parser.parse_args(argv)
@@ -864,6 +1171,12 @@ def main(argv=None):
         parser.error("--threshold requires --candidate lexical-threshold")
     if args.threshold is not None and args.threshold < 1:
         parser.error("--threshold must be a positive integer (got {})".format(args.threshold))
+    if (args.k1 is not None or args.b is not None) and args.candidate != "lexical-bm25":
+        parser.error("--k1/--b require --candidate lexical-bm25")
+    if args.k1 is not None and args.k1 < 0:
+        parser.error("--k1 must be non-negative (got {})".format(args.k1))
+    if args.b is not None and not 0.0 <= args.b <= 1.0:
+        parser.error("--b must be in [0, 1] (got {})".format(args.b))
 
     errors = validate_fixtures(args.retriever)
     if errors:
@@ -873,6 +1186,12 @@ def main(argv=None):
     candidate = None
     if args.candidate == "lexical-threshold":
         candidate = {"type": "lexical-threshold", "threshold": args.threshold}
+    elif args.candidate == "lexical-bm25":
+        candidate = {
+            "type": "lexical-bm25",
+            "k1": args.k1 if args.k1 is not None else BM25_K1,
+            "b": args.b if args.b is not None else BM25_B,
+        }
 
     ks = tuple(sorted(set(args.ks))) if args.ks else DEFAULT_KS
     result = run_benchmark(args.retriever, ks, candidate=candidate)
@@ -881,6 +1200,13 @@ def main(argv=None):
     baseline = None
     if args.baseline_json and args.baseline_json.exists():
         baseline = load_json(args.baseline_json)
+    references = []
+    if candidate and candidate["type"] == "lexical-bm25":
+        references = [
+            (label, load_json(path))
+            for label, path in BM25_REFERENCE_REPORTS
+            if path.exists()
+        ]
 
     if args.json_out:
         args.json_out.parent.mkdir(parents=True, exist_ok=True)
@@ -888,10 +1214,11 @@ def main(argv=None):
             json.dumps(view, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     if args.md_out:
         args.md_out.parent.mkdir(parents=True, exist_ok=True)
-        args.md_out.write_text(render_markdown(result, baseline=baseline), encoding="utf-8")
+        args.md_out.write_text(
+            render_markdown(result, baseline=baseline, references=references), encoding="utf-8")
     if not args.json_out and not args.md_out:
         if args.format == "markdown":
-            sys.stdout.write(render_markdown(result, baseline=baseline))
+            sys.stdout.write(render_markdown(result, baseline=baseline, references=references))
         else:
             sys.stdout.write(json.dumps(view, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
     return 0
