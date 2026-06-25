@@ -17,6 +17,28 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
   deprecation window.
 
+## [v0.12.3] — 2026-06-25 · Threshold Experiment & Community Feedback Intake
+
+### Added
+- Added an experiment-only lexical confidence threshold candidate for retrieval-v1.
+- Evaluated thresholds 1, 2, 3, and 5 against the v0.12.2 lexical baseline.
+- Committed Markdown and JSON threshold result reports under `docs/benchmarks/results/`.
+- Added GitHub issue templates for bug reports, feature requests, corpus/source suggestions, and
+  retrieval benchmark issues.
+- Added local good-first-issue drafts and a pinned retrieval roadmap draft.
+
+### Findings
+- Thresholds 2 and 3 eliminated both no-answer false-support cases without answerable-query
+  regression.
+- Threshold 5 regressed q007 and q010.
+- Default retrieval behavior remains unchanged.
+- No backend is selected.
+
+### Non-goals
+- No RAG, vector store, BM25, local index, or backend adoption.
+- No default threshold behavior change.
+- No edition-backed assurance.
+
 ## [v0.12.2] — 2026-06-24 · Retrieval Benchmark Lexical Baseline
 
 ### Added

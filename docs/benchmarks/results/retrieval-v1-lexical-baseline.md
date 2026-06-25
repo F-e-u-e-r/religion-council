@@ -8,7 +8,7 @@ Baseline **measured**. **No backend selected.** This report is measurement only 
 
 - retriever_kind: `project-file`
 - contract_version: `religion-council/retrieval/v1`
-- corpus: C0 curated references — 56 records across 8 traditions (VERSION v0.12.2)
+- corpus: C0 curated references — 56 records across 8 traditions (VERSION v0.12.3)
 - queries: 18 (16 answerable, 2 no-answer)
 
 ## Summary metrics
@@ -45,7 +45,7 @@ Baseline **measured**. **No backend selected.** This report is measurement only 
 ## Operational (snapshot — machine-specific, not part of the reproducible metrics)
 
 - records searched per query: 56
-- total: 0.0239s · avg query: 1.3285 ms · max query: 2.5738 ms
+- total: 0.0206s · avg query: 1.1465 ms · max query: 1.7488 ms
 
 ## Per-query results
 

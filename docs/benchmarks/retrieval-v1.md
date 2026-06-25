@@ -7,6 +7,10 @@
     [results/retrieval-v1-lexical-baseline.md](results/retrieval-v1-lexical-baseline.md) (runner:
     `scripts/run_retrieval_benchmark.py`; frozen query set + judgments under `queries/` and
     `judgments/`).
+  - Lexical confidence threshold experiment: **complete** (v0.12.3). Thresholds 1, 2, 3, and 5 are
+    committed under `results/`; thresholds 2 and 3 eliminate the two no-answer false-support cases
+    without answerable-query regression, while threshold 5 regresses q007 and q010. This remains an
+    experiment only: no default threshold and no backend is adopted.
   - Backend selection: **deferred.** Candidate backends are unmeasured and unselected. No backend is
     selected by this document.
 - Owner stage: the **A2→A3** decision gate ([ADR 0002](../adr/0002-roadmap-stage-nomenclature.md) §1):
