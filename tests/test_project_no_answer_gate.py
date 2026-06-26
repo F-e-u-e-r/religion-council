@@ -11,7 +11,7 @@ lexical score), which is the only confidence a per-tradition `retrieve_envelope(
 exposes. This is faithful to ADR 0007 §8.2 and is the correct unit for the orchestrated council
 (each tradition decides whether it has confident support). It is slightly more conservative than the
 benchmark's *global* t3 gate on weak cross-tradition matches — see
-`test_gate_is_per_tradition_not_global`, which pins that intentional behavior.
+`test_gate_is_per_tradition_not_global`, which pins that intentional behavior for both q010 and q011.
 """
 import importlib.util
 import json
@@ -118,8 +118,8 @@ class ProjectNoAnswerGateTest(unittest.TestCase):
 
     def test_gated_does_not_regress_q007_q010(self):
         # The benchmark retrieves these (q007 hit at rank 2; q010 recall@5 = 0.25). After per-tradition
-        # gating, the judged-relevant record the benchmark actually found is still retrievable — its
-        # owning tradition's confidence clears t3.
+        # gating, at least one judged-relevant record still survives. This preserves the benchmark's
+        # observed answer while leaving q010's broad-thematic recall weakness unresolved.
         for qid in ("q007", "q010"):
             query = self._q(qid)
             rel_keys = {(r["tradition"], r["work"], r["locator"])
@@ -132,12 +132,17 @@ class ProjectNoAnswerGateTest(unittest.TestCase):
 
     def test_gate_is_per_tradition_not_global(self):
         # Intentional, pinned: the gate decides per tradition, so a weak cross-tradition match is
-        # gated even when another tradition answers the same query strongly. For "愛人", christianity
-        # (馬太福音, conf 14) passes while mohism (墨子·兼愛中, conf 2) is gated — more conservative than
-        # the benchmark's global t3 gate, consistent with ADR 0007's unresolved broad-thematic recall.
-        query = self._q("q011")
-        self.assertTrue(self.project.retrieve_gated("christianity", query, 5))
-        self.assertEqual(self.project.retrieve_gated("mohism", query, 5), [])
+        # gated even when another tradition answers the same query strongly. This is more
+        # conservative than the benchmark's global t3 gate and matches ADR 0007's unresolved
+        # broad-thematic recall caveat.
+        love_query = self._q("q011")
+        self.assertTrue(self.project.retrieve_gated("christianity", love_query, 5))
+        self.assertEqual(self.project.retrieve_gated("mohism", love_query, 5), [])
+
+        death_query = self._q("q010")
+        self.assertTrue(self.project.retrieve_gated("hinduism", death_query, 5))
+        self.assertEqual(self.project.retrieve_gated("buddhism", death_query, 5), [])
+        self.assertEqual(self.project.retrieve_gated("confucianism", death_query, 5), [])
 
     def test_threshold_is_overridable(self):
         # The cutoff is a parameter; lowering it admits the weak match, raising it gates everything.
