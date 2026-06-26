@@ -12,6 +12,13 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Changed
+- Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
+  `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
+  deprecation window.
+
+## [v0.12.4] — 2026-06-26 · BM25 Retrieval Experiment
+
 ### Added
 - Experiment-only **BM25-style lexical re-ranking** candidate for the retrieval-v1 benchmark
   (`--candidate lexical-bm25`, with configurable `--k1` / `--b`). It re-ranks the same file corpus
@@ -21,11 +28,6 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   under `docs/benchmarks/results/retrieval-v1-lexical-bm25.{md,json}`, plus benchmark tests for
   tokenization parity with the retriever, identity / citation-fidelity preservation, cross-process
   determinism, CLI validation, and committed-report reproducibility.
-
-### Changed
-- Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
-  `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
-  deprecation window.
 
 ### Findings
 - On C0, BM25 (Lucene-style defaults: k1=1.2, b=0.75) improves some ranking metrics over the
