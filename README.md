@@ -8,7 +8,7 @@
 ![code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)
 ![content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)
 ![runs on: Codex · Claude Code · any agent](https://img.shields.io/badge/runs%20on-Codex%20·%20Claude%20Code%20·%20any%20agent-green.svg)
-![version: v0.12.5](https://img.shields.io/badge/version-v0.12.5-orange.svg)
+![version: v0.12.6](https://img.shields.io/badge/version-v0.12.6-orange.svg)
 
 **English** · [繁體中文](#繁體中文)
 
@@ -25,7 +25,7 @@ argue from **its own texts**. Every claim is tagged as either a **[Text]** quota
 (with a real locator) or an **[Interpretation]**, and the moderator surfaces the
 genuine tensions instead of forcing agreement.
 
-Version **v0.12.5** supports three execution modes:
+Version **v0.12.6** supports three execution modes:
 
 1. **Claude Code only** — 37 specialized Claude agents (1 moderator + 36 voices).
 2. **Codex only** — a portable Codex skill, with native Codex subagents when requested.
@@ -92,6 +92,12 @@ ranking gains while the threshold supplies no-answer discrimination: MRR improve
 0.969, nDCG@5 from 0.902 to 0.919, exact-span hit remains 1.000, no-answer correctness reaches
 1.000, and false-support falls to 0.000. Broad thematic recall remains weak on q010, so no backend
 is selected and default retrieval remains unchanged.
+
+v0.12.6 publishes ADR 0007, the retrieval backend decision from the retrieval-v1 evidence. It selects
+BM25 + lexical-confidence threshold (t2/t3) as the project retriever's ranking + no-answer policy,
+while gating the default BM25 ranking flip on the ≥2-judge + κ step. It still selects no RAG, vector,
+hybrid, built-index, or network backend, and default retrieval remains unchanged until a follow-up
+implementation.
 
 ### Strict finalization: the guarantee boundary
 
@@ -269,7 +275,7 @@ religion/
 ├── DISCLAIMER.md                 # sourcing rules + religious-sensitivity statement
 ├── LICENSE                       # MIT — skill logic, agents, scripts, config
 ├── LICENSE-CONTENT               # CC BY 4.0 — references & corpus
-├── VERSION                       # current release: v0.12.5
+├── VERSION                       # current release: v0.12.6
 ├── .mcp.json                     # Claude → deterministic Codex controller
 │
 ├── skills/religion-council/      # ▸ PORTABLE skill (Codex & any agent)
@@ -417,7 +423,7 @@ Quoted primary scriptures are public-domain source texts in their original langu
 標注為**〔據典〕**(引文+真實出處)或**〔詮釋〕**;主持人負責把真正的張力點攤開,而非強行
 調和。
 
-目前 **v0.12.5** 支援三種執行方式:
+目前 **v0.12.6** 支援三種執行方式:
 
 1. **純 Claude Code**——附 37 個專屬 agent(1 位主持人 + 36 個聲音)。
 2. **純 Codex**——可攜 Codex skill;明確要求時可用 Codex 原生 subagent。
@@ -471,6 +477,11 @@ v0.12.5 評估 experiment-only BM25 + lexical confidence threshold candidate。B
 提升到 0.919，exact-span hit 維持 1.000，no-answer correctness 達到 1.000，false-support
 降到 0.000。q010 的 broad thematic recall 仍然偏弱，因此未選定任何 backend，default retrieval
 也維持不變。
+
+v0.12.6 發布 ADR 0007，也就是根據 retrieval-v1 evidence 作出的 retrieval backend decision。
+它選擇 BM25 + lexical-confidence threshold (t2/t3) 作為 project retriever 的 ranking +
+no-answer policy，但把 default BM25 ranking flip 仍然 gate 在 ≥2-judge + κ 步驟之後。它仍未選定
+RAG、vector、hybrid、built-index 或 network backend；default retrieval 會等後續實作才改變。
 
 ### Strict finalization：保證邊界
 

@@ -8,7 +8,7 @@
 
 - retriever_kind: `project-file`
 - contract_version: `religion-council/retrieval/v1`
-- corpus: C0 curated references — 56 records across 8 traditions (VERSION v0.12.5)
+- corpus: C0 curated references — 56 records across 8 traditions (VERSION v0.12.6)
 - queries: 18 (16 answerable, 2 no-answer)
 
 ## Summary metrics
@@ -45,7 +45,7 @@
 ## Operational (snapshot — machine-specific, not part of the reproducible metrics)
 
 - records searched per query: 56
-- total: 0.0219s · avg query: 1.2160 ms · max query: 1.8854 ms
+- total: 0.0214s · avg query: 1.1865 ms · max query: 1.7971 ms
 
 ## Per-query results
 
