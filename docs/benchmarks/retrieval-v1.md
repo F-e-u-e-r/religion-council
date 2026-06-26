@@ -21,9 +21,18 @@
     The result is consistent with "Why this gate exists" — on a small, multilingual,
     classical-Chinese corpus, exact-term/locator matching already does much of the work and a ranker
     alone is not a no-answer policy.
+  - BM25 + lexical confidence threshold experiment: **complete** (Unreleased). The combined
+    candidate is committed under `results/`
+    ([t2](results/retrieval-v1-lexical-bm25-threshold-t2.md),
+    [t3](results/retrieval-v1-lexical-bm25-threshold-t3.md)). BM25 supplies the ranking signal while
+    the v0.12.3 lexical confidence gate supplies no-answer discrimination. On C0, BM25+t2/t3 preserve
+    the BM25 ranking improvements (MRR 0.969, nDCG@5 0.919) and exact-span hit rate (1.000), while
+    eliminating no-answer false-support (no-answer correctness 1.000, false-support 0.000). The
+    broad-thematic weakness remains: q010 stays recall@5 = 0.25. This is still measurement only:
+    no threshold, ranker, backend, vector store, or RAG path is adopted.
   - Backend selection: **deferred.** Candidate backends are unmeasured and unselected. No backend is
-    selected by this document. The deferred decision ADR (0007) now has three reference runs to weigh
-    — lexical baseline, confidence threshold, and BM25 — but is **not** written here.
+    selected by this document. The deferred decision ADR (0007) now has four reference runs to weigh
+    — lexical baseline, confidence threshold, BM25, and BM25+threshold — but is **not** written here.
 - Owner stage: the **A2→A3** decision gate ([ADR 0002](../adr/0002-roadmap-stage-nomenclature.md) §1):
   whether to move retrieval beyond today's file-based lexical ranking to a local index, a hybrid, or
   a dense/vector backend — and, separately, to a networked RAG service.

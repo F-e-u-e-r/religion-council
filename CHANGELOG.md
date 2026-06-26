@@ -12,6 +12,23 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Added
+- Experiment-only **BM25 + lexical confidence threshold** candidate for the retrieval-v1 benchmark
+  (`--candidate lexical-bm25-threshold --threshold {2,3}`). BM25 still only re-ranks inside the
+  benchmark harness; the confidence gate uses the v0.12.3 lexical threshold semantics, so the t2/t3
+  cutoffs are applied to the project retriever's lexical top score rather than to BM25's
+  floating-point score scale. Committed Markdown + JSON reports under
+  `docs/benchmarks/results/retrieval-v1-lexical-bm25-threshold-t{2,3}.{md,json}`.
+
+### Findings
+- BM25+t2 and BM25+t3 preserve BM25's ranking gains over the lexical baseline (MRR 0.938 → 0.969;
+  nDCG@5 0.902 → 0.919), keep exact-span hit rate at 1.000, and inherit the threshold experiment's
+  no-answer behavior (no-answer correctness 1.000; false-support 0.000).
+- The combined candidate still does **not** improve q010 broad-thematic recall (recall@5 remains
+  0.25), so lexical ranking plus a confidence gate does not solve that weakness on retrieval-v1.
+- No backend is selected and default retrieval remains unchanged; ADR 0007 remains deferred until
+  these measured candidates are compared as a decision.
+
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a

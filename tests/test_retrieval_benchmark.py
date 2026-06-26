@@ -9,6 +9,7 @@ identity is unstable, required metadata is missing, or the report format/baselin
 import ast
 import importlib.util
 import json
+import tempfile
 import types
 import unittest
 from pathlib import Path
@@ -259,6 +260,8 @@ class RetrievalBenchmarkTest(unittest.TestCase):
     # ---- candidate: lexical-bm25 ----
 
     BM25 = {"type": "lexical-bm25", "k1": 1.2, "b": 0.75}
+    BM25_T2 = {"type": "lexical-bm25-threshold", "threshold": 2, "k1": 1.2, "b": 0.75}
+    BM25_T3 = {"type": "lexical-bm25-threshold", "threshold": 3, "k1": 1.2, "b": 0.75}
 
     def test_lexical_terms_matches_query_features(self):
         # The BM25 candidate must tokenize identically to the retriever it re-ranks, or the
@@ -366,6 +369,82 @@ class RetrievalBenchmarkTest(unittest.TestCase):
         fresh = self.bm.reproducible_view(self.bm.run_benchmark(
             "project", self.bm.DEFAULT_KS, candidate=dict(self.BM25)))
         self.assertEqual(committed, fresh)
+
+    # ---- candidate: lexical-bm25-threshold ----
+
+    def test_bm25_threshold_combines_ranking_and_no_answer_filter(self):
+        bm25 = self.bm.run_benchmark("project", self.bm.DEFAULT_KS, candidate=dict(self.BM25))
+        cand = self.bm.run_benchmark("project", self.bm.DEFAULT_KS, candidate=dict(self.BM25_T2))
+        self.assertEqual(cand["candidate"], self.BM25_T2)
+        self.assertEqual(cand["summary"]["exact_span_hit_rate"], 1.0)
+        self.assertGreater(
+            cand["summary"]["no_answer_correct_rate"],
+            bm25["summary"]["no_answer_correct_rate"])
+        self.assertLess(
+            cand["summary"]["false_support_rate"],
+            bm25["summary"]["false_support_rate"])
+        self.assertEqual(self._query(cand, "q005")["first_relevant_rank"], 1)
+        self.assertEqual(self._query(cand, "q010")["recall_at_5"], 0.25)
+        q014 = self._query(cand, "q014")
+        self.assertEqual(q014["outcome"], "no_answer_ok")
+        self.assertEqual(q014["threshold_score_source"], "lexical-baseline")
+        self.assertEqual(q014["pre_threshold_top_score"], 1)
+        self.assertGreater(q014["bm25_pre_threshold_top_score"], self.BM25_T2["threshold"])
+        self.assertEqual(self._query(cand, "q015")["outcome"], "no_answer_ok")
+
+    def test_bm25_threshold_t2_and_t3_preserve_contract(self):
+        for candidate in (self.BM25_T2, self.BM25_T3):
+            with self.subTest(candidate=candidate):
+                cand = self.bm.run_benchmark("project", self.bm.DEFAULT_KS, candidate=dict(candidate))
+                contract = cand["contract"]
+                self.assertTrue(contract["stable_occurrence_identity_present"])
+                self.assertTrue(contract["deterministic_repeat"])
+                self.assertEqual(contract["citation_fidelity"]["fidelity"], 1.0)
+                self.assertEqual(cand["summary"]["exact_span_hit_rate"], 1.0)
+                self.assertEqual(cand["summary"]["no_answer_correct_rate"], 1.0)
+                self.assertEqual(cand["summary"]["false_support_rate"], 0.0)
+
+    def test_bm25_threshold_markdown_compares_all_reference_candidates(self):
+        bm25 = self.bm.run_benchmark("project", self.bm.DEFAULT_KS, candidate=dict(self.BM25))
+        t2 = json.loads(
+            (ROOT / "docs/benchmarks/results/retrieval-v1-lexical-threshold-t2.json")
+            .read_text(encoding="utf-8"))
+        t3 = json.loads(
+            (ROOT / "docs/benchmarks/results/retrieval-v1-lexical-threshold-t3.json")
+            .read_text(encoding="utf-8"))
+        bmt2 = self.bm.run_benchmark("project", self.bm.DEFAULT_KS, candidate=dict(self.BM25_T2))
+        bmt3 = self.bm.run_benchmark("project", self.bm.DEFAULT_KS, candidate=dict(self.BM25_T3))
+        refs = [("threshold t2", t2), ("threshold t3", t3), ("BM25", bm25), ("BM25+t3", bmt3)]
+        report = self.bm.render_markdown(bmt2, baseline=self.result, references=refs)
+        for label in ("baseline", "threshold t2", "threshold t3", "BM25", "BM25+t2", "BM25+t3"):
+            self.assertIn(label, report)
+        self.assertIn("broad cross-tradition: facing death", report)
+        self.assertIn("no-answer: crypto investment", report)
+
+    def test_bm25_threshold_cli_validation(self):
+        with self.assertRaises(SystemExit):
+            self.bm.main(["--candidate", "lexical-bm25-threshold"])
+        with self.assertRaises(SystemExit):
+            self.bm.main(["--candidate", "lexical-bm25-threshold", "--threshold", "0"])
+        with self.assertRaises(SystemExit):
+            self.bm.main(["--candidate", "lexical-bm25-threshold", "--threshold", "2", "--b", "2.0"])
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(self.bm.main([
+                "--candidate", "lexical-bm25-threshold",
+                "--threshold", "2",
+                "--json-out", str(Path(tmp) / "result.json"),
+            ]), 0)
+
+    def test_committed_bm25_threshold_reports_are_reproducible(self):
+        for threshold, candidate in ((2, self.BM25_T2), (3, self.BM25_T3)):
+            path = ROOT / "docs" / "benchmarks" / "results" / (
+                "retrieval-v1-lexical-bm25-threshold-t{}.json".format(threshold))
+            if not path.exists():
+                self.skipTest("bm25 threshold t={} result not yet committed".format(threshold))
+            committed = json.loads(path.read_text(encoding="utf-8"))
+            fresh = self.bm.reproducible_view(self.bm.run_benchmark(
+                "project", self.bm.DEFAULT_KS, candidate=dict(candidate)))
+            self.assertEqual(committed, fresh)
 
     # ---- committed baseline ----
 

@@ -47,6 +47,13 @@ BM25_REFERENCE_REPORTS = (
     ("threshold t2", ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-threshold-t2.json"),
     ("threshold t3", ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-threshold-t3.json"),
 )
+BM25_THRESHOLD_REFERENCE_REPORTS = (
+    ("threshold t2", ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-threshold-t2.json"),
+    ("threshold t3", ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-threshold-t3.json"),
+    ("BM25", ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-bm25.json"),
+    ("BM25+t2", ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-bm25-threshold-t2.json"),
+    ("BM25+t3", ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-bm25-threshold-t3.json"),
+)
 
 DEFAULT_KS = (1, 3, 5)
 RELEVANT_THRESHOLD = 1  # relevance >= 1 counts as relevant (exact-span metrics require 2)
@@ -463,14 +470,33 @@ def run_benchmark(retriever_kind, ks, candidate=None):
     max_k = max(ks)
     threshold = candidate.get("threshold") if candidate else None
     cand_type = candidate.get("type") if candidate else None
-    bm25_index = _build_bm25_index(records) if cand_type == "lexical-bm25" else None
-    bm25_k1 = candidate.get("k1", BM25_K1) if cand_type == "lexical-bm25" else None
-    bm25_b = candidate.get("b", BM25_B) if cand_type == "lexical-bm25" else None
+    uses_bm25 = cand_type in ("lexical-bm25", "lexical-bm25-threshold")
+    bm25_index = _build_bm25_index(records) if uses_bm25 else None
+    bm25_k1 = candidate.get("k1", BM25_K1) if uses_bm25 else None
+    bm25_b = candidate.get("b", BM25_B) if uses_bm25 else None
 
     def _rank(text):
         if bm25_index is not None:
             return search_bm25(retriever, text, max_k, bm25_index, bm25_k1, bm25_b)
         return search(retriever, text, max_k)
+
+    def _apply_candidate_threshold(text, ranked_raw):
+        if threshold is None:
+            return ranked_raw, None
+        if cand_type == "lexical-bm25-threshold":
+            # Keep the threshold semantics comparable to the v0.12.3 experiment: the cutoff is the
+            # project retriever's lexical confidence score, while BM25 is used only to rank records
+            # that pass that confidence gate. BM25's floating-point scores are not on the same scale
+            # as the lexical score, so applying t2/t3 directly to BM25 would not measure the intended
+            # "BM25 + threshold t2/t3" candidate.
+            lexical_raw = search(retriever, text, max_k)
+            confidence = lexical_raw[0][1] if lexical_raw else 0
+            if confidence < threshold:
+                return [], confidence
+            return ranked_raw, confidence
+        return _threshold_filter(ranked_raw, threshold), (
+            ranked_raw[0][1] if ranked_raw else 0
+        )
 
     per_query = []
     latencies = []
@@ -482,8 +508,8 @@ def run_benchmark(retriever_kind, ks, candidate=None):
         judgment = judgments.get(qid, {"no_answer": False, "relevant": []})
         start = time.perf_counter()
         ranked_raw = _rank(query["query"])
+        ranked, threshold_score = _apply_candidate_threshold(query["query"], ranked_raw)
         latencies.append(time.perf_counter() - start)
-        ranked = _threshold_filter(ranked_raw, threshold) if threshold is not None else ranked_raw
         ranked_signature[qid] = [record_key(rec) for rec, _ in ranked]
 
         rel_map = {
@@ -519,13 +545,17 @@ def run_benchmark(retriever_kind, ks, candidate=None):
             entry.update(metrics)
         if threshold is not None:
             entry["threshold_filtered"] = len(ranked) < len(ranked_raw)
-            entry["pre_threshold_top_score"] = ranked_raw[0][1] if ranked_raw else 0
+            entry["pre_threshold_top_score"] = threshold_score
+            if cand_type == "lexical-bm25-threshold":
+                entry["threshold_score_source"] = "lexical-baseline"
+                entry["bm25_pre_threshold_top_score"] = ranked_raw[0][1] if ranked_raw else 0
         per_query.append(entry)
 
     # Determinism repeat check: a second pass must reproduce every ranking exactly.
     def _repeat(q):
         raw = _rank(q)
-        return _threshold_filter(raw, threshold) if threshold is not None else raw
+        ranked, _ = _apply_candidate_threshold(q, raw)
+        return ranked
     repeat_ok = all(
         ranked_signature[query["query_id"]]
         == [record_key(rec) for rec, _ in _repeat(query["query"])]
@@ -696,7 +726,11 @@ def render_markdown(result, baseline=None, references=None):
     ks = [str(k) for k in result["k_values"]]
     cand = result.get("candidate")
     lines = []
-    if cand and cand["type"] == "lexical-bm25":
+    if cand and cand["type"] == "lexical-bm25-threshold":
+        lines.append("# Retrieval Benchmark v1 — Candidate: lexical-bm25-threshold "
+                     "(threshold={}, k1={}, b={})".format(
+                         cand["threshold"], cand["k1"], cand["b"]))
+    elif cand and cand["type"] == "lexical-bm25":
         lines.append("# Retrieval Benchmark v1 — Candidate: lexical-bm25 (k1={}, b={})".format(
             cand["k1"], cand["b"]))
     elif cand:
@@ -707,7 +741,16 @@ def render_markdown(result, baseline=None, references=None):
     lines.append("")
     lines.append("## Status")
     lines.append("")
-    if cand and cand["type"] == "lexical-bm25":
+    if cand and cand["type"] == "lexical-bm25-threshold":
+        lines.append("**Experiment only.** This report combines BM25-style lexical re-ranking "
+                     "(k1={}, b={}) with the lexical confidence threshold from the v0.12.3 "
+                     "experiment (baseline lexical top\\_score < {} → no support). BM25 ranks the "
+                     "records that pass the lexical confidence gate; the threshold is not applied to "
+                     "BM25's floating-point score scale. The project/portable retrievers are "
+                     "unchanged; BM25 and thresholding are computed only in the benchmark harness. "
+                     "**No default behavior changed.** **No backend selected.**".format(
+                         cand["k1"], cand["b"], cand["threshold"]))
+    elif cand and cand["type"] == "lexical-bm25":
         lines.append("**Experiment only.** This report re-ranks the same file-based lexical corpus with a "
                      "BM25-style scorer (k1={}, b={}) over the **same tokenization** as the baseline, so "
                      "the comparison isolates term weighting (TF saturation + length normalization + IDF) "
@@ -869,6 +912,8 @@ def render_markdown(result, baseline=None, references=None):
         lines.extend(_render_comparison(result, baseline))
     if cand and cand["type"] == "lexical-bm25" and references:
         lines.extend(_render_bm25_reference_comparisons(result, references))
+    if cand and cand["type"] == "lexical-bm25-threshold" and references:
+        lines.extend(_render_bm25_threshold_reference_comparisons(result, baseline, references))
 
     return "\n".join(lines)
 
@@ -885,6 +930,8 @@ def _delta_str(new, old):
 def _render_comparison(result, baseline):
     if result["candidate"]["type"] == "lexical-bm25":
         return _render_comparison_bm25(result, baseline)
+    if result["candidate"]["type"] == "lexical-bm25-threshold":
+        return _render_comparison_bm25_threshold_baseline(result, baseline)
     return _render_comparison_threshold(result, baseline)
 
 
@@ -1034,6 +1081,80 @@ def _render_comparison_bm25(result, baseline):
     return lines
 
 
+def _render_comparison_bm25_threshold_baseline(result, baseline):
+    """Baseline comparison for BM25 + threshold.
+
+    This candidate combines a ranking change (BM25) with a no-answer cutoff, so the comparison needs
+    both BM25-style rank/recall deltas and threshold-style no-answer outcome deltas.
+    """
+    bs = baseline["summary"]
+    cs = result["summary"]
+    ks = [str(k) for k in result["k_values"]]
+    cand = result["candidate"]
+    last_k = result["k_values"][-1]
+    label = "bm25+t{} (k1={}, b={})".format(cand["threshold"], cand["k1"], cand["b"])
+    lines = []
+    lines.append("## Comparison vs. v0.12.2 lexical baseline")
+    lines.append("")
+    lines.append("### Summary metrics")
+    lines.append("")
+    lines.append("| metric | baseline | {} | Δ |".format(label))
+    lines.append("|---|---|---|---|")
+    for metric_label, key in [("Recall", "recall_at_k"), ("Precision", "precision_at_k"), ("nDCG", "ndcg_at_k")]:
+        for k in ks:
+            bv, cv = bs[key][k], cs[key][k]
+            lines.append("| {}@{} | {} | {} | {} |".format(
+                metric_label, k, _fmt(bv), _fmt(cv), _delta_str(cv, bv)))
+    for metric_label, key in [
+        ("MRR", "mrr"),
+        ("Exact-span hit", "exact_span_hit_rate"),
+        ("No-answer correct", "no_answer_correct_rate"),
+        ("False-support", "false_support_rate"),
+    ]:
+        bv, cv = bs[key], cs[key]
+        lines.append("| {} | {} | {} | {} |".format(
+            metric_label, _fmt(bv), _fmt(cv), _delta_str(cv, bv)))
+    lines.append("")
+    lines.append("### Per-query changes (first-relevant rank · recall@{}; no-answer outcome)".format(last_k))
+    lines.append("")
+    b_by_id = {q["query_id"]: q for q in baseline["per_query"]}
+    improved, regressed, unchanged = [], [], 0
+    for q in result["per_query"]:
+        bq = b_by_id.get(q["query_id"], {})
+        if q["no_answer"]:
+            b_out, c_out = bq.get("outcome"), q.get("outcome")
+            if b_out == c_out:
+                unchanged += 1
+            else:
+                detail = "`{}` (no_answer): {} → {} (pre-threshold top score {})".format(
+                    q["query_id"], b_out, c_out, q.get("pre_threshold_top_score", "?"))
+                (improved if c_out == "no_answer_ok" else regressed).append(detail)
+            continue
+        recall_key = "recall_at_{}".format(last_k)
+        b_rank, c_rank = bq.get("first_relevant_rank"), q.get("first_relevant_rank")
+        b_rec, c_rec = bq.get(recall_key), q.get(recall_key)
+        b_quality = (b_rec if b_rec is not None else -1.0, -(b_rank if b_rank else 10 ** 9))
+        c_quality = (c_rec if c_rec is not None else -1.0, -(c_rank if c_rank else 10 ** 9))
+        if c_quality == b_quality:
+            unchanged += 1
+            continue
+        detail = "`{}` ({}): rank {} → {}, recall@{} {} → {}".format(
+            q["query_id"], q.get("category", "?"),
+            b_rank or "—", c_rank or "—", last_k, _fmt(b_rec), _fmt(c_rec))
+        (improved if c_quality > b_quality else regressed).append(detail)
+    for header, items in [("Improved", improved), ("Regressed", regressed)]:
+        if items:
+            lines.append("**{}:**".format(header))
+            for item in items:
+                lines.append("- {}".format(item))
+        else:
+            lines.append("**{}:** none.".format(header))
+        lines.append("")
+    lines.append("**Unchanged:** {} queries.".format(unchanged))
+    lines.append("")
+    return lines
+
+
 def _query_by_id(report, query_id):
     return next(q for q in report["per_query"] if q["query_id"] == query_id)
 
@@ -1122,6 +1243,93 @@ def _render_bm25_reference_comparisons(result, references):
     return lines
 
 
+def _candidate_label(report):
+    cand = report.get("candidate")
+    if not cand:
+        return "baseline"
+    if cand["type"] == "lexical-threshold":
+        return "threshold t{}".format(cand["threshold"])
+    if cand["type"] == "lexical-bm25":
+        return "BM25"
+    if cand["type"] == "lexical-bm25-threshold":
+        return "BM25+t{}".format(cand["threshold"])
+    return cand["type"]
+
+
+def _ordered_reference_reports(result, baseline, references):
+    by_label = {}
+    if baseline:
+        by_label["baseline"] = baseline
+    for label, report in references:
+        if report:
+            by_label[label] = report
+    by_label[_candidate_label(result)] = result  # prefer the current in-memory report over disk
+    return [
+        (label, by_label[label])
+        for label in ("baseline", "threshold t2", "threshold t3", "BM25", "BM25+t2", "BM25+t3")
+        if label in by_label
+    ]
+
+
+def _render_bm25_threshold_reference_comparisons(result, baseline, references):
+    reports = _ordered_reference_reports(result, baseline, references)
+    if len(reports) <= 1:
+        return []
+    ks = [str(k) for k in result["k_values"]]
+    lines = []
+    lines.append("## Comparison across retrieval-v1 reference candidates")
+    lines.append("")
+    lines.append("This table compares the current combined candidate against the committed lexical baseline, "
+                 "threshold t2/t3, and BM25-only reports. These are measurements only: no backend or "
+                 "threshold behavior is adopted here.")
+    lines.append("")
+    labels = [label for label, _ in reports]
+    lines.append("### Summary metrics")
+    lines.append("")
+    lines.append("| metric | {} |".format(" | ".join(labels)))
+    lines.append("|---|" + "---|" * len(labels))
+    for metric_label, key in [("Recall", "recall_at_k"), ("Precision", "precision_at_k"), ("nDCG", "ndcg_at_k")]:
+        for k in ks:
+            lines.append("| {}@{} | {} |".format(
+                metric_label, k,
+                " | ".join(_fmt(report["summary"][key][k]) for _, report in reports)))
+    for metric_label, key in [
+        ("MRR", "mrr"),
+        ("Exact-span hit", "exact_span_hit_rate"),
+        ("No-answer correct", "no_answer_correct_rate"),
+        ("False-support", "false_support_rate"),
+    ]:
+        lines.append("| {} | {} |".format(
+            metric_label,
+            " | ".join(_fmt(report["summary"][key]) for _, report in reports)))
+    lines.append("")
+    lines.append("### Targeted query comparison")
+    lines.append("")
+    lines.append("| focus | {} |".format(" | ".join(labels)))
+    lines.append("|---|" + "---|" * len(labels))
+    for query_id, focus in [
+        ("q005", "exact locator: John 3:16"),
+        ("q007", "paraphrase: do not impose on others"),
+        ("q010", "broad cross-tradition: facing death"),
+        ("q014", "no-answer: crypto investment"),
+        ("q015", "no-answer: smartphone specs"),
+    ]:
+        lines.append("| {} (`{}`) | {} |".format(
+            focus, query_id,
+            " | ".join(_query_focus_cell(report, query_id) for _, report in reports)))
+    lines.append("")
+    lines.append("### Takeaway")
+    lines.append("")
+    lines.append("- BM25+threshold preserves the BM25 exact-span behavior and applies the threshold "
+                 "no-answer cutoff.")
+    lines.append("- `q010` remains the broad-thematic weak point; lexical ranking plus thresholding does not "
+                 "increase its recall@5 above 0.250 on retrieval-v1.")
+    lines.append("- No backend is selected; ADR 0007 remains deferred until these candidates are compared as a "
+                 "decision, not merely measured.")
+    lines.append("")
+    return lines
+
+
 # ------------------------------------------------------------------------------------------- cli
 
 def main(argv=None):
@@ -1135,16 +1343,17 @@ def main(argv=None):
     parser.add_argument("--md-out", type=Path)
     parser.add_argument("--check-fixtures", action="store_true",
                         help="validate the query/judgment fixtures and exit non-zero on any error.")
-    parser.add_argument("--candidate", choices=("lexical-threshold", "lexical-bm25"),
+    parser.add_argument("--candidate", choices=("lexical-threshold", "lexical-bm25", "lexical-bm25-threshold"),
                         help="candidate to evaluate against the baseline (experiment only).")
     parser.add_argument("--threshold", type=int,
-                        help="confidence threshold (requires --candidate lexical-threshold).")
+                        help="confidence threshold (requires --candidate lexical-threshold or "
+                             "lexical-bm25-threshold).")
     parser.add_argument("--k1", type=float,
-                        help="BM25 term-frequency saturation (requires --candidate lexical-bm25; "
-                             "default {}).".format(BM25_K1))
+                        help="BM25 term-frequency saturation (requires --candidate lexical-bm25 or "
+                             "lexical-bm25-threshold; default {}).".format(BM25_K1))
     parser.add_argument("--b", type=float,
-                        help="BM25 length-normalization in [0, 1] (requires --candidate lexical-bm25; "
-                             "default {}).".format(BM25_B))
+                        help="BM25 length-normalization in [0, 1] (requires --candidate lexical-bm25 "
+                             "or lexical-bm25-threshold; default {}).".format(BM25_B))
     parser.add_argument("--baseline-json", type=Path,
                         help="baseline JSON report for the comparison section in Markdown output.")
     args = parser.parse_args(argv)
@@ -1165,14 +1374,16 @@ def main(argv=None):
             if k < 1:
                 parser.error("--k must be a positive integer (got {})".format(k))
 
-    if args.candidate == "lexical-threshold" and args.threshold is None:
-        parser.error("--candidate lexical-threshold requires --threshold")
-    if args.threshold is not None and args.candidate != "lexical-threshold":
-        parser.error("--threshold requires --candidate lexical-threshold")
+    threshold_candidates = ("lexical-threshold", "lexical-bm25-threshold")
+    bm25_candidates = ("lexical-bm25", "lexical-bm25-threshold")
+    if args.candidate in threshold_candidates and args.threshold is None:
+        parser.error("--candidate {} requires --threshold".format(args.candidate))
+    if args.threshold is not None and args.candidate not in threshold_candidates:
+        parser.error("--threshold requires --candidate lexical-threshold or lexical-bm25-threshold")
     if args.threshold is not None and args.threshold < 1:
         parser.error("--threshold must be a positive integer (got {})".format(args.threshold))
-    if (args.k1 is not None or args.b is not None) and args.candidate != "lexical-bm25":
-        parser.error("--k1/--b require --candidate lexical-bm25")
+    if (args.k1 is not None or args.b is not None) and args.candidate not in bm25_candidates:
+        parser.error("--k1/--b require --candidate lexical-bm25 or lexical-bm25-threshold")
     if args.k1 is not None and args.k1 < 0:
         parser.error("--k1 must be non-negative (got {})".format(args.k1))
     if args.b is not None and not 0.0 <= args.b <= 1.0:
@@ -1192,6 +1403,13 @@ def main(argv=None):
             "k1": args.k1 if args.k1 is not None else BM25_K1,
             "b": args.b if args.b is not None else BM25_B,
         }
+    elif args.candidate == "lexical-bm25-threshold":
+        candidate = {
+            "type": "lexical-bm25-threshold",
+            "threshold": args.threshold,
+            "k1": args.k1 if args.k1 is not None else BM25_K1,
+            "b": args.b if args.b is not None else BM25_B,
+        }
 
     ks = tuple(sorted(set(args.ks))) if args.ks else DEFAULT_KS
     result = run_benchmark(args.retriever, ks, candidate=candidate)
@@ -1202,9 +1420,11 @@ def main(argv=None):
         baseline = load_json(args.baseline_json)
     references = []
     if candidate and candidate["type"] == "lexical-bm25":
+        references = [(label, load_json(path)) for label, path in BM25_REFERENCE_REPORTS if path.exists()]
+    if candidate and candidate["type"] == "lexical-bm25-threshold":
         references = [
             (label, load_json(path))
-            for label, path in BM25_REFERENCE_REPORTS
+            for label, path in BM25_THRESHOLD_REFERENCE_REPORTS
             if path.exists()
         ]
 
