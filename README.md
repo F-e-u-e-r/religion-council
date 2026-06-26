@@ -128,9 +128,31 @@ This does **not** mean every word is machine-verified. Interpretation prose can 
 misleading; the complete answer is not semantically fail-closed; the default hybrid path without
 `debate_finalize` is unchanged and not finalized; and the capability-token mint guard is not a
 Python sandbox. Strict mode is opt-in and does not change the default hybrid workflow.
+### Strict mode quick start
+
+Run the offline deterministic example from the repository root:
+
+```bash
+python3 examples/strict-finalization/run_example.py
+```
+
+Expected lifecycle:
+
+```text
+debate_start(profile="strict", evidence_envelope=…)
+→ debate_collect
+→ finalization_required=true / finalized=false
+→ debate_finalize
+→ finalized=true
+```
+
+This example demonstrates the strict finalization lifecycle and the separation between the textual-authority surface (Surface A) and the interpretation surface (Surface B). Strict mode is opt-in and does not change the default workflow.
+
 
 Run the offline, deterministic [strict end-to-end example](examples/strict-finalization/README.md)
 to inspect the complete path and its assertions.
+
+
 
 ## Why it's different
 
@@ -510,6 +532,26 @@ debate_start(profile="strict", evidence_envelope=…)
 這不代表所有文字都已由機器驗證。Surface B 仍可能誤導；完整答案不是 semantic fail-closed；沒有
 `debate_finalize` 的預設 hybrid 路徑不變且未 finalized；capability-token mint guard 也不是 Python
 sandbox。strict mode 是 opt-in，不會改變預設 hybrid workflow。
+### Strict mode quick start
+
+第一次使用 strict finalization 時，可直接在專案根目錄執行：
+
+```bash
+python3 examples/strict-finalization/run_example.py
+```
+
+預期流程：
+
+```text
+debate_start(profile="strict", evidence_envelope=…)
+→ debate_collect
+→ finalization_required=true / finalized=false
+→ debate_finalize
+→ finalized=true
+```
+
+此範例展示 strict finalization 的完整流程，以及 textual-authority surface（Surface A）與 interpretation surface（Surface B）的分離。Strict mode 為 opt-in，不會改變預設 workflow.
+
 
 可執行且離線、deterministic 的完整路徑見
 [strict end-to-end example](examples/strict-finalization/README.md)。
