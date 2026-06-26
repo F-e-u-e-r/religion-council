@@ -1,10 +1,12 @@
 # ADR 0007 — Retrieval Backend Decision (retrieval-v1 evidence)
 
 - Status: Accepted
-- Implementation: **Not implemented.** This ADR selects the ranking + no-answer policy the project
-  retriever should adopt and scopes the change; the project retriever still ships the v0.12.x
-  file-based lexical ranking until a follow-up implements the adopted policy. No backend is built
-  here, and the default retrieval behavior does not change on merge of this ADR.
+- Implementation: **Partially implemented.** Step 1 is shipped as an explicit, opt-in project
+  retriever no-answer gate (`retrieve_gated()` / `retrieve_envelope_gated()`) using the t3 lexical
+  confidence cutoff. Raw `retrieve()` / `retrieve_envelope()` remain the default surface, so the
+  project retriever still ships the v0.12.x file-based lexical ranking by default. The BM25 ranking
+  half, any live default flip, and any baseline re-pointing remain deferred to the independent-judge /
+  κ gate in §9. No RAG / vector / index / network backend is built here.
 - Scope: chooses, from the four measured retrieval-v1 candidates, the **ranking + no-answer policy**
   for the **project** retriever (`orchestrator/project_retrieve.py`). This is a retrieval
   ranking / no-answer policy decision — **not** a RAG / vector / built-index / network-service

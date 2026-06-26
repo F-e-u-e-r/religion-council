@@ -57,6 +57,51 @@ def retrieve_envelope(tradition, query, k=5):
     return _portable.retrieve_envelope(tradition, query, k)
 
 
+# --- No-answer gate (ADR 0007 §1, §8.2 — the threshold half, adopted as an explicit project API) ---
+#
+# When the lexical confidence (the top record's lexical score) for a (tradition, query) is below the
+# threshold, the gated retrieval returns "no support" (an empty result), so an off-corpus query does
+# not surface a noise-floor match as if it were evidence. The cutoff is applied to the LEXICAL score
+# (the calibrated integer signal the t2/t3 thresholds were tuned against in v0.12.3), never to a
+# re-ranking float scale.
+#
+# This is deliberately ADDITIVE: ``retrieve()`` / ``retrieve_envelope()`` are unchanged, so the
+# retrieval-v1 lexical baseline and the ADR 0006 conformance suite keep measuring the raw signal and
+# the committed benchmark reports stay byte-identical. ``retrieve_gated`` / ``retrieve_envelope_gated``
+# are the project retriever's no-answer POLICY, validated by the committed
+# ``retrieval-v1-lexical-threshold-t3`` report. Flipping a default and re-pointing the baseline to the
+# portable retriever are deferred to the BM25 adoption after the independent-judge / κ gate
+# (ADR 0007 §8.4, §9); this module does not change default behavior or select any backend.
+NO_ANSWER_THRESHOLD = 3  # t3: ADR 0007 — t2/t3 are equivalent on retrieval-v1; t3 is more conservative.
+
+
+def retrieve_gated(tradition, query, k=5, threshold=NO_ANSWER_THRESHOLD):
+    """Lexical retrieval with the ADR 0007 no-answer gate.
+
+    Returns the raw lexical-ranked top-``k`` **unchanged** when the top lexical score meets
+    ``threshold``; returns an empty list (no support) when it is below ``threshold``. The gate only
+    decides whether the whole result set is admitted — it never re-orders or mutates records, so the
+    identity and ordering of any returned record are exactly what :func:`retrieve` returns.
+    """
+    ranked = _portable.retrieve(tradition, query, k)
+    if not ranked or _portable.score(query, ranked[0]) < threshold:
+        return []
+    return ranked
+
+
+def retrieve_envelope_gated(tradition, query, k=5, threshold=NO_ANSWER_THRESHOLD):
+    """Versioned envelope around :func:`retrieve_gated`.
+
+    Same ``contract_version`` as :func:`retrieve_envelope`; an empty ``records`` list is the
+    no-support signal. The envelope shape is unchanged, so the B1 adapter and downstream consumers
+    treat a gated no-answer as "zero records", not as a contract error.
+    """
+    return {
+        "contract_version": RETRIEVAL_CONTRACT_VERSION,
+        "records": retrieve_gated(tradition, query, k, threshold),
+    }
+
+
 def score(query, record):
     """Lexical relevance score for one record (re-exported from the wrapped backend).
 

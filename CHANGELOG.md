@@ -12,6 +12,26 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Added
+- **Project retriever no-answer gate (ADR 0007 §1, §8.2 — Step 1).** The project retriever now
+  exposes an explicit no-answer-gated retrieval API (`retrieve_gated()` /
+  `retrieve_envelope_gated()`, default threshold **t3**) using the validated lexical confidence
+  threshold: when a tradition's top lexical score is below the cutoff, gated retrieval returns no
+  support (empty records) instead of a noise-floor match. Existing raw `retrieve()` /
+  `retrieve_envelope()` remain available for benchmark continuity and **default behavior is
+  unchanged** — the gate is additive and opt-in, so the retrieval-v1 lexical baseline, the committed
+  benchmark reports, and the ADR 0006 conformance suite are all untouched. The gate is applied
+  per-tradition (the unit the per-tradition retriever API exposes), validated by the committed
+  `retrieval-v1-lexical-threshold-t3` report; new tests cover the off-corpus no-answer probes,
+  exact-quote/locator preservation, q007/q010 non-regression, the per-tradition semantics, stable
+  occurrence identity, and portable-retriever isolation.
+
+### Non-goals
+- No default retrieval behavior change, no BM25 ranking, no index/RAG/vector/network backend, no
+  envelope-contract or assurance-tier change, and no portable-retriever change. Flipping a live
+  default and re-pointing the retrieval-v1 baseline are deferred to the BM25 adoption after the
+  independent-judge / κ gate (ADR 0007 §8.4, §9).
+
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
