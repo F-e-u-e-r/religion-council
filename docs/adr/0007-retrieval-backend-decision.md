@@ -1,6 +1,6 @@
 # ADR 0007 — Retrieval Backend Decision (retrieval-v1 evidence)
 
-- Status: Proposed
+- Status: Accepted
 - Implementation: **Not implemented.** This ADR selects the ranking + no-answer policy the project
   retriever should adopt and scopes the change; the project retriever still ships the v0.12.x
   file-based lexical ranking until a follow-up implements the adopted policy. No backend is built
@@ -41,7 +41,7 @@ C0 corpus is small (56 curated records) and the relevance judgments are a **sing
 (`independent_judge_count: 1`, IAA `n/a`, disclosed). This ADR decides which ranking + no-answer
 policy that evidence supports; it does not enlarge the corpus, add judges, or build a backend.
 
-## Measured evidence (retrieval-v1, C0, VERSION v0.12.5)
+## Measured evidence (retrieval-v1, C0, VERSION v0.12.6)
 
 | metric | baseline | threshold t2/t3 | BM25 | **BM25 + t2/t3** |
 |---|---|---|---|---|

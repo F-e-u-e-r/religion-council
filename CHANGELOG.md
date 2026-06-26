@@ -12,21 +12,29 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
-### Added
-- **ADR 0007 — Retrieval Backend Decision** (`docs/adr/0007-retrieval-backend-decision.md`, *Proposed*).
-  Decides the retrieval ranking + no-answer policy from the four measured retrieval-v1 candidates
-  (lexical baseline, threshold t2/t3, BM25, BM25+threshold): selects **BM25 + lexical-confidence
-  threshold (t2/t3)** for the project retriever as an ADR 0006 §4.5 internals change. It states why
-  BM25-alone (false-support stays 1.0) and threshold-alone (ranking unchanged) are each insufficient,
-  preserves the portable-retriever constraints and stable occurrence identity, selects **no**
-  RAG/vector/index backend, mints **no** edition-backed assurance, records q010 broad-thematic recall
-  as unresolved, and defines the implementation scope. Default retrieval is unchanged; the default
-  ranking flip is gated on the ≥2-judge + κ step (retrieval-v1.md decision gate 2).
-
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
   deprecation window.
+
+## [v0.12.6] — 2026-06-26 · ADR 0007 Retrieval Decision
+
+### Added
+- **ADR 0007 — Retrieval Backend Decision** (`docs/adr/0007-retrieval-backend-decision.md`,
+  *Accepted*). Decides the retrieval ranking + no-answer policy from the four measured retrieval-v1
+  candidates (lexical baseline, threshold t2/t3, BM25, BM25+threshold): selects **BM25 +
+  lexical-confidence threshold (t2/t3)** for the project retriever as an ADR 0006 §4.5 internals
+  change. It states why BM25-alone (false-support stays 1.0) and threshold-alone (ranking unchanged)
+  are each insufficient, preserves the portable-retriever constraints and stable occurrence identity,
+  selects **no** RAG/vector/index backend, mints **no** edition-backed assurance, records q010
+  broad-thematic recall as unresolved, and defines the implementation scope. Default retrieval is
+  unchanged; the default ranking flip is gated on the ≥2-judge + κ step (retrieval-v1.md decision
+  gate 2).
+
+### Non-goals
+- No retriever implementation change, no RAG/vector/hybrid/built-index/network backend adoption, no
+  portable retriever change, and no edition-backed assurance. ADR 0007 records the decision and
+  follow-up gates; it does not flip default retrieval behavior on merge.
 
 ## [v0.12.5] — 2026-06-26 · BM25 + Threshold Retrieval Experiment
 

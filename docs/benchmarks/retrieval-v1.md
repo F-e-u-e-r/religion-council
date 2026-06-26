@@ -30,7 +30,8 @@
     eliminating no-answer false-support (no-answer correctness 1.000, false-support 0.000). The
     broad-thematic weakness remains: q010 stays recall@5 = 0.25. This is still measurement only:
     no threshold, ranker, backend, vector store, or RAG path is adopted.
-  - Ranking + no-answer decision: **proposed** ([ADR 0007](../adr/0007-retrieval-backend-decision.md)).
+  - Ranking + no-answer decision: **accepted** (v0.12.6;
+    [ADR 0007](../adr/0007-retrieval-backend-decision.md)).
     From the four reference runs — lexical baseline, confidence threshold, BM25, and BM25+threshold —
     ADR 0007 selects **BM25 + lexical-confidence threshold (t2/t3)** as the project retriever's ranking
     + no-answer policy, scoped as an internals change (ADR 0006 §4.5), with the default-ranking flip
