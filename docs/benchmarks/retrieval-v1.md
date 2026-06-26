@@ -30,9 +30,15 @@
     eliminating no-answer false-support (no-answer correctness 1.000, false-support 0.000). The
     broad-thematic weakness remains: q010 stays recall@5 = 0.25. This is still measurement only:
     no threshold, ranker, backend, vector store, or RAG path is adopted.
-  - Backend selection: **deferred.** Candidate backends are unmeasured and unselected. No backend is
-    selected by this document. The deferred decision ADR (0007) now has four reference runs to weigh
-    — lexical baseline, confidence threshold, BM25, and BM25+threshold — but is **not** written here.
+  - Ranking + no-answer decision: **proposed** ([ADR 0007](../adr/0007-retrieval-backend-decision.md)).
+    From the four reference runs — lexical baseline, confidence threshold, BM25, and BM25+threshold —
+    ADR 0007 selects **BM25 + lexical-confidence threshold (t2/t3)** as the project retriever's ranking
+    + no-answer policy, scoped as an internals change (ADR 0006 §4.5), with the default-ranking flip
+    gated on the ≥2-judge + κ step (decision gate 2). Broad-thematic recall (q010) is recorded as
+    unresolved.
+  - Backend selection: **deferred.** No RAG / vector / dense / hybrid / built-local-index / network
+    backend is measured or selected by this document or by ADR 0007 — that remains gated on a separate,
+    evidence-justified experiment plus the operational/rights review.
 - Owner stage: the **A2→A3** decision gate ([ADR 0002](../adr/0002-roadmap-stage-nomenclature.md) §1):
   whether to move retrieval beyond today's file-based lexical ranking to a local index, a hybrid, or
   a dense/vector backend — and, separately, to a networked RAG service.
