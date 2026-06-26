@@ -12,6 +12,13 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Changed
+- Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
+  `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
+  deprecation window.
+
+## [v0.12.5] — 2026-06-26 · BM25 + Threshold Retrieval Experiment
+
 ### Added
 - Experiment-only **BM25 + lexical confidence threshold** candidate for the retrieval-v1 benchmark
   (`--candidate lexical-bm25-threshold --threshold {2,3}`). BM25 still only re-ranks inside the
@@ -29,10 +36,9 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 - No backend is selected and default retrieval remains unchanged; ADR 0007 remains deferred until
   these measured candidates are compared as a decision.
 
-### Changed
-- Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
-  `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
-  deprecation window.
+### Non-goals
+- No RAG, vector store, dense/hybrid, local index, backend adoption, or default retrieval behavior
+  change; no edition-backed assurance; ADR 0007 is **not** written.
 
 ## [v0.12.4] — 2026-06-26 · BM25 Retrieval Experiment
 
