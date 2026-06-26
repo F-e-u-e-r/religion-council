@@ -1,0 +1,1179 @@
+{
+  "answerable_query_count": 16,
+  "benchmark": "retrieval-v1",
+  "candidate": {
+    "b": 0.75,
+    "k1": 1.2,
+    "threshold": 3,
+    "type": "lexical-bm25-threshold"
+  },
+  "contract": {
+    "citation_fidelity": {
+      "fidelity": 1.0,
+      "records": 19,
+      "reproducible_across_two_runs_and_reorder": true,
+      "stable_records": 19,
+      "unstable": []
+    },
+    "deterministic_repeat": true,
+    "occurrence_id_minted_count": 38,
+    "occurrence_scheme_counts": {
+      "occ/v1-corpus-stable": 38
+    },
+    "records_evaluated": 38,
+    "representation_metadata_records": 7,
+    "required_envelope_fields_present": true,
+    "rights_metadata_records": 13,
+    "source_assurance_artifact_backed_count": 38,
+    "span_assurance": {
+      "all_records_artifact_backed": true,
+      "edition_backed_span_verified": false,
+      "note": "retrieval mints no span-assurance tier; curated-snapshot-span-verified is minted at B2 and edition-backed-span-verified is reserved for A2 — beating this benchmark upgrades neither (docs/benchmarks/retrieval-v1.md hard constraint 6).",
+      "records_artifact_backed": 38,
+      "source_assurance_floor": "artifact-backed",
+      "span_tiers_minted_at_retrieval": [],
+      "tier_at_retrieval": null
+    },
+    "stable_occurrence_identity_present": true
+  },
+  "contract_version": "religion-council/retrieval/v1",
+  "corpus": {
+    "records": 56,
+    "traditions": 8
+  },
+  "corpus_version": "v0.12.4",
+  "judging": {
+    "agreement_method": "cohen_kappa",
+    "agreement_required_at": "backend-selection decision gate (candidate vs. baseline), deferred to ADR 0007",
+    "disclosure": "retrieval-v1 baseline judgments are a single-curator pass; no second independent judge exists for the baseline, so no inter-annotator-agreement figure is available (reported as n/a, not fabricated). Per docs/benchmarks/retrieval-v1.md, >=2 independent judges and an IAA figure are required when a candidate backend is compared against this baseline at the decision gate, not to establish the baseline measurement itself. The labels here are deliberately objective (exact quotes, locators, and source-grounded paraphrase/theme calls each carry a rationale) to bound that subjectivity for the baseline.",
+    "independent_judge_count": 1,
+    "inter_annotator_agreement": null,
+    "judges": [
+      {
+        "id": "curator-1",
+        "independent": false,
+        "role": "project maintainer"
+      }
+    ]
+  },
+  "k_values": [
+    1,
+    3,
+    5
+  ],
+  "no_answer_query_count": 2,
+  "operational": {
+    "records_searched": 56
+  },
+  "per_query": [
+    {
+      "bm25_pre_threshold_top_score": 48.992896,
+      "category": "exact_quote",
+      "exact_target_at_rank1": true,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 1.0,
+      "ndcg_at_3": 1.0,
+      "ndcg_at_5": 1.0,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 30,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.3333333333333333,
+      "precision_at_5": 0.2,
+      "query": "己所不欲,勿施於人",
+      "query_id": "q001",
+      "recall_at_1": 1.0,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "relevant_total": 1,
+      "retrieved": [
+        {
+          "locator": "reference file entry",
+          "rank": 1,
+          "relevance": 2,
+          "score": 48.992896,
+          "tradition": "confucianism",
+          "work": "論語·顏淵"
+        },
+        {
+          "locator": "reference file entry",
+          "rank": 2,
+          "relevance": 0,
+          "score": 4.892733,
+          "tradition": "confucianism",
+          "work": "孟子·告子下"
+        },
+        {
+          "locator": "22:37-39",
+          "rank": 3,
+          "relevance": 0,
+          "score": 4.545191,
+          "tradition": "christianity",
+          "work": "馬太福音"
+        },
+        {
+          "locator": "reference file entry",
+          "rank": 4,
+          "relevance": 0,
+          "score": 4.267923,
+          "tradition": "mohism",
+          "work": "墨子·非攻上"
+        },
+        {
+          "locator": "reference file entry",
+          "rank": 5,
+          "relevance": 0,
+          "score": 3.844877,
+          "tradition": "buddhism",
+          "work": "金剛經"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 32.216944,
+      "category": "exact_quote",
+      "exact_target_at_rank1": true,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 1.0,
+      "ndcg_at_3": 1.0,
+      "ndcg_at_5": 1.0,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 20,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.3333333333333333,
+      "precision_at_5": 0.2,
+      "query": "上善若水",
+      "query_id": "q002",
+      "recall_at_1": 1.0,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "relevant_total": 1,
+      "retrieved": [
+        {
+          "locator": "8",
+          "rank": 1,
+          "relevance": 2,
+          "score": 32.216944,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "reference file entry",
+          "rank": 2,
+          "relevance": 0,
+          "score": 4.075897,
+          "tradition": "mohism",
+          "work": "墨子·兼愛中"
+        },
+        {
+          "locator": "多處(如 2:25、103 章)",
+          "rank": 3,
+          "relevance": 0,
+          "score": 3.323805,
+          "tradition": "islam",
+          "work": "古蘭經"
+        },
+        {
+          "locator": "reference file entry",
+          "rank": 4,
+          "relevance": 0,
+          "score": 2.736604,
+          "tradition": "buddhism",
+          "work": "般若波羅蜜多心經"
+        },
+        {
+          "locator": "183",
+          "rank": 5,
+          "relevance": 0,
+          "score": 2.604182,
+          "tradition": "buddhism",
+          "work": "法句經"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 25.727914,
+      "category": "exact_quote",
+      "exact_target_at_rank1": true,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 1.0,
+      "ndcg_at_3": 1.0,
+      "ndcg_at_5": 1.0,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 19,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.3333333333333333,
+      "precision_at_5": 0.2,
+      "query": "色即是空",
+      "query_id": "q003",
+      "recall_at_1": 1.0,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "relevant_total": 1,
+      "retrieved": [
+        {
+          "locator": "reference file entry",
+          "rank": 1,
+          "relevance": 2,
+          "score": 25.727914,
+          "tradition": "buddhism",
+          "work": "般若波羅蜜多心經"
+        },
+        {
+          "locator": "6.8.7",
+          "rank": 2,
+          "relevance": 0,
+          "score": 6.301137,
+          "tradition": "hinduism",
+          "work": "歌者奧義書"
+        },
+        {
+          "locator": "1.4.10",
+          "rank": 3,
+          "relevance": 0,
+          "score": 6.238227,
+          "tradition": "hinduism",
+          "work": "廣林奧義書"
+        },
+        {
+          "locator": "1:2",
+          "rank": 4,
+          "relevance": 0,
+          "score": 4.507112,
+          "tradition": "christianity",
+          "work": "傳道書"
+        },
+        {
+          "locator": "reference file entry",
+          "rank": 5,
+          "relevance": 0,
+          "score": 2.888411,
+          "tradition": "legalism",
+          "work": "韓非子·五蠹"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 38.456529,
+      "category": "exact_locator",
+      "exact_target_at_rank1": true,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 1.0,
+      "ndcg_at_3": 1.0,
+      "ndcg_at_5": 1.0,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 19,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.3333333333333333,
+      "precision_at_5": 0.2,
+      "query": "道德經 第48章 為學日益",
+      "query_id": "q004",
+      "recall_at_1": 1.0,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "relevant_total": 1,
+      "retrieved": [
+        {
+          "locator": "48",
+          "rank": 1,
+          "relevance": 2,
+          "score": 38.456529,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "1",
+          "rank": 2,
+          "relevance": 0,
+          "score": 10.855759,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "25",
+          "rank": 3,
+          "relevance": 0,
+          "score": 10.736894,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "8",
+          "rank": 4,
+          "relevance": 0,
+          "score": 10.32341,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "58",
+          "rank": 5,
+          "relevance": 0,
+          "score": 10.32341,
+          "tradition": "taoism",
+          "work": "道德經"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 21.572816,
+      "category": "exact_locator",
+      "exact_target_at_rank1": true,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 1.0,
+      "ndcg_at_3": 1.0,
+      "ndcg_at_5": 1.0,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 23,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.3333333333333333,
+      "precision_at_5": 0.2,
+      "query": "約翰福音 3:16",
+      "query_id": "q005",
+      "recall_at_1": 1.0,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "relevant_total": 1,
+      "retrieved": [
+        {
+          "locator": "3:16",
+          "rank": 1,
+          "relevance": 2,
+          "score": 21.572816,
+          "tradition": "christianity",
+          "work": "約翰福音"
+        },
+        {
+          "locator": "1:1",
+          "rank": 2,
+          "relevance": 0,
+          "score": 21.551197,
+          "tradition": "christianity",
+          "work": "約翰福音"
+        },
+        {
+          "locator": "22:37-39",
+          "rank": 3,
+          "relevance": 0,
+          "score": 7.503254,
+          "tradition": "christianity",
+          "work": "馬太福音"
+        },
+        {
+          "locator": "58",
+          "rank": 4,
+          "relevance": 0,
+          "score": 4.08154,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "1.3.28",
+          "rank": 5,
+          "relevance": 0,
+          "score": 2.753095,
+          "tradition": "hinduism",
+          "work": "廣林奧義書"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 29.912382,
+      "category": "exact_locator",
+      "exact_target_at_rank1": true,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 1.0,
+      "ndcg_at_3": 1.0,
+      "ndcg_at_5": 1.0,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 15,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.3333333333333333,
+      "precision_at_5": 0.2,
+      "query": "古蘭經 開端章 1:1",
+      "query_id": "q006",
+      "recall_at_1": 1.0,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "relevant_total": 1,
+      "retrieved": [
+        {
+          "locator": "1:1(開端章)",
+          "rank": 1,
+          "relevance": 2,
+          "score": 29.912382,
+          "tradition": "islam",
+          "work": "古蘭經"
+        },
+        {
+          "locator": "112:1-4(忠誠章)",
+          "rank": 2,
+          "relevance": 0,
+          "score": 15.009796,
+          "tradition": "islam",
+          "work": "古蘭經"
+        },
+        {
+          "locator": "多處(如 2:25、103 章)",
+          "rank": 3,
+          "relevance": 0,
+          "score": 12.019382,
+          "tradition": "islam",
+          "work": "古蘭經"
+        },
+        {
+          "locator": "2:256",
+          "rank": 4,
+          "relevance": 0,
+          "score": 10.548155,
+          "tradition": "islam",
+          "work": "古蘭經"
+        },
+        {
+          "locator": "51:56",
+          "rank": 5,
+          "relevance": 0,
+          "score": 9.565331,
+          "tradition": "islam",
+          "work": "古蘭經"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 7.849678,
+      "category": "paraphrased",
+      "exact_target_at_rank1": false,
+      "first_relevant_rank": 2,
+      "mrr": 0.5,
+      "ndcg_at_1": 0.0,
+      "ndcg_at_3": 0.6309297535714575,
+      "ndcg_at_5": 0.6309297535714575,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 4,
+      "precision_at_1": 0.0,
+      "precision_at_3": 0.3333333333333333,
+      "precision_at_5": 0.2,
+      "query": "不要把自己不想要的事強加給別人",
+      "query_id": "q007",
+      "recall_at_1": 0.0,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "relevant_total": 1,
+      "retrieved": [
+        {
+          "locator": "22:37-39",
+          "rank": 1,
+          "relevance": 0,
+          "score": 7.849678,
+          "tradition": "christianity",
+          "work": "馬太福音"
+        },
+        {
+          "locator": "reference file entry",
+          "rank": 2,
+          "relevance": 2,
+          "score": 7.024192,
+          "tradition": "confucianism",
+          "work": "論語·顏淵"
+        },
+        {
+          "locator": "6:8",
+          "rank": 3,
+          "relevance": 0,
+          "score": 6.63864,
+          "tradition": "christianity",
+          "work": "彌迦書"
+        },
+        {
+          "locator": "25",
+          "rank": 4,
+          "relevance": 0,
+          "score": 6.394416,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "3:16",
+          "rank": 5,
+          "relevance": 0,
+          "score": 5.252463,
+          "tradition": "christianity",
+          "work": "約翰福音"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 31.790297,
+      "category": "paraphrased",
+      "exact_target_at_rank1": true,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 1.0,
+      "ndcg_at_3": 1.0,
+      "ndcg_at_5": 1.0,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 15,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.6666666666666666,
+      "precision_at_5": 0.4,
+      "query": "行動的時候不要執著於成果",
+      "query_id": "q008",
+      "recall_at_1": 0.5,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "relevant_total": 2,
+      "retrieved": [
+        {
+          "locator": "2:47",
+          "rank": 1,
+          "relevance": 2,
+          "score": 31.790297,
+          "tradition": "hinduism",
+          "work": "薄伽梵歌"
+        },
+        {
+          "locator": "2:48",
+          "rank": 2,
+          "relevance": 1,
+          "score": 21.448898,
+          "tradition": "hinduism",
+          "work": "薄伽梵歌"
+        },
+        {
+          "locator": "reference file entry",
+          "rank": 3,
+          "relevance": 0,
+          "score": 6.89608,
+          "tradition": "confucianism",
+          "work": "孟子·告子下"
+        },
+        {
+          "locator": "難三",
+          "rank": 4,
+          "relevance": 0,
+          "score": 5.669348,
+          "tradition": "legalism",
+          "work": "韓非子"
+        },
+        {
+          "locator": "2:20",
+          "rank": 5,
+          "relevance": 0,
+          "score": 5.012732,
+          "tradition": "hinduism",
+          "work": "薄伽梵歌"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 19.693994,
+      "category": "paraphrased",
+      "exact_target_at_rank1": true,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 1.0,
+      "ndcg_at_3": 1.0,
+      "ndcg_at_5": 1.0,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 12,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.3333333333333333,
+      "precision_at_5": 0.2,
+      "query": "做人應當謙卑並且行公義",
+      "query_id": "q009",
+      "recall_at_1": 1.0,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "relevant_total": 1,
+      "retrieved": [
+        {
+          "locator": "6:8",
+          "rank": 1,
+          "relevance": 2,
+          "score": 19.693994,
+          "tradition": "christianity",
+          "work": "彌迦書"
+        },
+        {
+          "locator": "2:48",
+          "rank": 2,
+          "relevance": 0,
+          "score": 6.987621,
+          "tradition": "hinduism",
+          "work": "薄伽梵歌"
+        },
+        {
+          "locator": "reference file entry",
+          "rank": 3,
+          "relevance": 0,
+          "score": 4.355944,
+          "tradition": "mohism",
+          "work": "墨子·非攻上"
+        },
+        {
+          "locator": "4:7",
+          "rank": 4,
+          "relevance": 0,
+          "score": 4.30604,
+          "tradition": "hinduism",
+          "work": "薄伽梵歌"
+        },
+        {
+          "locator": "多處(如 2:25、103 章)",
+          "rank": 5,
+          "relevance": 0,
+          "score": 3.868461,
+          "tradition": "islam",
+          "work": "古蘭經"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 8.412802,
+      "category": "cross_tradition",
+      "exact_target_at_rank1": false,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 0.5,
+      "ndcg_at_3": 0.26582598262939583,
+      "ndcg_at_5": 0.2385191169365424,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 4,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.3333333333333333,
+      "precision_at_5": 0.2,
+      "query": "人應該如何面對死亡",
+      "query_id": "q010",
+      "recall_at_1": 0.25,
+      "recall_at_3": 0.25,
+      "recall_at_5": 0.25,
+      "relevant_total": 4,
+      "retrieved": [
+        {
+          "locator": "1.3.28",
+          "rank": 1,
+          "relevance": 1,
+          "score": 8.412802,
+          "tradition": "hinduism",
+          "work": "廣林奧義書"
+        },
+        {
+          "locator": "reference file entry",
+          "rank": 2,
+          "relevance": 0,
+          "score": 4.973072,
+          "tradition": "confucianism",
+          "work": "孟子·告子下"
+        },
+        {
+          "locator": "22:37-39",
+          "rank": 3,
+          "relevance": 0,
+          "score": 4.545191,
+          "tradition": "christianity",
+          "work": "馬太福音"
+        },
+        {
+          "locator": "6:8",
+          "rank": 4,
+          "relevance": 0,
+          "score": 3.892738,
+          "tradition": "christianity",
+          "work": "彌迦書"
+        },
+        {
+          "locator": "3:16",
+          "rank": 5,
+          "relevance": 0,
+          "score": 3.873775,
+          "tradition": "christianity",
+          "work": "約翰福音"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 8.321731,
+      "category": "cross_tradition",
+      "exact_target_at_rank1": true,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 1.0,
+      "ndcg_at_3": 1.0,
+      "ndcg_at_5": 1.0,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 14,
+      "precision_at_1": 1.0,
+      "precision_at_3": 1.0,
+      "precision_at_5": 0.6,
+      "query": "愛人",
+      "query_id": "q011",
+      "recall_at_1": 0.3333333333333333,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "relevant_total": 3,
+      "retrieved": [
+        {
+          "locator": "22:37-39",
+          "rank": 1,
+          "relevance": 2,
+          "score": 8.321731,
+          "tradition": "christianity",
+          "work": "馬太福音"
+        },
+        {
+          "locator": "reference file entry",
+          "rank": 2,
+          "relevance": 1,
+          "score": 5.792602,
+          "tradition": "mohism",
+          "work": "墨子·兼愛中"
+        },
+        {
+          "locator": "3:16",
+          "rank": 3,
+          "relevance": 1,
+          "score": 4.356202,
+          "tradition": "christianity",
+          "work": "約翰福音"
+        },
+        {
+          "locator": "reference file entry",
+          "rank": 4,
+          "relevance": 0,
+          "score": 2.703238,
+          "tradition": "mohism",
+          "work": "墨子·天志上"
+        },
+        {
+          "locator": "reference file entry",
+          "rank": 5,
+          "relevance": 0,
+          "score": 2.522585,
+          "tradition": "mohism",
+          "work": "墨子·非攻上"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 12.321807,
+      "category": "cross_lingual",
+      "exact_target_at_rank1": true,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 1.0,
+      "ndcg_at_3": 1.0,
+      "ndcg_at_5": 1.0,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 16,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.3333333333333333,
+      "precision_at_5": 0.2,
+      "query": "Tat tvam asi",
+      "query_id": "q012",
+      "recall_at_1": 1.0,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "relevant_total": 1,
+      "retrieved": [
+        {
+          "locator": "6.8.7",
+          "rank": 1,
+          "relevance": 2,
+          "score": 12.321807,
+          "tradition": "hinduism",
+          "work": "歌者奧義書"
+        },
+        {
+          "locator": "1(南傳)",
+          "rank": 2,
+          "relevance": 0,
+          "score": 0.0,
+          "tradition": "buddhism",
+          "work": "法句經"
+        },
+        {
+          "locator": "2:47",
+          "rank": 3,
+          "relevance": 0,
+          "score": 0.0,
+          "tradition": "hinduism",
+          "work": "薄伽梵歌"
+        },
+        {
+          "locator": "偈(漢傳常引)",
+          "rank": 4,
+          "relevance": 0,
+          "score": 0.0,
+          "tradition": "buddhism",
+          "work": "大般涅槃經"
+        },
+        {
+          "locator": "1:1",
+          "rank": 5,
+          "relevance": 0,
+          "score": 0.0,
+          "tradition": "christianity",
+          "work": "創世記"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 13.753182,
+      "category": "cross_lingual",
+      "exact_target_at_rank1": true,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 1.0,
+      "ndcg_at_3": 1.0,
+      "ndcg_at_5": 1.0,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 6,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.3333333333333333,
+      "precision_at_5": 0.2,
+      "query": "niyyah 舉意",
+      "query_id": "q013",
+      "recall_at_1": 1.0,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "relevant_total": 1,
+      "retrieved": [
+        {
+          "locator": "開卷傳述(附傳述鏈)",
+          "rank": 1,
+          "relevance": 2,
+          "score": 13.753182,
+          "tradition": "islam",
+          "work": "布哈里聖訓實錄"
+        },
+        {
+          "locator": "尚賢上",
+          "rank": 2,
+          "relevance": 0,
+          "score": 3.066602,
+          "tradition": "mohism",
+          "work": "墨子"
+        },
+        {
+          "locator": "1(南傳)",
+          "rank": 3,
+          "relevance": 0,
+          "score": 2.786133,
+          "tradition": "buddhism",
+          "work": "法句經"
+        },
+        {
+          "locator": "1:1",
+          "rank": 4,
+          "relevance": 0,
+          "score": 1.929563,
+          "tradition": "christianity",
+          "work": "創世記"
+        },
+        {
+          "locator": "reference file entry",
+          "rank": 5,
+          "relevance": 0,
+          "score": 1.801122,
+          "tradition": "mohism",
+          "work": "墨子·天志上"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 3.177883,
+      "category": "no_answer",
+      "false_support": false,
+      "no_answer": true,
+      "no_answer_correct": true,
+      "outcome": "no_answer_ok",
+      "pre_threshold_top_score": 1,
+      "query": "區塊鏈與加密貨幣的投資策略",
+      "query_id": "q014",
+      "retrieved": [],
+      "threshold_filtered": true,
+      "threshold_score_source": "lexical-baseline",
+      "top1_score": 0
+    },
+    {
+      "bm25_pre_threshold_top_score": 4.066262,
+      "category": "no_answer",
+      "false_support": false,
+      "no_answer": true,
+      "no_answer_correct": true,
+      "outcome": "no_answer_ok",
+      "pre_threshold_top_score": 1,
+      "query": "最新智慧型手機的硬體規格比較",
+      "query_id": "q015",
+      "retrieved": [],
+      "threshold_filtered": true,
+      "threshold_score_source": "lexical-baseline",
+      "top1_score": 0
+    },
+    {
+      "bm25_pre_threshold_top_score": 2.366786,
+      "category": "ambiguous",
+      "exact_target_at_rank1": true,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 1.0,
+      "ndcg_at_3": 0.8403030283801005,
+      "ndcg_at_5": 0.8596139055669277,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 11,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.6666666666666666,
+      "precision_at_5": 0.6,
+      "query": "道",
+      "query_id": "q016",
+      "recall_at_1": 0.25,
+      "recall_at_3": 0.5,
+      "recall_at_5": 0.75,
+      "relevant_total": 4,
+      "retrieved": [
+        {
+          "locator": "1",
+          "rank": 1,
+          "relevance": 2,
+          "score": 2.366786,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "25",
+          "rank": 2,
+          "relevance": 1,
+          "score": 2.247921,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "48",
+          "rank": 3,
+          "relevance": 0,
+          "score": 2.177394,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "1:1",
+          "rank": 4,
+          "relevance": 1,
+          "score": 2.136722,
+          "tradition": "christianity",
+          "work": "約翰福音"
+        },
+        {
+          "locator": "8",
+          "rank": 5,
+          "relevance": 0,
+          "score": 1.992871,
+          "tradition": "taoism",
+          "work": "道德經"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 25.663114,
+      "category": "duplicate_near_duplicate",
+      "exact_target_at_rank1": true,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 1.0,
+      "ndcg_at_3": 0.8670870086853021,
+      "ndcg_at_5": 0.9699225363013644,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 11,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.6666666666666666,
+      "precision_at_5": 0.6,
+      "query": "道德經 論道與自然",
+      "query_id": "q017",
+      "recall_at_1": 0.3333333333333333,
+      "recall_at_3": 0.6666666666666666,
+      "recall_at_5": 1.0,
+      "relevant_total": 3,
+      "retrieved": [
+        {
+          "locator": "25",
+          "rank": 1,
+          "relevance": 2,
+          "score": 25.663114,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "1",
+          "rank": 2,
+          "relevance": 2,
+          "score": 10.855759,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "8",
+          "rank": 3,
+          "relevance": 0,
+          "score": 10.32341,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "58",
+          "rank": 4,
+          "relevance": 0,
+          "score": 10.32341,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "48",
+          "rank": 5,
+          "relevance": 1,
+          "score": 9.929226,
+          "tradition": "taoism",
+          "work": "道德經"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    },
+    {
+      "bm25_pre_threshold_top_score": 13.41893,
+      "category": "duplicate_near_duplicate",
+      "exact_target_at_rank1": true,
+      "first_relevant_rank": 1,
+      "mrr": 1.0,
+      "ndcg_at_1": 1.0,
+      "ndcg_at_3": 1.0,
+      "ndcg_at_5": 1.0,
+      "no_answer": false,
+      "outcome": "hit",
+      "pre_threshold_top_score": 17,
+      "precision_at_1": 1.0,
+      "precision_at_3": 0.6666666666666666,
+      "precision_at_5": 0.4,
+      "query": "法句經",
+      "query_id": "q018",
+      "recall_at_1": 0.5,
+      "recall_at_3": 1.0,
+      "recall_at_5": 1.0,
+      "relevant_total": 2,
+      "retrieved": [
+        {
+          "locator": "1(南傳)",
+          "rank": 1,
+          "relevance": 2,
+          "score": 13.41893,
+          "tradition": "buddhism",
+          "work": "法句經"
+        },
+        {
+          "locator": "183",
+          "rank": 2,
+          "relevance": 2,
+          "score": 12.111032,
+          "tradition": "buddhism",
+          "work": "法句經"
+        },
+        {
+          "locator": "25",
+          "rank": 3,
+          "relevance": 0,
+          "score": 3.559372,
+          "tradition": "taoism",
+          "work": "道德經"
+        },
+        {
+          "locator": "(初轉法輪,南傳)",
+          "rank": 4,
+          "relevance": 0,
+          "score": 3.266303,
+          "tradition": "buddhism",
+          "work": "轉法輪經"
+        },
+        {
+          "locator": "偈(漢傳常引)",
+          "rank": 5,
+          "relevance": 0,
+          "score": 2.339796,
+          "tradition": "buddhism",
+          "work": "大般涅槃經"
+        }
+      ],
+      "threshold_filtered": false,
+      "threshold_score_source": "lexical-baseline"
+    }
+  ],
+  "query_count": 18,
+  "retriever_kind": "project-file",
+  "summary": {
+    "exact_span_hit_rate": 1.0,
+    "false_support_rate": 0.0,
+    "mrr": 0.9688,
+    "ndcg_at_k": {
+      "1": 0.9062,
+      "3": 0.9128,
+      "5": 0.9187
+    },
+    "no_answer_correct_rate": 1.0,
+    "precision_at_k": {
+      "1": 0.9375,
+      "3": 0.4583,
+      "5": 0.3
+    },
+    "recall_at_k": {
+      "1": 0.6979,
+      "3": 0.901,
+      "5": 0.9375
+    }
+  }
+}
