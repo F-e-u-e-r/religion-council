@@ -21,7 +21,7 @@
     The result is consistent with "Why this gate exists" — on a small, multilingual,
     classical-Chinese corpus, exact-term/locator matching already does much of the work and a ranker
     alone is not a no-answer policy.
-  - BM25 + lexical confidence threshold experiment: **complete** (Unreleased). The combined
+  - BM25 + lexical confidence threshold experiment: **complete** (v0.12.5). The combined
     candidate is committed under `results/`
     ([t2](results/retrieval-v1-lexical-bm25-threshold-t2.md),
     [t3](results/retrieval-v1-lexical-bm25-threshold-t3.md)). BM25 supplies the ranking signal while
