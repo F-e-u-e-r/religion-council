@@ -8,7 +8,7 @@
 ![code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)
 ![content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)
 ![runs on: Codex · Claude Code · any agent](https://img.shields.io/badge/runs%20on-Codex%20·%20Claude%20Code%20·%20any%20agent-green.svg)
-![version: v0.12.3](https://img.shields.io/badge/version-v0.12.3-orange.svg)
+![version: v0.12.4](https://img.shields.io/badge/version-v0.12.4-orange.svg)
 
 **English** · [繁體中文](#繁體中文)
 
@@ -25,7 +25,7 @@ argue from **its own texts**. Every claim is tagged as either a **[Text]** quota
 (with a real locator) or an **[Interpretation]**, and the moderator surfaces the
 genuine tensions instead of forcing agreement.
 
-Version **v0.12.3** supports three execution modes:
+Version **v0.12.4** supports three execution modes:
 
 1. **Claude Code only** — 37 specialized Claude agents (1 moderator + 36 voices).
 2. **Codex only** — a portable Codex skill, with native Codex subagents when requested.
@@ -81,6 +81,11 @@ v0.12.3 evaluates an experiment-only lexical confidence threshold and adds GitHu
 for public feedback intake. Thresholds 2 and 3 eliminate the benchmark's no-answer false-support
 cases without answerable-query regression, while threshold 5 regresses q007 and q010. No threshold
 or backend is adopted yet.
+
+v0.12.4 evaluates an experiment-only BM25-style lexical ranking candidate. BM25 improves some
+ranking metrics, including MRR and nDCG@5, while preserving exact-span hit rate, but it does not
+improve no-answer discrimination or broad thematic recall. No backend is selected and default
+retrieval remains unchanged.
 
 ### Strict finalization: the guarantee boundary
 
@@ -258,7 +263,7 @@ religion/
 ├── DISCLAIMER.md                 # sourcing rules + religious-sensitivity statement
 ├── LICENSE                       # MIT — skill logic, agents, scripts, config
 ├── LICENSE-CONTENT               # CC BY 4.0 — references & corpus
-├── VERSION                       # current release: v0.12.3
+├── VERSION                       # current release: v0.12.4
 ├── .mcp.json                     # Claude → deterministic Codex controller
 │
 ├── skills/religion-council/      # ▸ PORTABLE skill (Codex & any agent)
@@ -406,7 +411,7 @@ Quoted primary scriptures are public-domain source texts in their original langu
 標注為**〔據典〕**(引文+真實出處)或**〔詮釋〕**;主持人負責把真正的張力點攤開,而非強行
 調和。
 
-目前 **v0.12.3** 支援三種執行方式:
+目前 **v0.12.4** 支援三種執行方式:
 
 1. **純 Claude Code**——附 37 個專屬 agent(1 位主持人 + 36 個聲音)。
 2. **純 Codex**——可攜 Codex skill;明確要求時可用 Codex 原生 subagent。
@@ -450,6 +455,10 @@ baseline 識別出 lexical retriever 的兩大弱點：broad thematic recall 與
 v0.12.3 評估 experiment-only lexical confidence threshold，並加入 GitHub issue templates 以承接公開
 feedback。threshold 2 與 3 消除了 benchmark 的 no-answer false-support cases，且未造成 answerable-query
 regression；threshold 5 則使 q007 與 q010 regression。目前仍未採用 threshold 或任何 backend。
+
+v0.12.4 評估 experiment-only BM25-style lexical ranking candidate。BM25 改善部分 ranking metrics，
+包含 MRR 與 nDCG@5，並保住 exact-span hit rate；但它沒有改善 no-answer discrimination 或 broad
+thematic recall。未選定任何 backend，default retrieval 也維持不變。
 
 ### Strict finalization：保證邊界
 

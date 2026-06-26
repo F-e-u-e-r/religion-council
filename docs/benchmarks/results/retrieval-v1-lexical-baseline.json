@@ -35,7 +35,7 @@
     "records": 56,
     "traditions": 8
   },
-  "corpus_version": "v0.12.3",
+  "corpus_version": "v0.12.4",
   "judging": {
     "agreement_method": "cohen_kappa",
     "agreement_required_at": "backend-selection decision gate (candidate vs. baseline), deferred to ADR 0007",

@@ -11,7 +11,7 @@
     committed under `results/`; thresholds 2 and 3 eliminate the two no-answer false-support cases
     without answerable-query regression, while threshold 5 regresses q007 and q010. This remains an
     experiment only: no default threshold and no backend is adopted.
-  - BM25-style lexical re-ranking experiment: **complete** (Unreleased). A BM25 re-ranking of the
+  - BM25-style lexical re-ranking experiment: **complete** (v0.12.4). A BM25 re-ranking of the
     same file corpus over the same tokenization (Lucene-style defaults: k1=1.2, b=0.75) is committed
     under `results/` ([retrieval-v1-lexical-bm25.md](results/retrieval-v1-lexical-bm25.md)). On C0 it
     improves some ranking metrics (MRR 0.938 → 0.969, nDCG@5 0.902 → 0.919) and preserves exact-span
