@@ -8,7 +8,7 @@
 
 - retriever_kind: `project-file`
 - contract_version: `religion-council/retrieval/v1`
-- corpus: C0 curated references — 56 records across 8 traditions (VERSION v0.12.6)
+- corpus: C0 curated references — 56 records across 8 traditions (VERSION v0.13.0)
 - queries: 18 (16 answerable, 2 no-answer)
 
 ## Summary metrics
