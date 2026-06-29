@@ -8,7 +8,7 @@
 ![code: MIT](https://img.shields.io/badge/code-MIT-blue.svg)
 ![content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)
 ![runs on: Codex · Claude Code · any agent](https://img.shields.io/badge/runs%20on-Codex%20·%20Claude%20Code%20·%20any%20agent-green.svg)
-![version: v0.12.6](https://img.shields.io/badge/version-v0.12.6-orange.svg)
+![version: v0.13.0](https://img.shields.io/badge/version-v0.13.0-orange.svg)
 
 **English** · [繁體中文](#繁體中文)
 
@@ -25,7 +25,7 @@ argue from **its own texts**. Every claim is tagged as either a **[Text]** quota
 (with a real locator) or an **[Interpretation]**, and the moderator surfaces the
 genuine tensions instead of forcing agreement.
 
-Version **v0.12.6** supports three execution modes:
+Version **v0.13.0** supports three execution modes:
 
 1. **Claude Code only** — 37 specialized Claude agents (1 moderator + 36 voices).
 2. **Codex only** — a portable Codex skill, with native Codex subagents when requested.
@@ -98,6 +98,14 @@ BM25 + lexical-confidence threshold (t2/t3) as the project retriever's ranking +
 while gating the default BM25 ranking flip on the ≥2-judge + κ step. It still selects no RAG, vector,
 hybrid, built-index, or network backend, and default retrieval remains unchanged until a follow-up
 implementation.
+
+v0.13.0 ships ADR 0007 Step 1 as a release: the project retriever now exposes an explicit, opt-in
+no-answer-gated retrieval API (`retrieve_gated()` / `retrieve_envelope_gated()`, default threshold
+t3), built on the validated lexical confidence threshold. The raw `retrieve()` / `retrieve_envelope()`
+surface, the portable retriever, and the retrieval envelope contract are all unchanged, so default
+behavior and the retrieval-v1 lexical baseline are untouched. The default BM25 ranking flip stays
+deferred to the independent-judge / κ gate, and no RAG, vector, index, network backend, or
+edition-backed assurance is adopted.
 
 ### Strict finalization: the guarantee boundary
 
@@ -297,7 +305,7 @@ religion/
 ├── DISCLAIMER.md                 # sourcing rules + religious-sensitivity statement
 ├── LICENSE                       # MIT — skill logic, agents, scripts, config
 ├── LICENSE-CONTENT               # CC BY 4.0 — references & corpus
-├── VERSION                       # current release: v0.12.6
+├── VERSION                       # current release: v0.13.0
 ├── .mcp.json                     # Claude → deterministic Codex controller
 │
 ├── skills/religion-council/      # ▸ PORTABLE skill (Codex & any agent)
@@ -445,7 +453,7 @@ Quoted primary scriptures are public-domain source texts in their original langu
 標注為**〔據典〕**(引文+真實出處)或**〔詮釋〕**;主持人負責把真正的張力點攤開,而非強行
 調和。
 
-目前 **v0.12.6** 支援三種執行方式:
+目前 **v0.13.0** 支援三種執行方式:
 
 1. **純 Claude Code**——附 37 個專屬 agent(1 位主持人 + 36 個聲音)。
 2. **純 Codex**——可攜 Codex skill;明確要求時可用 Codex 原生 subagent。
@@ -504,6 +512,13 @@ v0.12.6 發布 ADR 0007，也就是根據 retrieval-v1 evidence 作出的 retrie
 它選擇 BM25 + lexical-confidence threshold (t2/t3) 作為 project retriever 的 ranking +
 no-answer policy，但把 default BM25 ranking flip 仍然 gate 在 ≥2-judge + κ 步驟之後。它仍未選定
 RAG、vector、hybrid、built-index 或 network backend；default retrieval 會等後續實作才改變。
+
+v0.13.0 以 release 形式發布 ADR 0007 的第一步：project retriever 現在提供明確、opt-in 的
+no-answer gated retrieval API(`retrieve_gated()` / `retrieve_envelope_gated()`，預設門檻 t3)，
+建立在已驗證的 lexical confidence threshold 之上。原始 `retrieve()` / `retrieve_envelope()` 介面、
+portable retriever 與 retrieval envelope contract 皆維持不變，因此 default behavior 與 retrieval-v1
+lexical baseline 不受影響。default BM25 ranking flip 仍延後至 independent-judge / κ gate；未採用任何
+RAG、vector、index、network backend 或 edition-backed assurance。
 
 ### Strict finalization：保證邊界
 
