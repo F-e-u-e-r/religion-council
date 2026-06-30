@@ -12,6 +12,21 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Added
+- **Second-judge κ gate + disclosed model-judge pass (ADR 0007 §9 — the gate before BM25 default
+  ranking).** Adds `scripts/compute_iaa.py` (standard-library, offline, deterministic Cohen's κ) and
+  an additive, optional `judging.iaa` pool in the retrieval-v1 judgments fixture; the benchmark runner
+  now computes and surfaces κ in every report when ≥2 judges have labeled the pool (otherwise `n/a`,
+  never fabricated). retrieval-v1 now carries a second, **disclosed model judge** (`claude-opus-4-8`)
+  that blind-labeled the 110-item pool — Cohen's κ vs curator-1 = **0.4436** (moderate). Under the
+  model judge's independent labels, BM25 / BM25+t3 still beat the lexical baseline on nDCG@5
+  (**0.898 → 0.932**, vs **0.902 → 0.919** under curator-1), so the BM25 ranking advantage is
+  directionally robust to a second judge. This is **provisional model-judge evidence only**: it does
+  **not** flip the default ranking, it is disclosed as a model (not human) judge, and a future human
+  blind judge can replace/augment it via the same schema. Scoring (`judgments[].relevant[]`) is
+  unchanged, so all candidate metrics and committed report rankings are identical — only the judging
+  provenance block updates.
+
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a

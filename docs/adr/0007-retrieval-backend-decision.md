@@ -38,10 +38,11 @@ under `docs/benchmarks/results/`:
 
 All four are measured **through the ADR 0006 §2 envelope contract** by the same standard-library,
 offline, deterministic harness; all carry `retriever_kind: project-file` (no backend was introduced
-to measure them — BM25 and the threshold are computed inside the harness as candidate signals). The
-C0 corpus is small (56 curated records) and the relevance judgments are a **single-curator** pass
-(`independent_judge_count: 1`, IAA `n/a`, disclosed). This ADR decides which ranking + no-answer
-policy that evidence supports; it does not enlarge the corpus, add judges, or build a backend.
+to measure them — BM25 and the threshold are computed inside the harness as candidate signals). At
+the time this ADR was accepted, the C0 corpus was small (56 curated records) and the relevance
+judgments were a **single-curator** pass (`independent_judge_count: 1`, IAA `n/a`, disclosed). This
+ADR decides which ranking + no-answer policy that evidence supports; it does not enlarge the corpus,
+add judges, or build a backend.
 
 ## Measured evidence (retrieval-v1, C0, VERSION v0.12.6)
 
@@ -185,8 +186,9 @@ When the follow-up implements this decision in `orchestrator/project_retrieve.py
 retrieval-v1.md **decision gate 2** requires that a candidate beat the baseline on the primary metric
 (**nDCG@k on C0**) by a pre-registered, meaningful margin **measured against ≥ 2 independent judges
 with a reported inter-annotator agreement (κ)** — precisely because a thin margin over a single
-curator's judgments is treated as "not justified." The current evidence is **single-curator**, and
-BM25's ranking margin (nDCG@5 +0.0165 on 18 queries) is real but **modest**. Therefore:
+curator's judgments is treated as "not justified." At acceptance time, the evidence was
+**single-curator**, and BM25's ranking margin (nDCG@5 +0.0165 on 18 queries) was real but **modest**.
+Therefore:
 
 - The **no-answer gate** (the threshold half) is justified **now**: its effect is objective
   (false-support 1.000 → 0.000, zero answerable regression), not a subjective margin, so it does not
@@ -195,6 +197,11 @@ BM25's ranking margin (nDCG@5 +0.0165 on 18 queries) is real but **modest**. The
   ranking, the retrieval-v1 judgments must be extended to **≥ 2 independent judges with a κ figure**,
   and the nDCG margin re-confirmed against that set (retrieval-v1.md §Decision gates / §Honest
   limitations). This ADR records the selection and the single open prerequisite; it does not waive it.
+
+Post-v0.13 follow-up note: retrieval-v1 may record disclosed model-judge κ evidence before a human
+blind judge exists. That can reduce the single-curator risk if the model limitation is explicit, but
+it still does not itself flip BM25 to the default ranking; the project must separately accept whether
+that gate evidence is sufficient.
 
 ## Consequences
 

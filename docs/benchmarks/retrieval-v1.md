@@ -149,16 +149,47 @@ Graded relevance (e.g. 0/1/2) per `(query, record)` pair, with:
   every report): judge identities, the independent-judge count, the inter-annotator-agreement figure
   (or an explicit `n/a`), and the agreement method. The benchmark must *disclose* how subjective the
   judgments are; it must not silently omit provenance;
-- **≥ 2 independent judges** on a sampled subset with an inter-annotator-agreement figure (Cohen's κ)
-  reported **when a candidate backend is compared against the baseline at the decision gate** — that
-  is the point where a subjective margin decides adoption, so the disagreement among judges must be
-  quantified there. The **baseline measurement itself** is a single-curator pass: it is reported with
-  `independent_judge_count: 1` and `inter_annotator_agreement: n/a` (disclosed, never fabricated),
-  and the labels are kept deliberately objective (exact quotes, locators, source-grounded paraphrase
-  with rationales) to bound that subjectivity. Adding the second judge + κ is a prerequisite of the
-  deferred backend-selection ADR, not of establishing the lexical baseline;
+- **≥ 2 judges** on a sampled subset with an inter-annotator-agreement figure (Cohen's κ) reported
+  **when a candidate backend is compared against the baseline at the decision gate** — that is the
+  point where a subjective margin decides adoption, so the disagreement among judges must be
+  quantified there. The original baseline measurement was a single-curator pass (`κ: n/a`, disclosed,
+  never fabricated); the additive `judging.iaa` pool below is the mechanism for adding second-judge
+  labels without changing the authoritative scoring set. Adding the second judge + κ is a
+  prerequisite of the deferred backend-selection ADR, not of establishing the lexical baseline;
 - judgments keyed to **stable occurrence identity**, not list position, so they survive reordering
   and backend changes.
+
+**Computing κ.** The agreement figure is computed by
+`scripts/compute_iaa.py` (standard-library, offline, deterministic) from an additive, optional
+`judging.iaa` block — a fixed *pool* of `(query, record)` items that every judge grades, including the
+records a judge calls *not* relevant (so disagreement is observable). The scoring set
+`judgments[].relevant[]` lists only positives and is left untouched:
+
+```json
+"judging": {
+  "iaa": {
+    "label_set": [0, 1, 2],
+    "pool": [
+      {"query_id": "q001", "tradition": "…", "work": "…", "locator": "…",
+       "labels": {"curator-1": 2, "judge-2": 1}}
+    ]
+  }
+}
+```
+
+With fewer than two judges in the pool, the tool and every benchmark report show `κ: n/a` (a
+single-curator state — disclosed, never fabricated). When a second judge's labels are added, Cohen's κ
+is computed and surfaced automatically (`python3 scripts/compute_iaa.py`).
+
+**Provisional second judge (disclosed model judge).** A disclosed model judge (`claude-opus-4-8`) has
+blind-labeled the 110-item pool (query + record content, objective rubric; blind to curator-1's labels
+and to candidate scores). Cohen's κ vs curator-1 is **0.4436** (moderate; raw agreement 76/110).
+Re-scoring nDCG@5 under the model judge's labels, BM25 and BM25+t3 still beat the lexical baseline
+(**0.898 → 0.932**, vs **0.902 → 0.919** under curator-1), so BM25's ranking advantage is
+directionally robust to this second judge — though the margin stays thin and κ only moderate. This is
+**provisional model-judge evidence**: it is disclosed as a model (not human) judge and does **not**
+authorize flipping the default ranking; a human blind judge may replace or augment it via the same
+schema (ADR 0007 §9).
 
 ### Metrics
 
@@ -236,10 +267,9 @@ retriever, and this document records that outcome with the run that produced it.
 
 - C0 is small; absolute metric values are noisy, so the gate is a **margin over the baseline**, not an
   absolute threshold, and the primary decision is reported with its uncertainty.
-- Relevance is subjective. The baseline measurement discloses **single-curator** judging with no
-  inter-annotator figure (`independent_judge_count: 1`, IAA `n/a`); the second independent judge and
-  the κ figure are added at the decision gate, where a thin margin over an uncertain judgment set is
-  treated as "not justified," not "justified." The baseline bounds subjectivity by keeping labels
-  objective and rationale-backed, not by claiming an agreement figure it does not have.
+- Relevance is subjective. The original baseline measurement was **single-curator**; the current
+  fixture adds a disclosed model-judge κ pool as provisional evidence, not a human IAA claim and not
+  an automatic BM25 default flip. A thin margin over an uncertain judgment set is treated as
+  "not justified," not "justified," until the project explicitly accepts the gate evidence.
 - Offline retrieval metrics are a proxy for debate quality, not debate quality itself; a backend that
   wins the benchmark still ships behind the same B-axis enforcement and the same assurance honesty.
