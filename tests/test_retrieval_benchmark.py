@@ -175,10 +175,17 @@ class RetrievalBenchmarkTest(unittest.TestCase):
 
     def test_judging_provenance_is_disclosed(self):
         j = self.result["judging"]
-        self.assertEqual(j["independent_judge_count"], 1)
-        self.assertIsNone(j["inter_annotator_agreement"])  # single-curator baseline: n/a, not faked
+        # retrieval-v1 now carries a disclosed model judge alongside curator-1 (ADR 0007 §9 gate); the
+        # κ is computed from the judging.iaa pool and surfaced in every report, not hidden or faked.
+        self.assertEqual(j["independent_judge_count"], 2)
+        self.assertEqual(j["agreement_method"], "cohen_kappa")
+        self.assertIsInstance(j["inter_annotator_agreement"], float)
+        self.assertTrue(0.0 < j["inter_annotator_agreement"] <= 1.0)
         self.assertTrue(str(j.get("disclosure", "")).strip())
-        self.assertTrue(j.get("judges"))
+        # the second judge is disclosed as a model judge with a stated limitation, never as a human.
+        model_judges = [x for x in j["judges"] if x.get("judge_type") == "model"]
+        self.assertTrue(model_judges)
+        self.assertTrue(all(x.get("limitation") for x in model_judges))
 
     def test_invalid_k_is_rejected_not_crashed(self):
         # --k 0 used to raise ZeroDivisionError; it must now be a clean CLI error.

@@ -43,6 +43,7 @@ PROJECT_RETRIEVER = ROOT / "orchestrator" / "project_retrieve.py"
 QUERIES_PATH = ROOT / "docs" / "benchmarks" / "queries" / "retrieval-v1.json"
 JUDGMENTS_PATH = ROOT / "docs" / "benchmarks" / "judgments" / "retrieval-v1.json"
 VERSION_PATH = ROOT / "VERSION"
+IAA_PATH = ROOT / "scripts" / "compute_iaa.py"
 BM25_REFERENCE_REPORTS = (
     ("threshold t2", ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-threshold-t2.json"),
     ("threshold t3", ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-threshold-t3.json"),
@@ -595,21 +596,40 @@ def run_benchmark(retriever_kind, ks, candidate=None):
     return result
 
 
+_IAA_MODULE = None
+
+
+def _iaa_module():
+    """Lazily load the stdlib κ helper (scripts/compute_iaa.py) — offline, no third-party deps."""
+    global _IAA_MODULE
+    if _IAA_MODULE is None:
+        spec = importlib.util.spec_from_file_location("rc_compute_iaa", IAA_PATH)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _IAA_MODULE = module
+    return _IAA_MODULE
+
+
 def judging_disclosure(judgments_doc):
     """Surface judge provenance + the inter-annotator-agreement status from the judgments fixture.
 
-    The retrieval-v1 baseline is a single-curator pass; ≥2 independent judges + an IAA figure are
-    required to compare a *candidate backend* against the baseline at the deferred decision gate, not
-    to measure the baseline itself (docs/benchmarks/retrieval-v1.md §Relevance judgments). This
-    reports the fixture's disclosed provenance so that scoping is explicit in every report rather
-    than an undisclosed gap.
+    The retrieval-v1 baseline began as a single-curator pass; ≥2 judges + an IAA figure are required
+    before a subjective ranking margin can justify a default-ranking change (docs/benchmarks/
+    retrieval-v1.md §Relevance judgments). When the fixture's optional ``judging.iaa`` pool carries
+    labels from ≥2 judges, Cohen's κ is computed from it (scripts/compute_iaa.py) and surfaced here;
+    otherwise the agreement stays the disclosed value (``n/a`` for a single-curator state — never
+    fabricated).
     """
     block = judgments_doc.get("judging", {})
     judges = block.get("judges", [])
+    computed_kappa = _iaa_module().overall_kappa(block)
     return {
         "independent_judge_count": block.get("independent_judge_count", len(judges)),
         "judges": judges,
-        "inter_annotator_agreement": block.get("inter_annotator_agreement"),
+        "inter_annotator_agreement": (
+            computed_kappa if computed_kappa is not None
+            else block.get("inter_annotator_agreement")
+        ),
         "agreement_method": block.get("agreement_method"),
         "agreement_required_at": block.get("agreement_required_at"),
         "disclosure": block.get("disclosure"),
