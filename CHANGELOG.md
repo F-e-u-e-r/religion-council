@@ -26,6 +26,13 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   blind judge can replace/augment it via the same schema. Scoring (`judgments[].relevant[]`) is
   unchanged, so all candidate metrics and committed report rankings are identical — only the judging
   provenance block updates.
+- **Machine-readable gate guardrail.** Adds a `judging.gate_evidence` object
+  (`status: provisional_model_judge`, `bm25_default_flip_authorized: false`,
+  `requires_owner_acceptance_for_default_flip: true`, `requires_human_blind_judge_for_strong_gate:
+  true`) that `judging_disclosure()` now surfaces in `result["judging"]` and in every Markdown report
+  directly under **Judging provenance** — so a coding agent or reviewer cannot read
+  `independent_judge_count: 2` + `inter_annotator_agreement: 0.4436` as authorization to flip the BM25
+  default ranking. Guardrail is metadata-only: no scoring, metric, or retrieval-behavior change.
 
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to

@@ -633,6 +633,10 @@ def judging_disclosure(judgments_doc):
         "agreement_method": block.get("agreement_method"),
         "agreement_required_at": block.get("agreement_required_at"),
         "disclosure": block.get("disclosure"),
+        # Machine-readable gate guardrail: travels with independent_judge_count + the κ figure into
+        # every report so an agent can never infer "BM25 default flip authorized" from count==2 + κ
+        # alone (ADR 0007 §9). Absent for a plain single-curator fixture.
+        "gate_evidence": block.get("gate_evidence"),
     }
 
 
@@ -844,6 +848,14 @@ def render_markdown(result, baseline=None, references=None):
         j["independent_judge_count"],
         "n/a" if j["inter_annotator_agreement"] is None else j["inter_annotator_agreement"],
         j["agreement_method"] or "—"))
+    gate = j.get("gate_evidence")
+    if gate:
+        lines.append(
+            "- **Gate evidence — `{}`:** `bm25_default_flip_authorized: {}`. A disclosed model-judge "
+            "κ; flipping BM25 to the default ranking needs explicit owner acceptance or a human blind "
+            "judge (ADR 0007 §9), not this figure alone.".format(
+                gate.get("status", "—"),
+                "true" if gate.get("bm25_default_flip_authorized") else "false"))
     if j.get("agreement_required_at"):
         lines.append("- ≥2-judge + IAA requirement applies at: {}".format(j["agreement_required_at"]))
     if j.get("disclosure"):
