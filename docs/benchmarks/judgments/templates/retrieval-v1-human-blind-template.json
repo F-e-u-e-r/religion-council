@@ -1,0 +1,1121 @@
+{
+  "template": "retrieval-v1-human-blind",
+  "instructions": "Independent BLIND relevance pass for the retrieval-v1 BM25 default-ranking gate (ADR 0007 §9). For each pool item, set `label` to 0, 1, or 2 using the rubric in retrieval-v1-human-blind-rubric.md, judging ONLY from `query` + the record's `topic`/`text`. Do not consult curator-1 or model-judge labels, the benchmark reports, or retrieval scores. Fill in `judge.id`. Then validate with `python3 scripts/validate_human_judge_template.py <this-file> --filled`.",
+  "rubric": "2 = direct/canonical source for the query's intent (exact quote, exact locator, or the definitive text); 1 = partial or cross-tradition thematic support; 0 = not relevant.",
+  "label_set": [
+    0,
+    1,
+    2
+  ],
+  "judge": {
+    "id": "",
+    "judge_type": "human",
+    "blind_to": [
+      "curator-1 labels",
+      "model-judge labels",
+      "candidate retrieval scores"
+    ]
+  },
+  "pool": [
+    {
+      "query_id": "q001",
+      "query": "己所不欲,勿施於人",
+      "tradition": "buddhism",
+      "work": "金剛經",
+      "locator": "reference file entry",
+      "topic": "不執",
+      "text": "應無所住而生其心。",
+      "label": null
+    },
+    {
+      "query_id": "q001",
+      "query": "己所不欲,勿施於人",
+      "tradition": "christianity",
+      "work": "約翰福音",
+      "locator": "3:16",
+      "topic": "神的愛/救恩",
+      "text": "神愛世人,甚至將他的獨生子賜給他們,叫一切信他的,不致滅亡,反得永生。",
+      "label": null
+    },
+    {
+      "query_id": "q001",
+      "query": "己所不欲,勿施於人",
+      "tradition": "christianity",
+      "work": "馬太福音",
+      "locator": "22:37-39",
+      "topic": "倫理核心",
+      "text": "你要盡心、盡性、盡意愛主你的神……要愛人如己。",
+      "label": null
+    },
+    {
+      "query_id": "q001",
+      "query": "己所不欲,勿施於人",
+      "tradition": "confucianism",
+      "work": "孟子·告子下",
+      "locator": "reference file entry",
+      "topic": "憂患成人",
+      "text": "生於憂患,而死於安樂。",
+      "label": null
+    },
+    {
+      "query_id": "q001",
+      "query": "己所不欲,勿施於人",
+      "tradition": "confucianism",
+      "work": "論語·顏淵",
+      "locator": "reference file entry",
+      "topic": "仁的實踐",
+      "text": "己所不欲,勿施於人。",
+      "label": null
+    },
+    {
+      "query_id": "q001",
+      "query": "己所不欲,勿施於人",
+      "tradition": "hinduism",
+      "work": "薄伽梵歌",
+      "locator": "2:47",
+      "topic": "行動之道",
+      "text": "你只有行動的權利,沒有對結果的權利;莫為結果而行動,亦莫執著於不行動。",
+      "label": null
+    },
+    {
+      "query_id": "q001",
+      "query": "己所不欲,勿施於人",
+      "tradition": "mohism",
+      "work": "墨子·非攻上",
+      "locator": "reference file entry",
+      "topic": "非攻",
+      "text": "殺一人謂之不義……殺百人,百重不義。",
+      "label": null
+    },
+    {
+      "query_id": "q002",
+      "query": "上善若水",
+      "tradition": "buddhism",
+      "work": "法句經",
+      "locator": "183",
+      "topic": "七佛通戒",
+      "text": "諸惡莫作,眾善奉行,自淨其意,是諸佛教。",
+      "label": null
+    },
+    {
+      "query_id": "q002",
+      "query": "上善若水",
+      "tradition": "buddhism",
+      "work": "般若波羅蜜多心經",
+      "locator": "reference file entry",
+      "topic": "空",
+      "text": "色不異空,空不異色;色即是空,空即是色。",
+      "label": null
+    },
+    {
+      "query_id": "q002",
+      "query": "上善若水",
+      "tradition": "islam",
+      "work": "古蘭經",
+      "locator": "多處(如 2:25、103 章)",
+      "topic": "行善與信仰,釋義",
+      "text": "信道而行善者必得回報之意",
+      "label": null
+    },
+    {
+      "query_id": "q002",
+      "query": "上善若水",
+      "tradition": "mohism",
+      "work": "墨子·兼愛中",
+      "locator": "reference file entry",
+      "topic": "兼愛",
+      "text": "視人之國若視其國,視人之家若視其家,視人之身若視其身。",
+      "label": null
+    },
+    {
+      "query_id": "q002",
+      "query": "上善若水",
+      "tradition": "mohism",
+      "work": "墨子·節用上",
+      "locator": "reference file entry",
+      "topic": "節用",
+      "text": "聖王為政……去無用之費。",
+      "label": null
+    },
+    {
+      "query_id": "q002",
+      "query": "上善若水",
+      "tradition": "mohism",
+      "work": "墨子·非攻上",
+      "locator": "reference file entry",
+      "topic": "非攻",
+      "text": "殺一人謂之不義……殺百人,百重不義。",
+      "label": null
+    },
+    {
+      "query_id": "q002",
+      "query": "上善若水",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "8",
+      "topic": "上善若水",
+      "text": "上善若水。水善利萬物而不爭。",
+      "label": null
+    },
+    {
+      "query_id": "q003",
+      "query": "色即是空",
+      "tradition": "buddhism",
+      "work": "般若波羅蜜多心經",
+      "locator": "reference file entry",
+      "topic": "空",
+      "text": "色不異空,空不異色;色即是空,空即是色。",
+      "label": null
+    },
+    {
+      "query_id": "q003",
+      "query": "色即是空",
+      "tradition": "christianity",
+      "work": "傳道書",
+      "locator": "1:2",
+      "topic": "虛無與意義",
+      "text": "虛空的虛空,凡事都是虛空。",
+      "label": null
+    },
+    {
+      "query_id": "q003",
+      "query": "色即是空",
+      "tradition": "hinduism",
+      "work": "廣林奧義書",
+      "locator": "1.4.10",
+      "topic": "梵我·大格言,釋義",
+      "text": "我即是梵。",
+      "label": null
+    },
+    {
+      "query_id": "q003",
+      "query": "色即是空",
+      "tradition": "hinduism",
+      "work": "歌者奧義書",
+      "locator": "6.8.7",
+      "topic": "梵我合一",
+      "text": "彼即是你(Tat tvam asi)。",
+      "label": null
+    },
+    {
+      "query_id": "q003",
+      "query": "色即是空",
+      "tradition": "legalism",
+      "work": "韓非子·五蠹",
+      "locator": "reference file entry",
+      "topic": "反空談",
+      "text": "對「儒以文亂法,俠以武犯禁」的批評",
+      "label": null
+    },
+    {
+      "query_id": "q004",
+      "query": "道德經 第48章 為學日益",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "1",
+      "topic": "道不可言",
+      "text": "道可道,非常道;名可名,非常名。",
+      "label": null
+    },
+    {
+      "query_id": "q004",
+      "query": "道德經 第48章 為學日益",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "25",
+      "topic": "法自然",
+      "text": "人法地,地法天,天法道,道法自然。",
+      "label": null
+    },
+    {
+      "query_id": "q004",
+      "query": "道德經 第48章 為學日益",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "48",
+      "topic": "為道日損",
+      "text": "為學日益,為道日損。損之又損,以至於無為。",
+      "label": null
+    },
+    {
+      "query_id": "q004",
+      "query": "道德經 第48章 為學日益",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "58",
+      "topic": "禍福相倚",
+      "text": "禍兮福之所倚,福兮禍之所伏。",
+      "label": null
+    },
+    {
+      "query_id": "q004",
+      "query": "道德經 第48章 為學日益",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "8",
+      "topic": "上善若水",
+      "text": "上善若水。水善利萬物而不爭。",
+      "label": null
+    },
+    {
+      "query_id": "q005",
+      "query": "約翰福音 3:16",
+      "tradition": "christianity",
+      "work": "約翰福音",
+      "locator": "1:1",
+      "topic": "道/太初",
+      "text": "太初有道,道與神同在,道就是神。",
+      "label": null
+    },
+    {
+      "query_id": "q005",
+      "query": "約翰福音 3:16",
+      "tradition": "christianity",
+      "work": "約翰福音",
+      "locator": "3:16",
+      "topic": "神的愛/救恩",
+      "text": "神愛世人,甚至將他的獨生子賜給他們,叫一切信他的,不致滅亡,反得永生。",
+      "label": null
+    },
+    {
+      "query_id": "q005",
+      "query": "約翰福音 3:16",
+      "tradition": "christianity",
+      "work": "馬太福音",
+      "locator": "22:37-39",
+      "topic": "倫理核心",
+      "text": "你要盡心、盡性、盡意愛主你的神……要愛人如己。",
+      "label": null
+    },
+    {
+      "query_id": "q005",
+      "query": "約翰福音 3:16",
+      "tradition": "hinduism",
+      "work": "廣林奧義書",
+      "locator": "1.3.28",
+      "topic": "求真之禱",
+      "text": "引我從虛妄至真實,從黑暗至光明,從死亡至不朽。",
+      "label": null
+    },
+    {
+      "query_id": "q005",
+      "query": "約翰福音 3:16",
+      "tradition": "islam",
+      "work": "古蘭經",
+      "locator": "多處(如 2:25、103 章)",
+      "topic": "行善與信仰,釋義",
+      "text": "信道而行善者必得回報之意",
+      "label": null
+    },
+    {
+      "query_id": "q005",
+      "query": "約翰福音 3:16",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "58",
+      "topic": "禍福相倚",
+      "text": "禍兮福之所倚,福兮禍之所伏。",
+      "label": null
+    },
+    {
+      "query_id": "q006",
+      "query": "古蘭經 開端章 1:1",
+      "tradition": "islam",
+      "work": "古蘭經",
+      "locator": "112:1-4(忠誠章)",
+      "topic": "獨一,釋義",
+      "text": "你說:他是真主,是獨一的主……",
+      "label": null
+    },
+    {
+      "query_id": "q006",
+      "query": "古蘭經 開端章 1:1",
+      "tradition": "islam",
+      "work": "古蘭經",
+      "locator": "1:1(開端章)",
+      "topic": "慈憫,釋義",
+      "text": "奉至仁至慈的真主之名。",
+      "label": null
+    },
+    {
+      "query_id": "q006",
+      "query": "古蘭經 開端章 1:1",
+      "tradition": "islam",
+      "work": "古蘭經",
+      "locator": "2:156",
+      "topic": "終極歸宿,釋義",
+      "text": "我們確是真主所有的,我們必定只歸依他。",
+      "label": null
+    },
+    {
+      "query_id": "q006",
+      "query": "古蘭經 開端章 1:1",
+      "tradition": "islam",
+      "work": "古蘭經",
+      "locator": "2:256",
+      "topic": "信仰無強迫,釋義",
+      "text": "對於宗教,絕無強迫。",
+      "label": null
+    },
+    {
+      "query_id": "q006",
+      "query": "古蘭經 開端章 1:1",
+      "tradition": "islam",
+      "work": "古蘭經",
+      "locator": "51:56",
+      "topic": "生命目的,釋義",
+      "text": "我創造精靈和人類,只為要他們崇拜我。",
+      "label": null
+    },
+    {
+      "query_id": "q006",
+      "query": "古蘭經 開端章 1:1",
+      "tradition": "islam",
+      "work": "古蘭經",
+      "locator": "多處(如 2:25、103 章)",
+      "topic": "行善與信仰,釋義",
+      "text": "信道而行善者必得回報之意",
+      "label": null
+    },
+    {
+      "query_id": "q007",
+      "query": "不要把自己不想要的事強加給別人",
+      "tradition": "christianity",
+      "work": "彌迦書",
+      "locator": "6:8",
+      "topic": "實踐",
+      "text": "世人哪,耶和華已指示你何為善。他向你所要的是甚麼呢?只要你行公義,好憐憫,存謙卑的心,與你的神同行。",
+      "label": null
+    },
+    {
+      "query_id": "q007",
+      "query": "不要把自己不想要的事強加給別人",
+      "tradition": "christianity",
+      "work": "約翰福音",
+      "locator": "3:16",
+      "topic": "神的愛/救恩",
+      "text": "神愛世人,甚至將他的獨生子賜給他們,叫一切信他的,不致滅亡,反得永生。",
+      "label": null
+    },
+    {
+      "query_id": "q007",
+      "query": "不要把自己不想要的事強加給別人",
+      "tradition": "christianity",
+      "work": "馬太福音",
+      "locator": "22:37-39",
+      "topic": "倫理核心",
+      "text": "你要盡心、盡性、盡意愛主你的神……要愛人如己。",
+      "label": null
+    },
+    {
+      "query_id": "q007",
+      "query": "不要把自己不想要的事強加給別人",
+      "tradition": "confucianism",
+      "work": "論語·顏淵",
+      "locator": "reference file entry",
+      "topic": "仁的實踐",
+      "text": "己所不欲,勿施於人。",
+      "label": null
+    },
+    {
+      "query_id": "q007",
+      "query": "不要把自己不想要的事強加給別人",
+      "tradition": "islam",
+      "work": "古蘭經",
+      "locator": "51:56",
+      "topic": "生命目的,釋義",
+      "text": "我創造精靈和人類,只為要他們崇拜我。",
+      "label": null
+    },
+    {
+      "query_id": "q007",
+      "query": "不要把自己不想要的事強加給別人",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "25",
+      "topic": "法自然",
+      "text": "人法地,地法天,天法道,道法自然。",
+      "label": null
+    },
+    {
+      "query_id": "q008",
+      "query": "行動的時候不要執著於成果",
+      "tradition": "buddhism",
+      "work": "金剛經",
+      "locator": "reference file entry",
+      "topic": "不執",
+      "text": "應無所住而生其心。",
+      "label": null
+    },
+    {
+      "query_id": "q008",
+      "query": "行動的時候不要執著於成果",
+      "tradition": "confucianism",
+      "work": "孟子·告子下",
+      "locator": "reference file entry",
+      "topic": "憂患成人",
+      "text": "生於憂患,而死於安樂。",
+      "label": null
+    },
+    {
+      "query_id": "q008",
+      "query": "行動的時候不要執著於成果",
+      "tradition": "confucianism",
+      "work": "論語·顏淵",
+      "locator": "reference file entry",
+      "topic": "仁的實踐",
+      "text": "己所不欲,勿施於人。",
+      "label": null
+    },
+    {
+      "query_id": "q008",
+      "query": "行動的時候不要執著於成果",
+      "tradition": "hinduism",
+      "work": "薄伽梵歌",
+      "locator": "2:20",
+      "topic": "靈魂不滅",
+      "text": "靈魂不生亦不滅……身體被殺時,它並不被殺。",
+      "label": null
+    },
+    {
+      "query_id": "q008",
+      "query": "行動的時候不要執著於成果",
+      "tradition": "hinduism",
+      "work": "薄伽梵歌",
+      "locator": "2:47",
+      "topic": "行動之道",
+      "text": "你只有行動的權利,沒有對結果的權利;莫為結果而行動,亦莫執著於不行動。",
+      "label": null
+    },
+    {
+      "query_id": "q008",
+      "query": "行動的時候不要執著於成果",
+      "tradition": "hinduism",
+      "work": "薄伽梵歌",
+      "locator": "2:48",
+      "topic": "行動瑜伽,釋義",
+      "text": "你應安住於瑜伽而行動,棄絕執著。",
+      "label": null
+    },
+    {
+      "query_id": "q008",
+      "query": "行動的時候不要執著於成果",
+      "tradition": "legalism",
+      "work": "韓非子",
+      "locator": "難三",
+      "topic": "法布於民",
+      "text": "法者,編著之圖籍,設之於官府,而布之於百姓者也。",
+      "label": null
+    },
+    {
+      "query_id": "q009",
+      "query": "做人應當謙卑並且行公義",
+      "tradition": "christianity",
+      "work": "彌迦書",
+      "locator": "6:8",
+      "topic": "實踐",
+      "text": "世人哪,耶和華已指示你何為善。他向你所要的是甚麼呢?只要你行公義,好憐憫,存謙卑的心,與你的神同行。",
+      "label": null
+    },
+    {
+      "query_id": "q009",
+      "query": "做人應當謙卑並且行公義",
+      "tradition": "hinduism",
+      "work": "薄伽梵歌",
+      "locator": "2:48",
+      "topic": "行動瑜伽,釋義",
+      "text": "你應安住於瑜伽而行動,棄絕執著。",
+      "label": null
+    },
+    {
+      "query_id": "q009",
+      "query": "做人應當謙卑並且行公義",
+      "tradition": "hinduism",
+      "work": "薄伽梵歌",
+      "locator": "4:7",
+      "topic": "化身降世,釋義",
+      "text": "每當正法衰落、非法興盛,我便降生。",
+      "label": null
+    },
+    {
+      "query_id": "q009",
+      "query": "做人應當謙卑並且行公義",
+      "tradition": "islam",
+      "work": "古蘭經",
+      "locator": "51:56",
+      "topic": "生命目的,釋義",
+      "text": "我創造精靈和人類,只為要他們崇拜我。",
+      "label": null
+    },
+    {
+      "query_id": "q009",
+      "query": "做人應當謙卑並且行公義",
+      "tradition": "islam",
+      "work": "古蘭經",
+      "locator": "多處(如 2:25、103 章)",
+      "topic": "行善與信仰,釋義",
+      "text": "信道而行善者必得回報之意",
+      "label": null
+    },
+    {
+      "query_id": "q009",
+      "query": "做人應當謙卑並且行公義",
+      "tradition": "mohism",
+      "work": "墨子·非攻上",
+      "locator": "reference file entry",
+      "topic": "非攻",
+      "text": "殺一人謂之不義……殺百人,百重不義。",
+      "label": null
+    },
+    {
+      "query_id": "q010",
+      "query": "人應該如何面對死亡",
+      "tradition": "buddhism",
+      "work": "大般涅槃經",
+      "locator": "偈(漢傳常引)",
+      "topic": "無常",
+      "text": "諸行無常,是生滅法;生滅滅已,寂滅為樂。",
+      "label": null
+    },
+    {
+      "query_id": "q010",
+      "query": "人應該如何面對死亡",
+      "tradition": "christianity",
+      "work": "彌迦書",
+      "locator": "6:8",
+      "topic": "實踐",
+      "text": "世人哪,耶和華已指示你何為善。他向你所要的是甚麼呢?只要你行公義,好憐憫,存謙卑的心,與你的神同行。",
+      "label": null
+    },
+    {
+      "query_id": "q010",
+      "query": "人應該如何面對死亡",
+      "tradition": "christianity",
+      "work": "約翰福音",
+      "locator": "3:16",
+      "topic": "神的愛/救恩",
+      "text": "神愛世人,甚至將他的獨生子賜給他們,叫一切信他的,不致滅亡,反得永生。",
+      "label": null
+    },
+    {
+      "query_id": "q010",
+      "query": "人應該如何面對死亡",
+      "tradition": "christianity",
+      "work": "馬太福音",
+      "locator": "22:37-39",
+      "topic": "倫理核心",
+      "text": "你要盡心、盡性、盡意愛主你的神……要愛人如己。",
+      "label": null
+    },
+    {
+      "query_id": "q010",
+      "query": "人應該如何面對死亡",
+      "tradition": "confucianism",
+      "work": "孟子·告子下",
+      "locator": "reference file entry",
+      "topic": "憂患成人",
+      "text": "生於憂患,而死於安樂。",
+      "label": null
+    },
+    {
+      "query_id": "q010",
+      "query": "人應該如何面對死亡",
+      "tradition": "confucianism",
+      "work": "論語·里仁",
+      "locator": "reference file entry",
+      "topic": "生命志向",
+      "text": "朝聞道,夕死可矣。",
+      "label": null
+    },
+    {
+      "query_id": "q010",
+      "query": "人應該如何面對死亡",
+      "tradition": "hinduism",
+      "work": "廣林奧義書",
+      "locator": "1.3.28",
+      "topic": "求真之禱",
+      "text": "引我從虛妄至真實,從黑暗至光明,從死亡至不朽。",
+      "label": null
+    },
+    {
+      "query_id": "q010",
+      "query": "人應該如何面對死亡",
+      "tradition": "hinduism",
+      "work": "薄伽梵歌",
+      "locator": "2:20",
+      "topic": "靈魂不滅",
+      "text": "靈魂不生亦不滅……身體被殺時,它並不被殺。",
+      "label": null
+    },
+    {
+      "query_id": "q011",
+      "query": "愛人",
+      "tradition": "christianity",
+      "work": "約翰福音",
+      "locator": "3:16",
+      "topic": "神的愛/救恩",
+      "text": "神愛世人,甚至將他的獨生子賜給他們,叫一切信他的,不致滅亡,反得永生。",
+      "label": null
+    },
+    {
+      "query_id": "q011",
+      "query": "愛人",
+      "tradition": "christianity",
+      "work": "馬太福音",
+      "locator": "22:37-39",
+      "topic": "倫理核心",
+      "text": "你要盡心、盡性、盡意愛主你的神……要愛人如己。",
+      "label": null
+    },
+    {
+      "query_id": "q011",
+      "query": "愛人",
+      "tradition": "confucianism",
+      "work": "論語·顏淵",
+      "locator": "reference file entry",
+      "topic": "仁的實踐",
+      "text": "己所不欲,勿施於人。",
+      "label": null
+    },
+    {
+      "query_id": "q011",
+      "query": "愛人",
+      "tradition": "islam",
+      "work": "古蘭經",
+      "locator": "51:56",
+      "topic": "生命目的,釋義",
+      "text": "我創造精靈和人類,只為要他們崇拜我。",
+      "label": null
+    },
+    {
+      "query_id": "q011",
+      "query": "愛人",
+      "tradition": "mohism",
+      "work": "墨子·兼愛中",
+      "locator": "reference file entry",
+      "topic": "兼愛",
+      "text": "視人之國若視其國,視人之家若視其家,視人之身若視其身。",
+      "label": null
+    },
+    {
+      "query_id": "q011",
+      "query": "愛人",
+      "tradition": "mohism",
+      "work": "墨子·天志上",
+      "locator": "reference file entry",
+      "topic": "天志",
+      "text": "順天意者,兼相愛,交相利,必得賞。",
+      "label": null
+    },
+    {
+      "query_id": "q011",
+      "query": "愛人",
+      "tradition": "mohism",
+      "work": "墨子·非攻上",
+      "locator": "reference file entry",
+      "topic": "非攻",
+      "text": "殺一人謂之不義……殺百人,百重不義。",
+      "label": null
+    },
+    {
+      "query_id": "q012",
+      "query": "Tat tvam asi",
+      "tradition": "buddhism",
+      "work": "大般涅槃經",
+      "locator": "偈(漢傳常引)",
+      "topic": "無常",
+      "text": "諸行無常,是生滅法;生滅滅已,寂滅為樂。",
+      "label": null
+    },
+    {
+      "query_id": "q012",
+      "query": "Tat tvam asi",
+      "tradition": "buddhism",
+      "work": "法句經",
+      "locator": "1(南傳)",
+      "topic": "心的主導",
+      "text": "諸法意先導,意主意造作。",
+      "label": null
+    },
+    {
+      "query_id": "q012",
+      "query": "Tat tvam asi",
+      "tradition": "christianity",
+      "work": "創世記",
+      "locator": "1:1",
+      "topic": "意義/造物",
+      "text": "起初,神創造天地。",
+      "label": null
+    },
+    {
+      "query_id": "q012",
+      "query": "Tat tvam asi",
+      "tradition": "hinduism",
+      "work": "歌者奧義書",
+      "locator": "6.8.7",
+      "topic": "梵我合一",
+      "text": "彼即是你(Tat tvam asi)。",
+      "label": null
+    },
+    {
+      "query_id": "q012",
+      "query": "Tat tvam asi",
+      "tradition": "hinduism",
+      "work": "薄伽梵歌",
+      "locator": "2:47",
+      "topic": "行動之道",
+      "text": "你只有行動的權利,沒有對結果的權利;莫為結果而行動,亦莫執著於不行動。",
+      "label": null
+    },
+    {
+      "query_id": "q013",
+      "query": "niyyah 舉意",
+      "tradition": "buddhism",
+      "work": "法句經",
+      "locator": "1(南傳)",
+      "topic": "心的主導",
+      "text": "諸法意先導,意主意造作。",
+      "label": null
+    },
+    {
+      "query_id": "q013",
+      "query": "niyyah 舉意",
+      "tradition": "christianity",
+      "work": "傳道書",
+      "locator": "1:2",
+      "topic": "虛無與意義",
+      "text": "虛空的虛空,凡事都是虛空。",
+      "label": null
+    },
+    {
+      "query_id": "q013",
+      "query": "niyyah 舉意",
+      "tradition": "christianity",
+      "work": "創世記",
+      "locator": "1:1",
+      "topic": "意義/造物",
+      "text": "起初,神創造天地。",
+      "label": null
+    },
+    {
+      "query_id": "q013",
+      "query": "niyyah 舉意",
+      "tradition": "islam",
+      "work": "布哈里聖訓實錄",
+      "locator": "開卷傳述(附傳述鏈)",
+      "topic": "聖訓,行為憑舉意",
+      "text": "一切行為全憑舉意(niyyah)。",
+      "label": null
+    },
+    {
+      "query_id": "q013",
+      "query": "niyyah 舉意",
+      "tradition": "legalism",
+      "work": "商君書·更法",
+      "locator": "(引商鞅之意)",
+      "topic": "因時變法",
+      "text": "治世不一道,便國不法古。",
+      "label": null
+    },
+    {
+      "query_id": "q013",
+      "query": "niyyah 舉意",
+      "tradition": "mohism",
+      "work": "墨子",
+      "locator": "尚賢上",
+      "topic": "尚賢",
+      "text": "官無常貴,而民無終賤;有能則舉之,無能則下之。",
+      "label": null
+    },
+    {
+      "query_id": "q013",
+      "query": "niyyah 舉意",
+      "tradition": "mohism",
+      "work": "墨子·天志上",
+      "locator": "reference file entry",
+      "topic": "天志",
+      "text": "順天意者,兼相愛,交相利,必得賞。",
+      "label": null
+    },
+    {
+      "query_id": "q014",
+      "query": "區塊鏈與加密貨幣的投資策略",
+      "tradition": "buddhism",
+      "work": "大般涅槃經",
+      "locator": "偈(漢傳常引)",
+      "topic": "無常",
+      "text": "諸行無常,是生滅法;生滅滅已,寂滅為樂。",
+      "label": null
+    },
+    {
+      "query_id": "q014",
+      "query": "區塊鏈與加密貨幣的投資策略",
+      "tradition": "buddhism",
+      "work": "法句經",
+      "locator": "1(南傳)",
+      "topic": "心的主導",
+      "text": "諸法意先導,意主意造作。",
+      "label": null
+    },
+    {
+      "query_id": "q014",
+      "query": "區塊鏈與加密貨幣的投資策略",
+      "tradition": "christianity",
+      "work": "創世記",
+      "locator": "1:1",
+      "topic": "意義/造物",
+      "text": "起初,神創造天地。",
+      "label": null
+    },
+    {
+      "query_id": "q014",
+      "query": "區塊鏈與加密貨幣的投資策略",
+      "tradition": "hinduism",
+      "work": "薄伽梵歌",
+      "locator": "2:47",
+      "topic": "行動之道",
+      "text": "你只有行動的權利,沒有對結果的權利;莫為結果而行動,亦莫執著於不行動。",
+      "label": null
+    },
+    {
+      "query_id": "q014",
+      "query": "區塊鏈與加密貨幣的投資策略",
+      "tradition": "islam",
+      "work": "布哈里聖訓實錄",
+      "locator": "開卷傳述(附傳述鏈)",
+      "topic": "聖訓,行為憑舉意",
+      "text": "一切行為全憑舉意(niyyah)。",
+      "label": null
+    },
+    {
+      "query_id": "q015",
+      "query": "最新智慧型手機的硬體規格比較",
+      "tradition": "buddhism",
+      "work": "大般涅槃經",
+      "locator": "偈(漢傳常引)",
+      "topic": "無常",
+      "text": "諸行無常,是生滅法;生滅滅已,寂滅為樂。",
+      "label": null
+    },
+    {
+      "query_id": "q015",
+      "query": "最新智慧型手機的硬體規格比較",
+      "tradition": "buddhism",
+      "work": "法句經",
+      "locator": "1(南傳)",
+      "topic": "心的主導",
+      "text": "諸法意先導,意主意造作。",
+      "label": null
+    },
+    {
+      "query_id": "q015",
+      "query": "最新智慧型手機的硬體規格比較",
+      "tradition": "hinduism",
+      "work": "廣林奧義書",
+      "locator": "1.4.10",
+      "topic": "梵我·大格言,釋義",
+      "text": "我即是梵。",
+      "label": null
+    },
+    {
+      "query_id": "q015",
+      "query": "最新智慧型手機的硬體規格比較",
+      "tradition": "hinduism",
+      "work": "薄伽梵歌",
+      "locator": "2:20",
+      "topic": "靈魂不滅",
+      "text": "靈魂不生亦不滅……身體被殺時,它並不被殺。",
+      "label": null
+    },
+    {
+      "query_id": "q015",
+      "query": "最新智慧型手機的硬體規格比較",
+      "tradition": "hinduism",
+      "work": "薄伽梵歌",
+      "locator": "2:47",
+      "topic": "行動之道",
+      "text": "你只有行動的權利,沒有對結果的權利;莫為結果而行動,亦莫執著於不行動。",
+      "label": null
+    },
+    {
+      "query_id": "q016",
+      "query": "道",
+      "tradition": "christianity",
+      "work": "傳道書",
+      "locator": "1:2",
+      "topic": "虛無與意義",
+      "text": "虛空的虛空,凡事都是虛空。",
+      "label": null
+    },
+    {
+      "query_id": "q016",
+      "query": "道",
+      "tradition": "christianity",
+      "work": "約翰福音",
+      "locator": "1:1",
+      "topic": "道/太初",
+      "text": "太初有道,道與神同在,道就是神。",
+      "label": null
+    },
+    {
+      "query_id": "q016",
+      "query": "道",
+      "tradition": "confucianism",
+      "work": "論語·里仁",
+      "locator": "reference file entry",
+      "topic": "生命志向",
+      "text": "朝聞道,夕死可矣。",
+      "label": null
+    },
+    {
+      "query_id": "q016",
+      "query": "道",
+      "tradition": "hinduism",
+      "work": "薄伽梵歌",
+      "locator": "2:47",
+      "topic": "行動之道",
+      "text": "你只有行動的權利,沒有對結果的權利;莫為結果而行動,亦莫執著於不行動。",
+      "label": null
+    },
+    {
+      "query_id": "q016",
+      "query": "道",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "1",
+      "topic": "道不可言",
+      "text": "道可道,非常道;名可名,非常名。",
+      "label": null
+    },
+    {
+      "query_id": "q016",
+      "query": "道",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "25",
+      "topic": "法自然",
+      "text": "人法地,地法天,天法道,道法自然。",
+      "label": null
+    },
+    {
+      "query_id": "q016",
+      "query": "道",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "48",
+      "topic": "為道日損",
+      "text": "為學日益,為道日損。損之又損,以至於無為。",
+      "label": null
+    },
+    {
+      "query_id": "q016",
+      "query": "道",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "8",
+      "topic": "上善若水",
+      "text": "上善若水。水善利萬物而不爭。",
+      "label": null
+    },
+    {
+      "query_id": "q017",
+      "query": "道德經 論道與自然",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "1",
+      "topic": "道不可言",
+      "text": "道可道,非常道;名可名,非常名。",
+      "label": null
+    },
+    {
+      "query_id": "q017",
+      "query": "道德經 論道與自然",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "25",
+      "topic": "法自然",
+      "text": "人法地,地法天,天法道,道法自然。",
+      "label": null
+    },
+    {
+      "query_id": "q017",
+      "query": "道德經 論道與自然",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "48",
+      "topic": "為道日損",
+      "text": "為學日益,為道日損。損之又損,以至於無為。",
+      "label": null
+    },
+    {
+      "query_id": "q017",
+      "query": "道德經 論道與自然",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "58",
+      "topic": "禍福相倚",
+      "text": "禍兮福之所倚,福兮禍之所伏。",
+      "label": null
+    },
+    {
+      "query_id": "q017",
+      "query": "道德經 論道與自然",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "8",
+      "topic": "上善若水",
+      "text": "上善若水。水善利萬物而不爭。",
+      "label": null
+    },
+    {
+      "query_id": "q018",
+      "query": "法句經",
+      "tradition": "buddhism",
+      "work": "大般涅槃經",
+      "locator": "偈(漢傳常引)",
+      "topic": "無常",
+      "text": "諸行無常,是生滅法;生滅滅已,寂滅為樂。",
+      "label": null
+    },
+    {
+      "query_id": "q018",
+      "query": "法句經",
+      "tradition": "buddhism",
+      "work": "法句經",
+      "locator": "1(南傳)",
+      "topic": "心的主導",
+      "text": "諸法意先導,意主意造作。",
+      "label": null
+    },
+    {
+      "query_id": "q018",
+      "query": "法句經",
+      "tradition": "buddhism",
+      "work": "法句經",
+      "locator": "183",
+      "topic": "七佛通戒",
+      "text": "諸惡莫作,眾善奉行,自淨其意,是諸佛教。",
+      "label": null
+    },
+    {
+      "query_id": "q018",
+      "query": "法句經",
+      "tradition": "buddhism",
+      "work": "轉法輪經",
+      "locator": "(初轉法輪,南傳)",
+      "topic": "四諦綱要",
+      "text": "苦、集、滅、道",
+      "label": null
+    },
+    {
+      "query_id": "q018",
+      "query": "法句經",
+      "tradition": "taoism",
+      "work": "道德經",
+      "locator": "25",
+      "topic": "法自然",
+      "text": "人法地,地法天,天法道,道法自然。",
+      "label": null
+    }
+  ]
+}
