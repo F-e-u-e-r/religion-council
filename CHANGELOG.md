@@ -12,6 +12,11 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Added
+- Add a blank, blind retrieval-v1 human-judge template, rubric, offline validator, and tests so a
+  human relevance pass can be collected without exposing curator-1/model-judge labels or retrieval
+  scores.
+
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
