@@ -12,6 +12,13 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 
 ## [Unreleased]
 
+### Changed
+- Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
+  `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
+  deprecation window.
+
+## [v0.13.1] — 2026-07-01 · Retrieval-v1 κ Guardrail
+
 ### Added
 - **Second-judge κ gate + disclosed model-judge pass (ADR 0007 §9 — the gate before BM25 default
   ranking).** Adds `scripts/compute_iaa.py` (standard-library, offline, deterministic Cohen's κ) and
@@ -34,10 +41,11 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   `independent_judge_count: 2` + `inter_annotator_agreement: 0.4436` as authorization to flip the BM25
   default ranking. Guardrail is metadata-only: no scoring, metric, or retrieval-behavior change.
 
-### Changed
-- Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
-  `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
-  deprecation window.
+### Non-goals
+- No BM25 default ranking flip, no portable-retriever change, no retrieval-envelope-contract change,
+  no RAG/vector/index/network backend, and no edition-backed assurance. This release publishes the
+  κ evidence + guardrail from #39/#40; it changes no retrieval behavior and no benchmark metric (only
+  the `corpus_version` release stamp updates, as every release does).
 
 ## [v0.13.0] — 2026-06-30 · Project Retriever No-Answer Gate
 

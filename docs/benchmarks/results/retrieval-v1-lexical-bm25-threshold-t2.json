@@ -41,7 +41,7 @@
     "records": 56,
     "traditions": 8
   },
-  "corpus_version": "v0.13.0",
+  "corpus_version": "v0.13.1",
   "judging": {
     "agreement_method": "cohen_kappa",
     "agreement_required_at": "backend-selection decision gate (candidate vs. baseline); whether a model-judge kappa suffices or a human blind judge is required is the project owner's call (ADR 0007 §9)",
