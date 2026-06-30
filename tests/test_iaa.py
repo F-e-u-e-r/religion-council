@@ -152,6 +152,15 @@ class CommittedFixtureModelJudgeTest(unittest.TestCase):
         for item in self.judging["iaa"]["pool"]:
             self.assertIn((item["tradition"], item["work"], item["locator"]), corpus)
 
+    def test_gate_evidence_guardrail_present_and_kappa_still_computed(self):
+        ge = self.judging["gate_evidence"]
+        self.assertEqual(ge["status"], "provisional_model_judge")
+        self.assertIs(ge["bm25_default_flip_authorized"], False)
+        self.assertIs(ge["requires_owner_acceptance_for_default_flip"], True)
+        self.assertIs(ge["requires_human_blind_judge_for_strong_gate"], True)
+        # the guardrail is additive — κ is still computed from the disclosed model-judge pool.
+        self.assertEqual(self.iaa.overall_kappa(self.judging), 0.4436)
+
     def test_cli_runs_offline_and_returns_zero(self):
         self.assertEqual(self.iaa.main([]), 0)
         self.assertEqual(self.iaa.main(["--json"]), 0)

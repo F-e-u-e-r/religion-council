@@ -187,6 +187,25 @@ class RetrievalBenchmarkTest(unittest.TestCase):
         self.assertTrue(model_judges)
         self.assertTrue(all(x.get("limitation") for x in model_judges))
 
+    def test_gate_guardrail_is_surfaced(self):
+        # ADR 0007 §9: a machine-readable guardrail must travel with the κ figure into the generated
+        # judging block + reports, so an agent cannot read independent_judge_count == 2 + a κ value as
+        # "BM25 default flip authorized".
+        ge = self.result["judging"]["gate_evidence"]
+        self.assertEqual(ge["status"], "provisional_model_judge")
+        self.assertIs(ge["bm25_default_flip_authorized"], False)
+        self.assertIs(ge["requires_owner_acceptance_for_default_flip"], True)
+        self.assertIs(ge["requires_human_blind_judge_for_strong_gate"], True)
+        # κ is still a real computed figure alongside the guardrail.
+        self.assertIsInstance(self.result["judging"]["inter_annotator_agreement"], float)
+        # surfaced in the generated Markdown, adjacent to the judges/κ lines.
+        md = self.bm.render_markdown(self.result)
+        self.assertIn("bm25_default_flip_authorized: false", md)
+        # metadata-only: the guardrail never leaks into the measured metrics (no behavior change).
+        self.assertNotIn("gate_evidence", self.result["summary"])
+        self.assertNotIn("gate_evidence", self.result["contract"])
+        self.assertTrue(all("gate_evidence" not in q for q in self.result["per_query"]))
+
     def test_invalid_k_is_rejected_not_crashed(self):
         # --k 0 used to raise ZeroDivisionError; it must now be a clean CLI error.
         for bad in ("0", "-3"):
