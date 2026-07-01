@@ -16,6 +16,15 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 - Add a blank, blind retrieval-v1 human-judge template, rubric, offline validator, and tests so a
   human relevance pass can be collected without exposing curator-1/model-judge labels or retrieval
   scores.
+- Add a disclosed **model-judge panel** for the retrieval-v1 pool: a generalized template validator
+  (`judge_type` human **or** model), a standard-library/offline pairwise-κ script
+  (`scripts/compute_panel_agreement.py`), and two blind filled passes — Claude/Opus
+  (`claude-opus-4-8`) and GPT/Codex (`gpt-5-codex`). Pairwise Cohen's κ: curator-1↔Claude **0.4436**,
+  curator-1↔GPT **0.3863**, Claude↔GPT **0.8998** — the two LLMs agree with each other far more than
+  either agrees with the human curator (correlated-model bias), so the panel is **evidence only** and
+  the gate guardrail stays `bm25_default_flip_authorized: false`. The blind judge template's
+  human-facing prose is also provided in Traditional Chinese. Fork-friendly: drop in more filled passes
+  and re-run the κ script.
 
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to

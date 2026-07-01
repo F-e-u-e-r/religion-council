@@ -28,6 +28,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURE = ROOT / "docs" / "benchmarks" / "judgments" / "retrieval-v1.json"
 LABEL_SET = {0, 1, 2}
+ALLOWED_JUDGE_TYPES = ("human", "model")  # the human template + model-panel filled passes share this schema
 LEAK_KEYS = ("labels", "curator-1", "model-judge-claude")
 
 
@@ -48,8 +49,8 @@ def validate(template, fixture_keys, filled=False):
         return ["template has no pool"]
 
     judge = template.get("judge", {})
-    if judge.get("judge_type") != "human":
-        errors.append("judge.judge_type must be 'human'")
+    if judge.get("judge_type") not in ALLOWED_JUDGE_TYPES:
+        errors.append("judge.judge_type must be one of {}".format(list(ALLOWED_JUDGE_TYPES)))
     if not judge.get("blind_to"):
         errors.append("judge.blind_to must be a non-empty list")
     if filled and not str(judge.get("id", "")).strip():
