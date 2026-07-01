@@ -41,7 +41,8 @@
 
 1. **Sidecar-first.** Carry all witness / canon / lineage / family metadata through the **existing**
    `presentation.json` sidecar — no parallel metadata system. Fields stay curator-declared and
-   carried-not-trusted (ADR 0003 §2); unknown enum values are dropped at merge (existing A1 behavior).
+   carried-not-trusted (ADR 0003 §2). The existing A1 merge drops wrong-typed sidecar values; enum
+   membership is enforced by curation/schema tests and must not silently ship unknown values.
 
 2. **Two orthogonal axes — split, never conflate.** A record's *textual witness type* and its
    *scriptural canon* are different questions and take different fields:
@@ -109,7 +110,8 @@
 
 ## Acceptance criteria (for the Phase 1 PR that follows)
 
-- Sidecar schema extended; enum membership checked in the test suite; unknown values dropped at merge.
+- Sidecar schema extended; enum membership checked in the test suite; wrong-typed sidecar values stay
+  dropped at merge and unknown enum values must not silently ship.
 - Both `presentation.json` copies stay byte-identical (`test_presentation_sidecars_are_byte_identical`);
   if `retrieve.py` is touched, both copies stay byte-identical
   (`test_portable_distribution_copies_are_byte_identical`); the project retriever still wraps / inherits
