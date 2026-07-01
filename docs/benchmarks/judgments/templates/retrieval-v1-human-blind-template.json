@@ -1,7 +1,7 @@
 {
   "template": "retrieval-v1-human-blind",
-  "instructions": "Independent BLIND relevance pass for the retrieval-v1 BM25 default-ranking gate (ADR 0007 §9). For each pool item, set `label` to 0, 1, or 2 using the rubric in retrieval-v1-human-blind-rubric.md, judging ONLY from `query` + the record's `topic`/`text`. Do not consult curator-1 or model-judge labels, the benchmark reports, or retrieval scores. Fill in `judge.id`. Then validate with `python3 scripts/validate_human_judge_template.py <this-file> --filled`.",
-  "rubric": "2 = direct/canonical source for the query's intent (exact quote, exact locator, or the definitive text); 1 = partial or cross-tradition thematic support; 0 = not relevant.",
+  "instructions": "針對 retrieval-v1 BM25 預設排序 gate(ADR 0007 §9)的獨立盲標(blind)relevance 判讀。請依 retrieval-v1-human-blind-rubric.md 的 rubric,為每個 pool item 將 `label` 設為 0、1 或 2,且僅依 `query` 與該筆記錄的 `topic`/`text` 判斷。請勿參考 curator-1 或 model-judge 的標註、benchmark 報告或 retrieval 分數。填入 `judge.id`,再執行 `python3 scripts/validate_human_judge_template.py <本檔> --filled` 驗證。",
+  "rubric": "2 = 直接/正典出處,切合該 query 的意旨(逐字引文、精確 locator,或決定性的原文);1 = 部分相關或跨傳統的主題呼應;0 = 不相關。",
   "label_set": [
     0,
     1,
@@ -11,9 +11,9 @@
     "id": "",
     "judge_type": "human",
     "blind_to": [
-      "curator-1 labels",
-      "model-judge labels",
-      "candidate retrieval scores"
+      "curator-1 標註",
+      "model-judge 標註",
+      "候選 retrieval 分數"
     ]
   },
   "pool": [
