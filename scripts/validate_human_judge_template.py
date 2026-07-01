@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Validate a retrieval-v1 human blind-judge template (ADR 0007 §9 gate package).
+"""Validate a retrieval-v1 blind-judge template or filled pass (ADR 0007 §9 gate package).
 
 Standard-library only, offline, deterministic. Checks a template against the committed retrieval-v1
-fixture pool so a human judge's independent pass is well-formed and genuinely **blind** before it is
-merged into ``judging.iaa`` as a new judge.
+fixture pool so a human or disclosed model judge's independent pass is well-formed and genuinely
+**blind** before it is used as panel evidence.
 
 Always checked:
   * the template's pool keys ``(query_id, tradition, work, locator)`` match the fixture's
     ``judging.iaa.pool`` exactly (same set, same count) — no missing, extra, or phantom items;
   * blindness — no item leaks an existing judge's answer: an item carries a single ``label`` field,
     never a ``labels`` map and never a ``curator-1`` / ``model-judge-*`` key;
-  * ``judge.judge_type == "human"`` and a non-empty ``blind_to`` list.
+  * ``judge.judge_type`` is ``"human"`` or ``"model"`` and ``blind_to`` is non-empty.
 
 Mode:
   * ``--blank``  (default): every ``label`` must be ``null`` — the distributable, unfilled template.
@@ -28,6 +28,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURE = ROOT / "docs" / "benchmarks" / "judgments" / "retrieval-v1.json"
 LABEL_SET = {0, 1, 2}
+ALLOWED_JUDGE_TYPES = ("human", "model")  # the human template + model-panel filled passes share this schema
 LEAK_KEYS = ("labels", "curator-1", "model-judge-claude")
 
 
@@ -48,8 +49,8 @@ def validate(template, fixture_keys, filled=False):
         return ["template has no pool"]
 
     judge = template.get("judge", {})
-    if judge.get("judge_type") != "human":
-        errors.append("judge.judge_type must be 'human'")
+    if judge.get("judge_type") not in ALLOWED_JUDGE_TYPES:
+        errors.append("judge.judge_type must be one of {}".format(list(ALLOWED_JUDGE_TYPES)))
     if not judge.get("blind_to"):
         errors.append("judge.blind_to must be a non-empty list")
     if filled and not str(judge.get("id", "")).strip():
@@ -85,7 +86,7 @@ def validate(template, fixture_keys, filled=False):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("template", help="path to the human-judge template JSON")
+    parser.add_argument("template", help="path to the blind-judge template/fill JSON")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--blank", action="store_true", help="require every label to be null (default)")
     mode.add_argument("--filled", action="store_true", help="require every label to be 0/1/2")
