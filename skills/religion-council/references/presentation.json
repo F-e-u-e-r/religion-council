@@ -154,21 +154,86 @@
   "taoism": [
     {
       "work": "道德經",
-      "locator": "48",
+      "locator": "1",
+      "version": "通行本",
+      "representation_kind": "original-text",
+      "witness_kind": "received",
+      "textual_witness": "wang_bi",
+      "commentarial_lineage": "wang_bi",
+      "corpus_family": "daodejing",
       "provenance": {
         "source_language": "lzh",
         "basis": "public-domain-by-age (pre-modern classical Chinese)",
-        "review": "not-independently-audited"
+        "review": "not-independently-audited",
+        "note": "Received text (通行本), Wang Bi 王弼 recension/commentary line; an excavated 馬王堆帛書 witness of this text exists and differs (e.g. 恆 vs 常 and 也 particles — ch.1 「道可道也,非恆道也」). Not edition-backed."
+      },
+      "rights": "Pre-modern classical Chinese text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
+    },
+    {
+      "work": "道德經",
+      "locator": "8",
+      "version": "通行本",
+      "representation_kind": "original-text",
+      "witness_kind": "received",
+      "textual_witness": "wang_bi",
+      "commentarial_lineage": "wang_bi",
+      "corpus_family": "daodejing",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern classical Chinese)",
+        "review": "not-independently-audited",
+        "note": "Received text (通行本), Wang Bi 王弼 recension/commentary line; an excavated 馬王堆帛書 witness of this text exists and differs (e.g. 恆 vs 常 and 也 particles). Not edition-backed."
+      },
+      "rights": "Pre-modern classical Chinese text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
+    },
+    {
+      "work": "道德經",
+      "locator": "25",
+      "version": "通行本",
+      "representation_kind": "original-text",
+      "witness_kind": "received",
+      "textual_witness": "wang_bi",
+      "commentarial_lineage": "wang_bi",
+      "corpus_family": "daodejing",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern classical Chinese)",
+        "review": "not-independently-audited",
+        "note": "Received text (通行本), Wang Bi 王弼 recension/commentary line; an excavated 馬王堆帛書 witness of this text exists and differs (e.g. 恆 vs 常 and 也 particles). Not edition-backed."
+      },
+      "rights": "Pre-modern classical Chinese text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
+    },
+    {
+      "work": "道德經",
+      "locator": "48",
+      "version": "通行本",
+      "representation_kind": "original-text",
+      "witness_kind": "received",
+      "textual_witness": "wang_bi",
+      "commentarial_lineage": "wang_bi",
+      "corpus_family": "daodejing",
+      "provenance": {
+        "source_language": "lzh",
+        "basis": "public-domain-by-age (pre-modern classical Chinese)",
+        "review": "not-independently-audited",
+        "note": "Received text (通行本), Wang Bi 王弼 recension/commentary line; an excavated 馬王堆帛書 witness of this text exists and differs (e.g. 恆 vs 常 and 也 particles). Not edition-backed."
       },
       "rights": "Pre-modern classical Chinese text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
     },
     {
       "work": "道德經",
       "locator": "58",
+      "version": "通行本",
+      "representation_kind": "original-text",
+      "witness_kind": "received",
+      "textual_witness": "wang_bi",
+      "commentarial_lineage": "wang_bi",
+      "corpus_family": "daodejing",
       "provenance": {
         "source_language": "lzh",
         "basis": "public-domain-by-age (pre-modern classical Chinese)",
-        "review": "not-independently-audited"
+        "review": "not-independently-audited",
+        "note": "Received text (通行本), Wang Bi 王弼 recension/commentary line; an excavated 馬王堆帛書 witness of this text exists and differs (e.g. 恆 vs 常 and 也 particles). Not edition-backed."
       },
       "rights": "Pre-modern classical Chinese text; understood public domain by age. Specific modern edition/typesetting and per-jurisdiction status not independently audited; confirm before redistribution."
     }

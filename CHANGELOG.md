@@ -16,6 +16,16 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
 - Add a blank, blind retrieval-v1 human-judge template, rubric, offline validator, and tests so a
   human relevance pass can be collected without exposing curator-1/model-judge labels or retrieval
   scores.
+- **ADR 0008 Phase 1 — textual-witness / canon sidecar schema (metadata only).** Extends the A1
+  `presentation.json` sidecar with corpus-versioning fields (`witness_kind`, `canon_scope`,
+  `textual_witness`, `commentarial_lineage`, `corpus_family`) governed by a new, **separate**
+  `policies/corpus-metadata.v1.json` enum manifest (kept out of the frozen quote-admissibility
+  policy); resolves the `version` placeholder drift by letting the sidecar carry the source edition
+  (e.g. `通行本`) per record. Backfills the 道教《道德經》records (通行本 / 王弼, `witness_kind:
+  received`) as the reference, disclosing the excavated 馬王堆帛書 variant **without** minting
+  edition-backed assurance. Metadata only: no new corpus records and no ranking/metric change —
+  committed reports move only the `representation_metadata_records` / `rights_metadata_records`
+  counts. Both portable copies stay byte-identical.
 - Add a disclosed **model-judge panel** for the retrieval-v1 pool: a generalized template validator
   (`judge_type` human **or** model), a standard-library/offline pairwise-κ script
   (`scripts/compute_panel_agreement.py`), and two blind filled passes — Claude/Opus

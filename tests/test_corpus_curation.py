@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "orchestrator"))
 
+import corpus_metadata_enums  # noqa: E402
 import policy_enums  # noqa: E402
 import retrieval_evidence_adapter as adapter  # noqa: E402
 from evidence_snapshot import EvidenceStore, canonical_bytes  # noqa: E402
@@ -93,6 +94,13 @@ class CorpusCurationTest(unittest.TestCase):
                 self.assertIn(r["representation_kind"], policy_enums.REPRESENTATION_KINDS, r["work"])
             if "rendering_mode" in r:
                 self.assertIn(r["rendering_mode"], policy_enums.RENDERING_MODES, r["work"])
+            # ADR 0008 witness/canon fields: enum-checked HERE (the portable retriever only
+            # type-checks them, carried-not-trusted). `version` is a free-form source-edition string.
+            for field, allowed in corpus_metadata_enums.SIDECAR_ENUM_FIELDS.items():
+                if field in r:
+                    self.assertIn(r[field], allowed, (r["work"], field))
+            if "version" in r:
+                self.assertTrue(isinstance(r["version"], str) and r["version"].strip(), r["work"])
             # Every curated record carries per-snippet provenance + a non-empty rights note.
             self.assertIsInstance(r.get("provenance"), dict, r["work"])
             self.assertTrue(isinstance(r.get("rights"), str) and r["rights"].strip(), r["work"])
@@ -127,6 +135,26 @@ class CorpusCurationTest(unittest.TestCase):
         for r in self.all_records:
             self.assertNotEqual(r.get("representation_kind"), "edition-backed")
             self.assertNotIn("span_assurance_tier", r)  # the corpus never asserts a verified tier at rest
+
+    def test_adr0008_witness_metadata_and_version_override(self):
+        # Phase 1: the 道德經 (通行本 / 王弼) records carry disclosed textual-witness metadata, and the
+        # sidecar `version` overrides the hardcoded placeholder with the source edition — resolving the
+        # ADR 0006 drift honestly, without minting edition-backed assurance.
+        daodejing = [r for r in self.all_records if r["work"] == "道德經"]
+        self.assertTrue(daodejing)
+        for r in daodejing:
+            self.assertEqual(r["version"], "通行本")
+            self.assertEqual(r["witness_kind"], "received")
+            self.assertEqual(r["textual_witness"], "wang_bi")
+            self.assertEqual(r["commentarial_lineage"], "wang_bi")
+            self.assertEqual(r["corpus_family"], "daodejing")
+            self.assertEqual(r["representation_kind"], "original-text")
+        # Un-curated records keep the honest snapshot-label default — never a fabricated edition tag.
+        self.assertTrue(any(r["version"] == "curated-reference-v0.1" for r in self.all_records))
+        # The witness/canon enums live in the corpus-metadata policy, separate from admissibility, and
+        # never admit an assurance value.
+        self.assertIn("wang_bi", corpus_metadata_enums.TEXTUAL_WITNESSES)
+        self.assertNotIn("edition-backed", corpus_metadata_enums.WITNESS_KINDS)
 
     # ---- span integrity + snapshot reproducibility ----------------------------------------
     def test_snapshot_roundtrip_and_full_span_integrity(self):

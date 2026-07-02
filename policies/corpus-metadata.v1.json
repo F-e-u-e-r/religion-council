@@ -1,0 +1,43 @@
+{
+  "_note": "Corpus-metadata enums (ADR 0008): textual-witness / canon / recension classification for corpus records, carried via the A1 presentation.json sidecar. DELIBERATELY separate from the frozen quote-admissibility policy (a different concern — admissibility vs. corpus provenance; ADR 0008 §Decision 1). Enum membership is checked in tests/test_corpus_curation.py; the portable retriever only type-checks these fields (carried-not-trusted). Adding a witness/canon record must NOT imply edition-backed assurance — the honest floor stays artifact-backed / curated-snapshot (ADR 0004 / ADR 0006).",
+  "schema_version": "corpus-metadata/v1",
+  "witness_kinds": [
+    {"id": "received", "label": "Received / transmitted text (傳世/通行本)"},
+    {"id": "excavated", "label": "Excavated manuscript (出土)"},
+    {"id": "dunhuang_fragment", "label": "Dunhuang manuscript fragment (敦煌殘卷)"},
+    {"id": "reconstructed", "label": "Critically reconstructed text"}
+  ],
+  "canon_scopes": [
+    {"id": "protestant"}, {"id": "catholic"}, {"id": "orthodox"},
+    {"id": "sunni"}, {"id": "shia"},
+    {"id": "theravada"}, {"id": "mahayana"}, {"id": "vajrayana"},
+    {"id": "sruti"}, {"id": "smriti"}
+  ],
+  "textual_witnesses": [
+    {"id": "wang_bi", "label": "王弼本"},
+    {"id": "heshang_gong", "label": "河上公本"},
+    {"id": "mawangdui_a", "label": "馬王堆帛書甲本"},
+    {"id": "mawangdui_b", "label": "馬王堆帛書乙本"},
+    {"id": "guodian_a", "label": "郭店楚簡甲"},
+    {"id": "guodian_b", "label": "郭店楚簡乙"},
+    {"id": "guodian_c", "label": "郭店楚簡丙"},
+    {"id": "beida", "label": "北大漢簡"},
+    {"id": "fuyi_guben", "label": "傅奕古本"},
+    {"id": "xianger", "label": "想爾注本"}
+  ],
+  "commentarial_lineages": [
+    {"id": "wang_bi", "label": "王弼注"},
+    {"id": "heshang_gong", "label": "河上公注"},
+    {"id": "xianger", "label": "想爾注"},
+    {"id": "zhu_xi", "label": "朱熹集注"},
+    {"id": "none", "label": "no commentary lineage attached"}
+  ],
+  "corpus_families": [
+    {"id": "daodejing"}, {"id": "zhuangzi"}, {"id": "liezi"},
+    {"id": "yijing"}, {"id": "lunyu"}, {"id": "mengzi"}, {"id": "xunzi"},
+    {"id": "hanfeizi"}, {"id": "mozi"},
+    {"id": "quran"}, {"id": "bible"},
+    {"id": "pali_canon"}, {"id": "mahayana_sutras"},
+    {"id": "upanishads"}, {"id": "bhagavad_gita"}
+  ]
+}

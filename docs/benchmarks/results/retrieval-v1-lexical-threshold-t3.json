@@ -19,9 +19,9 @@
       "occ/v1-corpus-stable": 37
     },
     "records_evaluated": 37,
-    "representation_metadata_records": 6,
+    "representation_metadata_records": 11,
     "required_envelope_fields_present": true,
-    "rights_metadata_records": 10,
+    "rights_metadata_records": 13,
     "source_assurance_artifact_backed_count": 37,
     "span_assurance": {
       "all_records_artifact_backed": true,
