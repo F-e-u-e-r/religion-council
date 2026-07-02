@@ -86,8 +86,10 @@ ASCII_WORD_RE = re.compile(r"[a-z0-9]+")
 CJK_RE = re.compile(r"[\u3400-\u9fff]+")
 
 # A1: optional curated presentation/provenance sidecar. It merges per-record presentation
-# dimensions (representation_kind / rendering_mode) and provenance / rights onto matching
-# records by (tradition, work, locator). These are curator-declared, carried-not-trusted
+# dimensions (representation_kind / rendering_mode), provenance / rights, and the ADR 0008
+# corpus-versioning fields (version / witness_kind / canon_scope / textual_witness /
+# commentarial_lineage / corpus_family) onto matching records by (tradition, work, locator).
+# These are curator-declared, carried-not-trusted
 # metadata: nothing is inferred. An absent, unparseable, or structurally-invalid sidecar
 # leaves retrieval unchanged, and a field whose value has the wrong type is dropped at merge
 # (pure-stdlib type-checking; the policy enum-membership check lives in the test suite, since
@@ -98,6 +100,15 @@ PRESENTATION_FIELD_TYPES = {
     "rendering_mode": str,
     "provenance": dict,
     "rights": str,
+    # ADR 0008 corpus-versioning: classify the textual witness / canon. Enum-checked in the test
+    # suite (never at merge — this portable retriever only type-checks, carried-not-trusted). The
+    # source edition is carried by the base `version` field, overridden per-record in the merge below
+    # (deliberately NOT listed here, so it stays present on every record, curated or not).
+    "witness_kind": str,
+    "canon_scope": str,
+    "textual_witness": str,
+    "commentarial_lineage": str,
+    "corpus_family": str,
 }
 PRESENTATION_FIELDS = tuple(PRESENTATION_FIELD_TYPES)
 
@@ -208,6 +219,11 @@ def parse_reference(tradition):
         # so a malformed sidecar cannot inject garbage into the contract.
         curation = PRESENTATION.get((tradition, work, resolved_locator))
         if curation:
+            # `version` is the source edition (ADR 0006/0008): a curated string overrides the
+            # placeholder default on this record; the field stays present on every record either way.
+            sidecar_version = curation.get("version")
+            if isinstance(sidecar_version, str) and sidecar_version:
+                record["version"] = sidecar_version
             for field, expected_type in PRESENTATION_FIELD_TYPES.items():
                 value = curation.get(field)
                 if isinstance(value, expected_type):
