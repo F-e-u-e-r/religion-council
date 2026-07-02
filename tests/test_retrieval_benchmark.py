@@ -196,11 +196,15 @@ class RetrievalBenchmarkTest(unittest.TestCase):
         self.assertIs(ge["bm25_default_flip_authorized"], False)
         self.assertIs(ge["requires_owner_acceptance_for_default_flip"], True)
         self.assertIs(ge["requires_human_blind_judge_for_strong_gate"], True)
+        # Owner decision (#42) is recorded machine-readably, not just pending flags.
+        self.assertEqual(ge["owner_decision"]["resolution"], "require_human_blind_judge")
+        self.assertIs(ge["owner_decision"]["model_panel_kappa_accepted"], False)
         # κ is still a real computed figure alongside the guardrail.
         self.assertIsInstance(self.result["judging"]["inter_annotator_agreement"], float)
         # surfaced in the generated Markdown, adjacent to the judges/κ lines.
         md = self.bm.render_markdown(self.result)
         self.assertIn("bm25_default_flip_authorized: false", md)
+        self.assertIn("require_human_blind_judge", md)
         # metadata-only: the guardrail never leaks into the measured metrics (no behavior change).
         self.assertNotIn("gate_evidence", self.result["summary"])
         self.assertNotIn("gate_evidence", self.result["contract"])

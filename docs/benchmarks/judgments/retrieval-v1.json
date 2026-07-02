@@ -29,7 +29,13 @@
       "status": "provisional_model_judge",
       "bm25_default_flip_authorized": false,
       "requires_owner_acceptance_for_default_flip": true,
-      "requires_human_blind_judge_for_strong_gate": true
+      "requires_human_blind_judge_for_strong_gate": true,
+      "owner_decision": {
+        "resolution": "require_human_blind_judge",
+        "model_panel_kappa_accepted": false,
+        "decided_ref": "#42",
+        "rationale": "Correlated model bias: Claude↔GPT κ=0.8998 vs model↔human κ≈0.39–0.44; high inter-model agreement is not independent corroboration, so the model-panel κ is not accepted as gate evidence (ADR 0007 §9)."
+      }
     },
     "agreement_method": "cohen_kappa",
     "agreement_required_at": "backend-selection decision gate (candidate vs. baseline); whether a model-judge kappa suffices or a human blind judge is required is the project owner's call (ADR 0007 §9)",
