@@ -158,6 +158,11 @@ class CommittedFixtureModelJudgeTest(unittest.TestCase):
         self.assertIs(ge["bm25_default_flip_authorized"], False)
         self.assertIs(ge["requires_owner_acceptance_for_default_flip"], True)
         self.assertIs(ge["requires_human_blind_judge_for_strong_gate"], True)
+        # Owner decision (#42) recorded machine-readably: require a human blind judge; model κ rejected.
+        decision = ge["owner_decision"]
+        self.assertEqual(decision["resolution"], "require_human_blind_judge")
+        self.assertIs(decision["model_panel_kappa_accepted"], False)
+        self.assertEqual(decision["decided_ref"], "#42")
         # the guardrail is additive — κ is still computed from the disclosed model-judge pool.
         self.assertEqual(self.iaa.overall_kappa(self.judging), 0.4436)
 

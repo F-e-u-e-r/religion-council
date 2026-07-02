@@ -856,6 +856,13 @@ def render_markdown(result, baseline=None, references=None):
             "judge (ADR 0007 §9), not this figure alone.".format(
                 gate.get("status", "—"),
                 "true" if gate.get("bm25_default_flip_authorized") else "false"))
+        decision = gate.get("owner_decision")
+        if decision:
+            lines.append(
+                "- **Owner decision ({}):** `{}` — model-panel κ accepted: `{}`.".format(
+                    decision.get("decided_ref", "—"),
+                    decision.get("resolution", "—"),
+                    "true" if decision.get("model_panel_kappa_accepted") else "false"))
     if j.get("agreement_required_at"):
         lines.append("- ≥2-judge + IAA requirement applies at: {}".format(j["agreement_required_at"]))
     if j.get("disclosure"):

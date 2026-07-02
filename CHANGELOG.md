@@ -35,6 +35,13 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   the gate guardrail stays `bm25_default_flip_authorized: false`. The blind judge template's
   human-facing prose is also provided in Traditional Chinese. Fork-friendly: drop in more filled passes
   and re-run the κ script.
+- **Machine-readable owner decision on the BM25 gate (#42).** Records the owner's decision in
+  `judging.gate_evidence.owner_decision` (`resolution: require_human_blind_judge`,
+  `model_panel_kappa_accepted: false`, `decided_ref: "#42"`) and surfaces it in every Markdown report,
+  so an agent reading the fixture or a report sees the *decision*, not just pending flags. The panel's
+  Claude↔GPT κ = 0.8998 vs model↔human κ ≈ 0.39–0.44 is correlated-model agreement, not independent
+  corroboration, so the model-panel κ is **not** accepted as gate evidence and the BM25 default flip
+  stays gated on a human blind judge. Metadata only: no ranking/metric change.
 
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to

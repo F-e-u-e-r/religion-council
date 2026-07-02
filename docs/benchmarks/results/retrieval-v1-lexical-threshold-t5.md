@@ -40,13 +40,14 @@
 
 - Independent judges: **2**; inter-annotator agreement: **0.4436** (method: cohen_kappa)
 - **Gate evidence — `provisional_model_judge`:** `bm25_default_flip_authorized: false`. A disclosed model-judge κ; flipping BM25 to the default ranking needs explicit owner acceptance or a human blind judge (ADR 0007 §9), not this figure alone.
+- **Owner decision (#42):** `require_human_blind_judge` — model-panel κ accepted: `false`.
 - ≥2-judge + IAA requirement applies at: backend-selection decision gate (candidate vs. baseline); whether a model-judge kappa suffices or a human blind judge is required is the project owner's call (ADR 0007 §9)
 - _retrieval-v1 now carries a second, DISCLOSED MODEL judge (claude-opus-4-8) alongside curator-1. The model judge blind-labeled the frozen pool and Cohen's kappa vs curator-1 is 0.4436 (moderate agreement; raw agreement 76/110). This is PROVISIONAL model-judge evidence — weaker independence than a human blind judge — recorded so the BM25 default-ranking gate (ADR 0007 §9) rests on a disclosed kappa rather than a single-curator margin. It is NOT a human inter-annotator figure and does not by itself authorize flipping the default ranking; the project owner decides whether a model-judge kappa suffices. A future human blind judge can replace or augment the model judge using this same judging.iaa schema. Scoring (judgments[].relevant[]) remains curator-1's authoritative set — the pool affects kappa only, never nDCG/MRR._
 
 ## Operational (snapshot — machine-specific, not part of the reproducible metrics)
 
 - records searched per query: 56
-- total: 0.0217s · avg query: 1.2076 ms · max query: 1.7450 ms
+- total: 0.0212s · avg query: 1.1756 ms · max query: 1.7505 ms
 
 ## Per-query results
 
