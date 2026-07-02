@@ -42,6 +42,13 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   Claude↔GPT κ = 0.8998 vs model↔human κ ≈ 0.39–0.44 is correlated-model agreement, not independent
   corroboration, so the model-panel κ is **not** accepted as gate evidence and the BM25 default flip
   stays gated on a human blind judge. Metadata only: no ranking/metric change.
+- **ADR 0008 Phase 2 — Hinduism canon-scope metadata.** Adds conservative `canon_scope` +
+  `corpus_family` to the three existing Hinduism generated-rendering records: `廣林奧義書 1.4.10` →
+  `sruti` / `upanishads`; `薄伽梵歌 2:48` & `4:7` → `smriti` / `bhagavad_gita`. No new records, no
+  textual-witness / edition claim; the existing `generated-rendering` / `meaning-rendering` /
+  provenance / rights notes are untouched. Metadata only — `representation_kind` / `rights` were
+  already present, so **no report metadata count changes and no report regeneration**; rankings and
+  metrics are unchanged. Both `presentation.json` copies stay byte-identical.
 
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to

@@ -156,6 +156,32 @@ class CorpusCurationTest(unittest.TestCase):
         self.assertIn("wang_bi", corpus_metadata_enums.TEXTUAL_WITNESSES)
         self.assertNotIn("edition-backed", corpus_metadata_enums.WITNESS_KINDS)
 
+    def test_adr0008_hinduism_canon_scope(self):
+        # Phase 2 (Hinduism): conservative canon-scope + corpus-family only, on the existing
+        # generated-rendering records — no textual-witness / edition claim, no new records. sruti =
+        # revealed (Upaniṣad); smriti = remembered (Gītā). Enum membership comes from the corpus-metadata
+        # policy, never from admissibility.
+        index = {(r["work"], r["locator"]): r for r in self.by_tradition["hinduism"]}
+        expected = {
+            ("廣林奧義書", "1.4.10"): ("sruti", "upanishads"),
+            ("薄伽梵歌", "2:48"): ("smriti", "bhagavad_gita"),
+            ("薄伽梵歌", "4:7"): ("smriti", "bhagavad_gita"),
+        }
+        for key, (canon, family) in expected.items():
+            record = index[key]
+            self.assertEqual(record["canon_scope"], canon, key)
+            self.assertEqual(record["corpus_family"], family, key)
+            self.assertIn(record["canon_scope"], corpus_metadata_enums.CANON_SCOPES, key)
+            self.assertIn(record["corpus_family"], corpus_metadata_enums.CORPUS_FAMILIES, key)
+            # Existing rendering classification is kept; no witness/edition claim is added.
+            self.assertEqual(record["representation_kind"], "generated-rendering", key)
+            self.assertEqual(record["rendering_mode"], "meaning-rendering", key)
+            self.assertNotIn("textual_witness", record)
+            self.assertNotIn("witness_kind", record)
+            # no sidecar source-edition override for a rendering — the base placeholder stays.
+            self.assertEqual(record["version"], "curated-reference-v0.1", key)
+            self.assertNotIn("span_assurance_tier", record)
+
     # ---- span integrity + snapshot reproducibility ----------------------------------------
     def test_snapshot_roundtrip_and_full_span_integrity(self):
         with tempfile.TemporaryDirectory() as tmp:
