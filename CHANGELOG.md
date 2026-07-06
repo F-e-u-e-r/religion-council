@@ -42,6 +42,14 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   Claude↔GPT κ = 0.8998 vs model↔human κ ≈ 0.39–0.44 is correlated-model agreement, not independent
   corroboration, so the model-panel κ is **not** accepted as gate evidence and the BM25 default flip
   stays gated on a human blind judge. Metadata only: no ranking/metric change.
+- **ADR 0008 Phase 2 — Christianity translation/canon metadata.** Discloses the two 和合本 (Chinese
+  Union Version, 1919) records (`約翰福音 1:1`, `希伯來書 11:1`) as a Protestant **published
+  translation**: `representation_kind: published-translation`, `rendering_mode: direct-translation`,
+  `canon_scope: protestant`, `corpus_family: bible`. Honestly marked as a translation of the
+  Greek/Hebrew originals — never `original-text`, no `textual_witness`, no edition-backed assurance;
+  the existing 和合本 provenance + rights are kept. Metadata only: the reports move only the
+  `representation_metadata_records` count (`約翰福音 1:1` gains it); rankings/metrics unchanged. Both
+  `presentation.json` copies stay byte-identical.
 
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to

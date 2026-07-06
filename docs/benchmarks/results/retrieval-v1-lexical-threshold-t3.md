@@ -31,7 +31,7 @@
 - Required envelope fields present: **True**
 - Deterministic repeat (identical ranking on a second pass): **True**
 - source_assurance artifact-backed: 37/37 retrieved records
-- Curated metadata among retrieved records: representation_kind=11, rights=13
+- Curated metadata among retrieved records: representation_kind=12, rights=13
 - **Citation fidelity** (returned+relevant records with a reproducible occurrence id across two runs and a reordering): **1.000** (19/19 records)
 - Span assurance at retrieval: tier_at_retrieval=`None`, source_assurance floor=`artifact-backed` (37/37 records), edition-backed-span-verified=**False**
 - _retrieval mints no span-assurance tier; curated-snapshot-span-verified is minted at B2 and edition-backed-span-verified is reserved for A2 — beating this benchmark upgrades neither (docs/benchmarks/retrieval-v1.md hard constraint 6)._
@@ -47,7 +47,7 @@
 ## Operational (snapshot — machine-specific, not part of the reproducible metrics)
 
 - records searched per query: 56
-- total: 0.0216s · avg query: 1.2009 ms · max query: 1.7840 ms
+- total: 0.0254s · avg query: 1.4102 ms · max query: 2.5157 ms
 
 ## Per-query results
 

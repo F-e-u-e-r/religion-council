@@ -156,6 +156,26 @@ class CorpusCurationTest(unittest.TestCase):
         self.assertIn("wang_bi", corpus_metadata_enums.TEXTUAL_WITNESSES)
         self.assertNotIn("edition-backed", corpus_metadata_enums.WITNESS_KINDS)
 
+    def test_adr0008_christianity_canon_scope(self):
+        # Phase 2 (Christianity): the 和合本 (Chinese Union Version) records are disclosed as a
+        # Protestant *published translation* of the Greek/Hebrew originals — representation + canon,
+        # no original-text or edition-backed claim, no new records. canon_scope is the edition's canon
+        # (和合本 = Protestant), not a claim that the book is Protestant-only.
+        index = {(r["work"], r["locator"]): r for r in self.by_tradition["christianity"]}
+        for key in (("約翰福音", "1:1"), ("希伯來書", "11:1")):
+            record = index[key]
+            self.assertEqual(record["representation_kind"], "published-translation", key)
+            self.assertEqual(record["rendering_mode"], "direct-translation", key)
+            self.assertEqual(record["canon_scope"], "protestant", key)
+            self.assertEqual(record["corpus_family"], "bible", key)
+            self.assertIn(record["canon_scope"], corpus_metadata_enums.CANON_SCOPES, key)
+            self.assertIn(record["corpus_family"], corpus_metadata_enums.CORPUS_FAMILIES, key)
+            # Honest wording: a translation, never the original-language text, never edition-backed.
+            self.assertNotEqual(record["representation_kind"], "original-text")
+            self.assertNotIn("textual_witness", record)
+            self.assertNotIn("span_assurance_tier", record)
+            self.assertIn("和合本", record["provenance"].get("translator", ""), key)
+
     # ---- span integrity + snapshot reproducibility ----------------------------------------
     def test_snapshot_roundtrip_and_full_span_integrity(self):
         with tempfile.TemporaryDirectory() as tmp:
