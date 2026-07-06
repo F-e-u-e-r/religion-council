@@ -156,6 +156,43 @@ class CorpusCurationTest(unittest.TestCase):
         self.assertIn("wang_bi", corpus_metadata_enums.TEXTUAL_WITNESSES)
         self.assertNotIn("edition-backed", corpus_metadata_enums.WITNESS_KINDS)
 
+    def test_adr0008_islam_corpus_family(self):
+        # Phase 2 (Islam): the five 馬堅《古蘭經》(Qur'an) records are grouped by corpus_family=quran —
+        # the only field added. The Qur'an stays a meaning-rendering *published translation*, never a
+        # textual "version" (ADR 0008 §7-A). Deliberately NO canon_scope: the Qur'anic text is agreed
+        # across Sunni/Shia; the sectarian split is the ḥadīth layer, deferred. No original-text /
+        # textual_witness / edition-backed claim, no new records.
+        index = {(r["work"], r["locator"]): r for r in self.by_tradition["islam"]}
+        quran_keys = (
+            ("古蘭經", "51:56"),
+            ("古蘭經", "112:1-4(忠誠章)"),
+            ("古蘭經", "2:156"),
+            ("古蘭經", "1:1(開端章)"),
+            ("古蘭經", "2:256"),
+        )
+        for key in quran_keys:
+            record = index[key]
+            self.assertEqual(record["corpus_family"], "quran", key)
+            self.assertIn(record["corpus_family"], corpus_metadata_enums.CORPUS_FAMILIES, key)
+            self.assertEqual(record["representation_kind"], "published-translation", key)
+            self.assertEqual(record["rendering_mode"], "meaning-rendering", key)
+            # Honest wording: a meaning-rendering translation, never the original-language text, never a
+            # textual "version", never edition-backed; no sectarian canon stamped on the Qur'an text.
+            self.assertNotEqual(record["representation_kind"], "original-text", key)
+            self.assertNotIn("textual_witness", record, key)
+            self.assertNotIn("canon_scope", record, key)
+            self.assertNotIn("span_assurance_tier", record, key)
+            self.assertIn("馬堅", record["provenance"].get("translator", ""), key)
+        # The remaining《古蘭經》record is a thematic 釋義 (no 馬堅 translation, no sidecar disclosure);
+        # it is deliberately left untagged by this metadata pass — not silently tagged as a witness.
+        untagged = [
+            r for r in self.by_tradition["islam"]
+            if r["work"] == "古蘭經" and (r["work"], r["locator"]) not in set(quran_keys)
+        ]
+        self.assertEqual(len(untagged), 1)
+        self.assertNotIn("corpus_family", untagged[0])
+        self.assertNotIn("representation_kind", untagged[0])
+
     # ---- span integrity + snapshot reproducibility ----------------------------------------
     def test_snapshot_roundtrip_and_full_span_integrity(self):
         with tempfile.TemporaryDirectory() as tmp:

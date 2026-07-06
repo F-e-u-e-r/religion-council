@@ -42,6 +42,20 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   Claude↔GPT κ = 0.8998 vs model↔human κ ≈ 0.39–0.44 is correlated-model agreement, not independent
   corroboration, so the model-panel κ is **not** accepted as gate evidence and the BM25 default flip
   stays gated on a human blind judge. Metadata only: no ranking/metric change.
+- **ADR 0008 Phase 2 — Islam `corpus_family` (Qur'an).** Groups the five 馬堅《古蘭經》(Qur'an)
+  records — `51:56`, `112:1-4(忠誠章)`, `2:156`, `1:1(開端章)`, `2:256` — under
+  `corpus_family: quran`, the **only** field added. They already disclosed
+  `representation_kind: published-translation` + `rendering_mode: meaning-rendering`; per ADR 0008
+  §7-A the Qur'an **stays a meaning-rendering, never a textual "version"**. Deliberately **no
+  `canon_scope`**: the Qur'anic text is agreed across Sunni/Shia — the sectarian split lives in the
+  ḥadīth layer and is **deferred**, not modeled here. No `textual_witness`, no `original-text`, no
+  edition-backed assurance; the existing 馬堅 provenance (`source_language: ar`) + rights are
+  untouched. Metadata only: `corpus_family` is not a counted contract field and these records already
+  carried `representation_kind`, so the reproducible report view is **unchanged**
+  (`representation_metadata_records` stays 12) — reports are **not** regenerated. The 6th《古蘭經》
+  entry (a thematic 釋義 at `多處(如 2:25、103 章)`, with no sidecar disclosure) is intentionally
+  left untagged pending its own representation/provenance decision. Both `presentation.json` copies
+  stay byte-identical.
 
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
