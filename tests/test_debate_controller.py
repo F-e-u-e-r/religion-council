@@ -62,8 +62,11 @@ class DebateControllerTest(unittest.TestCase):
         self.panelists_file = self.temp_path / "panelists.json"
         self.panelists_file.write_text(json.dumps(panelists), encoding="utf-8")
         fake = ROOT / "tests" / "fake_codex_mcp.py"
+        # The tempdir is this run's project root, so the panelists fixture written under it
+        # stays inside the path fence (_assert_within_project_root); the fake codex is passed
+        # by absolute path, so it is unaffected by the project_root choice.
         self.controller = DebateController(
-            project_root=ROOT,
+            project_root=self.temp_path,
             state_dir=self.temp_path / "runs",
             codex_command="{} {}".format(sys.executable, fake),
         )
@@ -71,6 +74,32 @@ class DebateControllerTest(unittest.TestCase):
     def tearDown(self):
         self.controller.close()
         self.temp.cleanup()
+
+    def test_panelists_file_absolute_outside_root_is_rejected(self):
+        # panelists_file is a moderator-supplied string (possibly prompt-injection-led): an
+        # absolute path outside project_root must not be read.
+        with self.assertRaises(ControllerError):
+            self.controller.load_panelists("/etc/passwd")
+
+    def test_panelists_file_parent_traversal_is_rejected(self):
+        with self.assertRaises(ControllerError):
+            self.controller.load_panelists("../../../../etc/passwd")
+
+    def test_reference_outside_project_root_is_rejected(self):
+        panelists = {"panelists": [{"id": "p1", "role": "r", "reference": "/etc/passwd"}]}
+        pf = self.temp_path / "ref-escape.json"
+        pf.write_text(json.dumps(panelists), encoding="utf-8")
+        with self.assertRaises(ControllerError):
+            self.controller.load_panelists(str(pf))
+
+    def test_reference_inside_project_root_is_read(self):
+        # The fence must not break a legitimate reference that lives under project_root.
+        (self.temp_path / "ref.md").write_text("REF-BODY", encoding="utf-8")
+        panelists = {"panelists": [{"id": "p1", "role": "r", "reference": "ref.md"}]}
+        pf = self.temp_path / "ref-ok.json"
+        pf.write_text(json.dumps(panelists), encoding="utf-8")
+        normalized, _ = self.controller.load_panelists(str(pf))
+        self.assertEqual(normalized[0]["reference_text"], "REF-BODY")
 
     def test_thirty_persistent_panelists_across_two_rounds(self):
         opening = self.controller.start(
