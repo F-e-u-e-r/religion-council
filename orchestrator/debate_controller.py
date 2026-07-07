@@ -921,6 +921,17 @@ Return:
     ):
         # Safety-routing boundary (S1) runs FIRST: a request already classified crisis-first
         # cannot enter the pipeline at all — no run dir, no snapshots, no panelist jobs.
+        # Defense in depth for direct (non-MCP) callers: reject any crisis_classification other than
+        # the enum value, so a typo'd safety label is never silently treated as non-crisis. None is
+        # the non-crisis default — a direct caller cannot distinguish it from an omitted arg, so the
+        # explicit-null case is enforced one layer out, at ControllerMcpServer._dispatch_tool (which
+        # sees key presence), where the untrusted MCP tool surface actually is.
+        if crisis_classification not in (None, CRISIS_FIRST_CLASSIFICATION):
+            raise ControllerError(
+                "crisis_classification must be omitted or {!r}, got {!r}".format(
+                    CRISIS_FIRST_CLASSIFICATION, crisis_classification
+                )
+            )
         guard_crisis_routing(crisis_classification)
         if not isinstance(question, str) or not question.strip():
             raise ControllerError("question is required.")
@@ -1344,7 +1355,11 @@ def tool_definitions():
                 "boundary_decision). profile=\"strict\" turns on the whole structured -> verify "
                 "-> fail-closed graph and fails at config time if a component is missing "
                 "(requires an evidence_envelope); it never degrades to prose. Default behavior is "
-                "unchanged prose."
+                "unchanged prose. Optional crisis_classification is a caller-supplied safety "
+                "ROUTING label (per policies/safety-routing.v1.json), NOT crisis detection: the "
+                "only accepted value \"crisis-first\" makes this call refuse to start the council "
+                "before any run work, so the moderator must classify each request per policy and "
+                "never route a crisis-first request into a debate."
             ),
             "inputSchema": {
                 "type": "object",
@@ -1360,6 +1375,12 @@ def tool_definitions():
                     "fail_closed": {"type": "boolean"},
                     "profile": {"type": "string", "enum": ["strict"]},
                     "cwd": {"type": "string"},
+                    # Safety ROUTING label (not detection): start() refuses a crisis-first request
+                    # before any run work AND rejects any other non-null value, so a non-validating
+                    # MCP caller cannot fail open on a typo'd safety label. Optional; single-sourced
+                    # to CRISIS_FIRST_CLASSIFICATION. See policies/safety-routing.v1.json and
+                    # docs/adr/0009-expose-crisis-classification-on-tool-surface.md.
+                    "crisis_classification": {"type": "string", "enum": [CRISIS_FIRST_CLASSIFICATION]},
                     **common_controls,
                 },
                 "required": ["question", "panelists_file"],
@@ -1472,6 +1493,21 @@ class ControllerMcpServer:
     def _dispatch_tool(self, name, arguments):
         arguments = arguments or {}
         if name == "debate_start":
+            # The inputSchema is advisory here — raw arguments are splatted into start() — so
+            # enforce the single-value crisis_classification enum at this boundary, keyed on
+            # PRESENCE: a truly omitted field is the non-crisis default, but if the caller supplies
+            # the key at all its value must be exactly the enum member. An explicitly-supplied null,
+            # a typo, or a non-string is rejected (never silently treated as omitted), so a
+            # non-validating MCP host cannot bypass the advertised enum or fail open on a bad label.
+            if (
+                "crisis_classification" in arguments
+                and arguments["crisis_classification"] != CRISIS_FIRST_CLASSIFICATION
+            ):
+                raise ControllerError(
+                    "crisis_classification must be omitted or {!r}, got {!r}".format(
+                        CRISIS_FIRST_CLASSIFICATION, arguments["crisis_classification"]
+                    )
+                )
             return self.controller.start(**arguments)
         if name == "debate_reply":
             return self.controller.reply(**arguments)

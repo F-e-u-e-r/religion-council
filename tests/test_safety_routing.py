@@ -124,5 +124,100 @@ class RoutingGuardTest(unittest.TestCase):
                 controller.close()
 
 
+class McpSurfaceCrisisRoutingTest(unittest.TestCase):
+    """The crisis machine-gate must be live on the real MCP tool path, not only via a direct
+    Python start(). These drive ControllerMcpServer.handle(tools/call) end to end (R1)."""
+
+    def _handle_debate_start(self, arguments):
+        with tempfile.TemporaryDirectory() as tmp:
+            controller = dc.DebateController(project_root=ROOT, state_dir=Path(tmp) / "runs")
+            server = dc.ControllerMcpServer(controller)
+            try:
+                return server.handle(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 1,
+                        "method": "tools/call",
+                        "params": {"name": "debate_start", "arguments": arguments},
+                    }
+                )
+            finally:
+                controller.close()
+
+    def test_schema_declares_crisis_classification_optional_enum(self):
+        start = next(t for t in dc.tool_definitions() if t["name"] == "debate_start")
+        schema = start["inputSchema"]
+        self.assertEqual(
+            schema["properties"].get("crisis_classification"),
+            {"type": "string", "enum": ["crisis-first"]},
+        )
+        self.assertFalse(schema["additionalProperties"])  # unknown keys still rejected
+        self.assertNotIn("crisis_classification", schema["required"])  # stays optional
+
+    def test_crisis_first_is_refused_on_the_mcp_path_before_any_work(self):
+        # A crisis-first debate_start must be refused via the real dispatch path, before any
+        # panelist / run-dir / snapshot work — proving the guarantee is machine-enforced on the
+        # tool surface, not only in a direct Python call. The panelists_file deliberately does not
+        # exist: the guard fires first (start() calls guard_crisis_routing before any work), so we
+        # never reach it.
+        response = self._handle_debate_start(
+            {
+                "question": "I am in danger right now",
+                "panelists_file": str(ROOT / "does-not-exist.json"),
+                "crisis_classification": "crisis-first",
+            }
+        )
+        result = response["result"]
+        self.assertTrue(result.get("isError"))
+        self.assertIn("crisis-first", result["content"][0]["text"])
+        self.assertIn("must not enter the council pipeline", result["content"][0]["text"])
+
+    def test_absent_crisis_classification_is_not_auto_refused(self):
+        # No detection: a normal debate_start is not auto-classified. It passes the guard and here
+        # fails later on the missing panelists file, so the error is NOT the crisis refusal.
+        response = self._handle_debate_start(
+            {
+                "question": "What is a good life?",
+                "panelists_file": str(ROOT / "does-not-exist.json"),
+            }
+        )
+        result = response["result"]
+        self.assertTrue(result.get("isError"))  # fails, but for a different reason
+        self.assertNotIn("must not enter the council pipeline", result["content"][0]["text"])
+
+    def test_unknown_crisis_classification_is_rejected_not_failed_open(self):
+        # A non-validating MCP caller could send a typo'd safety label; the inputSchema enum is only
+        # advisory on the host. start() enforces it server-side, so an unrecognized value is rejected
+        # outright (fail-safe) — it must NOT start a run as if it were a non-crisis request.
+        response = self._handle_debate_start(
+            {
+                "question": "I am in danger right now",
+                "panelists_file": str(ROOT / "does-not-exist.json"),
+                "crisis_classification": "crisis_first",  # underscore typo, not the enum value
+            }
+        )
+        result = response["result"]
+        self.assertTrue(result.get("isError"))
+        self.assertIn("crisis_classification", result["content"][0]["text"])
+        self.assertIsNone(result.get("structuredContent"))  # no successful run payload was produced
+
+    def test_explicit_null_crisis_classification_is_rejected_on_the_mcp_path(self):
+        # A truly OMITTED field is the non-crisis default, but an explicitly-supplied JSON null is
+        # outside the single-value string enum. The server boundary distinguishes the two by key
+        # presence and rejects the present-but-null value — it must NOT be treated as omitted (which
+        # would let a non-validating caller bypass the advertised enum) and must NOT start a run.
+        response = self._handle_debate_start(
+            {
+                "question": "I am in danger right now",
+                "panelists_file": str(ROOT / "does-not-exist.json"),
+                "crisis_classification": None,  # key present, JSON null — not a valid enum member
+            }
+        )
+        result = response["result"]
+        self.assertTrue(result.get("isError"))
+        self.assertIn("crisis_classification", result["content"][0]["text"])
+        self.assertIsNone(result.get("structuredContent"))  # no successful run payload was produced
+
+
 if __name__ == "__main__":
     unittest.main()
