@@ -57,8 +57,15 @@ def sanitize_contrast_proposition(value):
     if not isinstance(value, str):
         value = "" if value is None else str(value)
     contrast = value.strip()
-    for marker in ("<<<CONTRAST_PROPOSITION>>>", "<<<END_CONTRAST_PROPOSITION>>>"):
-        contrast = contrast.replace(marker, "")
+    # A single replace() is not idempotent: removing an inner marker lets the outer
+    # fragments reassemble a whole marker, so nested sentinels survive. Strip the whole
+    # marker set repeatedly to a fixpoint. Each pass that fires removes at least one
+    # marker (strictly shortening the string), so this terminates; it exits only when
+    # NEITHER marker remains as a substring — including any reassembled across the two.
+    markers = ("<<<CONTRAST_PROPOSITION>>>", "<<<END_CONTRAST_PROPOSITION>>>")
+    while any(marker in contrast for marker in markers):
+        for marker in markers:
+            contrast = contrast.replace(marker, "")
     return contrast[:CONTRAST_MAX_CHARS]
 
 
