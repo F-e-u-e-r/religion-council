@@ -404,11 +404,24 @@ class DebateController:
         state["updated_at"] = utc_now()
         atomic_write_json(self._run_path(state["run_id"]), state)
 
+    def _assert_within_project_root(self, path):
+        """Fence a moderator-supplied path to the project root.
+
+        ``panelists_file`` and a panelist ``reference`` are content-untrusted strings the
+        moderator may build from prompt-injected input, so an absolute path (``/etc/passwd``)
+        or a ``..`` escape must not read outside the repo. Resolve first (normalizing ``..``
+        and symlinks), then require the result to be the root itself or a descendant of it.
+        """
+        resolved = path.resolve()
+        if resolved != self.project_root and self.project_root not in resolved.parents:
+            raise ControllerError("Path escapes project root: {}".format(resolved))
+        return resolved
+
     def _resolve_panelists_file(self, value):
         path = Path(value)
         if not path.is_absolute():
             path = self.project_root / path
-        return path.resolve()
+        return self._assert_within_project_root(path)
 
     def load_panelists(self, panelists_file):
         path = self._resolve_panelists_file(panelists_file)
@@ -446,6 +459,7 @@ class DebateController:
                 reference_path = Path(reference)
                 if not reference_path.is_absolute():
                     reference_path = self.project_root / reference_path
+                reference_path = self._assert_within_project_root(reference_path)
                 if not reference_path.is_file():
                     raise ControllerError(
                         "Panelist {} reference not found: {}".format(
