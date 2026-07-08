@@ -37,7 +37,7 @@
       "The system deterministically detects every crisis from keywords."
     ],
     "classification_nature": "Natural-language safety classification is a distinct, fallible boundary. Normal academic discussion of self-harm and religion is NOT automatically a confirmed live crisis, and crisis detection is not keyword-deterministic. The controller enforces only the routing invariant over a classification supplied to it; it performs no crisis detection of its own. Runtime detection / automatic routing remains out of scope until a later architecture explicitly addresses it (would require its own ADR; see deferrals).",
-    "enforced_by": "orchestrator/debate_controller.py:guard_crisis_routing (DebateController.start refuses a crisis-first classification before any run dir, snapshot, or panelist job)."
+    "enforced_by": "orchestrator/debate_controller.py:guard_crisis_routing (DebateController.start refuses a crisis-first classification before any run dir, snapshot, or panelist job). Exposed on the public debate_start tool surface as the optional single-value enum crisis_classification, enforced at the ControllerMcpServer._dispatch_tool boundary (approved in docs/adr/0009-expose-crisis-classification-on-tool-surface.md)."
   },
   "required_surfaces": [
     {
@@ -72,7 +72,6 @@
     }
   ],
   "deferrals": [
-    "Semantic / keyword crisis detection and any automatic runtime routing decision (would require a dedicated ADR and a separate fallibility review).",
-    "Wiring the crisis_classification input through the MCP debate_start schema (kept out of the public tool surface until routing is approved)."
+    "Semantic / keyword crisis detection and any automatic runtime routing decision (would require a dedicated ADR and a separate fallibility review)."
   ]
 }

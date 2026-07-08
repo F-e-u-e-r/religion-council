@@ -167,7 +167,7 @@ Do not use CSV fan-out for a council that needs persistent panelists across mult
 - Attack propositions, premises, and consequences directly; never attack a participant, believer, or community.
 - Do not soften a real contradiction merely to sound agreeable, and do not exaggerate one into a strawman merely to create drama.
 - The moderator labels its own inferences, generalizations, causal readings, and position reconstructions as **[Interpretation]** — never as a participant's **[Text]**, and never as cross-tradition fact or consensus.
-- For personal crisis, self-harm, abuse, medical, legal, or financial situations, address immediate safety and professional guidance first; use the council only as supplementary reflection.
+- For personal crisis, self-harm, abuse, medical, legal, or financial situations, address immediate safety and professional guidance first; use the council only as supplementary reflection. Classify each request per `policies/safety-routing.v1.json`: if it is crisis-first, do not start the council — respond with the crisis-first contract; a `debate_start` carrying `crisis_classification="crisis-first"` is refused by the controller before any run work (a machine backstop for this fallible human judgment). The guarantee is routing-only: the system never claims to detect every crisis.
 
 ## Shape the Output
 
