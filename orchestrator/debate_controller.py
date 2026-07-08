@@ -45,6 +45,14 @@ CONTRAST_MAX_CHARS = 2000
 # natural-language crisis DETECTION (that remains a distinct, fallible, out-of-scope boundary).
 CRISIS_FIRST_CLASSIFICATION = "crisis-first"
 
+# Canonical weaponization-first classification id (single source: policies/weaponization-routing.v1.json;
+# a conformance test asserts this constant equals the policy's weaponization_first_classification).
+# A SECOND, distinct routing axis (ADR 0010) alongside crisis-first: a request whose evident purpose is
+# to produce targeted attack / harassment / incitement material against a religious/belief group or
+# individual cannot enter the pipeline. Like crisis-first, the controller enforces routing only and
+# performs no weaponization DETECTION (a distinct, fallible, out-of-scope boundary).
+WEAPONIZATION_FIRST_CLASSIFICATION = "weaponization-first"
+
 
 def sanitize_contrast_proposition(value):
     """Normalize a moderator-supplied contrast proposition before it is stored or rendered.
@@ -114,6 +122,14 @@ class CrisisRoutingError(ControllerError):
     """
 
 
+class WeaponizationRoutingError(ControllerError):
+    """Raised when a weaponization-first-classified request is asked to enter the council pipeline.
+
+    The second safety-routing axis (ADR 0010). Subclasses ControllerError so existing
+    ``except ControllerError`` handlers still fail closed; callers that care can catch it specifically.
+    """
+
+
 def guard_crisis_routing(classification):
     """Enforce the safety-routing invariant: a crisis-first request cannot start a council run.
 
@@ -125,6 +141,48 @@ def guard_crisis_routing(classification):
         raise CrisisRoutingError(
             "crisis-first request must not enter the council pipeline; prioritize immediate "
             "safety and local professional/emergency help (policies/safety-routing.v1.json)."
+        )
+
+
+def guard_weaponization_routing(classification):
+    """Enforce the second safety-routing invariant: a weaponization-first request cannot start a run.
+
+    Like :func:`guard_crisis_routing`, this is a boundary check over a caller-supplied classification,
+    NOT weaponization detection. Any value other than the canonical weaponization-first id (including
+    ``None``) proceeds untouched, so critical / academic / comparative religious discussion is never
+    auto-routed as weaponization.
+    """
+    if classification == WEAPONIZATION_FIRST_CLASSIFICATION:
+        raise WeaponizationRoutingError(
+            "weaponization-first request must not enter the council pipeline; the council attacks "
+            "propositions, not people or communities (policies/weaponization-routing.v1.json)."
+        )
+
+
+def _reject_off_enum_arg(arguments, key, allowed_value):
+    """Enforce a single-value safety-classification enum on a debate_start argument, keyed on presence.
+
+    The inputSchema is advisory (ControllerMcpServer._dispatch_tool splats raw arguments into
+    start()), so the enum is enforced here: a truly omitted field is the default, but if the caller
+    supplies ``key`` at all its value must be exactly ``allowed_value`` — an explicit null, a typo, or
+    a non-string is rejected (never silently treated as omitted), so a non-validating MCP host cannot
+    bypass the enum or fail open on a malformed safety label.
+    """
+    if key in arguments and arguments[key] != allowed_value:
+        raise ControllerError(
+            "{} must be omitted or {!r}, got {!r}".format(key, allowed_value, arguments[key])
+        )
+
+
+def _reject_off_enum_value(value, allowed_value, name):
+    """Defense in depth for direct (non-MCP) callers: reject any non-``None``, non-enum value.
+
+    ``None`` is the default; the explicit-null-vs-omitted distinction is only visible at the MCP
+    boundary (:func:`_reject_off_enum_arg`), so at the start() layer ``None`` is treated as omitted.
+    """
+    if value not in (None, allowed_value):
+        raise ControllerError(
+            "{} must be omitted or {!r}, got {!r}".format(name, allowed_value, value)
         )
 
 
@@ -918,21 +976,19 @@ Return:
         retries=1,
         cwd=None,
         crisis_classification=None,
+        weaponization_classification=None,
     ):
-        # Safety-routing boundary (S1) runs FIRST: a request already classified crisis-first
-        # cannot enter the pipeline at all — no run dir, no snapshots, no panelist jobs.
-        # Defense in depth for direct (non-MCP) callers: reject any crisis_classification other than
-        # the enum value, so a typo'd safety label is never silently treated as non-crisis. None is
-        # the non-crisis default — a direct caller cannot distinguish it from an omitted arg, so the
-        # explicit-null case is enforced one layer out, at ControllerMcpServer._dispatch_tool (which
-        # sees key presence), where the untrusted MCP tool surface actually is.
-        if crisis_classification not in (None, CRISIS_FIRST_CLASSIFICATION):
-            raise ControllerError(
-                "crisis_classification must be omitted or {!r}, got {!r}".format(
-                    CRISIS_FIRST_CLASSIFICATION, crisis_classification
-                )
-            )
+        # Safety-routing boundaries (S1) run FIRST: a request already classified crisis-first or
+        # weaponization-first cannot enter the pipeline at all — no run dir, no snapshots, no
+        # panelist jobs. Defense in depth for direct (non-MCP) callers rejects any non-null, non-enum
+        # classification here; the explicit-null case is enforced one layer out at
+        # ControllerMcpServer._dispatch_tool (which sees key presence), where the MCP tool surface is.
+        _reject_off_enum_value(crisis_classification, CRISIS_FIRST_CLASSIFICATION, "crisis_classification")
         guard_crisis_routing(crisis_classification)
+        _reject_off_enum_value(
+            weaponization_classification, WEAPONIZATION_FIRST_CLASSIFICATION, "weaponization_classification"
+        )
+        guard_weaponization_routing(weaponization_classification)
         if not isinstance(question, str) or not question.strip():
             raise ControllerError("question is required.")
         # Strict profile is a configuration invariant (ADR 0004 §8) — it turns on the whole
@@ -1359,7 +1415,12 @@ def tool_definitions():
                 "ROUTING label (per policies/safety-routing.v1.json), NOT crisis detection: the "
                 "only accepted value \"crisis-first\" makes this call refuse to start the council "
                 "before any run work, so the moderator must classify each request per policy and "
-                "never route a crisis-first request into a debate."
+                "never route a crisis-first request into a debate. Optional weaponization_classification "
+                "is the parallel routing label (per policies/weaponization-routing.v1.json): the only "
+                "accepted value \"weaponization-first\" refuses to start the council when the request's "
+                "evident purpose is to produce targeted attack/harassment/incitement material against a "
+                "group or individual (routing only, not detection); ordinary critical, academic, or "
+                "comparative discussion is not blocked."
             ),
             "inputSchema": {
                 "type": "object",
@@ -1381,6 +1442,11 @@ def tool_definitions():
                     # to CRISIS_FIRST_CLASSIFICATION. See policies/safety-routing.v1.json and
                     # docs/adr/0009-expose-crisis-classification-on-tool-surface.md.
                     "crisis_classification": {"type": "string", "enum": [CRISIS_FIRST_CLASSIFICATION]},
+                    # Parallel safety ROUTING label (not detection) for the weaponization axis; same
+                    # enforcement as crisis_classification. Optional; single-sourced to
+                    # WEAPONIZATION_FIRST_CLASSIFICATION. See policies/weaponization-routing.v1.json and
+                    # docs/adr/0010-weaponization-first-safety-routing.md.
+                    "weaponization_classification": {"type": "string", "enum": [WEAPONIZATION_FIRST_CLASSIFICATION]},
                     **common_controls,
                 },
                 "required": ["question", "panelists_file"],
@@ -1493,21 +1559,14 @@ class ControllerMcpServer:
     def _dispatch_tool(self, name, arguments):
         arguments = arguments or {}
         if name == "debate_start":
-            # The inputSchema is advisory here — raw arguments are splatted into start() — so
-            # enforce the single-value crisis_classification enum at this boundary, keyed on
-            # PRESENCE: a truly omitted field is the non-crisis default, but if the caller supplies
-            # the key at all its value must be exactly the enum member. An explicitly-supplied null,
-            # a typo, or a non-string is rejected (never silently treated as omitted), so a
-            # non-validating MCP host cannot bypass the advertised enum or fail open on a bad label.
-            if (
-                "crisis_classification" in arguments
-                and arguments["crisis_classification"] != CRISIS_FIRST_CLASSIFICATION
-            ):
-                raise ControllerError(
-                    "crisis_classification must be omitted or {!r}, got {!r}".format(
-                        CRISIS_FIRST_CLASSIFICATION, arguments["crisis_classification"]
-                    )
-                )
+            # The inputSchema is advisory here — raw arguments are splatted into start() — so enforce
+            # the single-value safety-classification enums at this boundary, keyed on presence (see
+            # _reject_off_enum_arg), so a non-validating MCP host cannot bypass them or fail open on a
+            # malformed safety label.
+            _reject_off_enum_arg(arguments, "crisis_classification", CRISIS_FIRST_CLASSIFICATION)
+            _reject_off_enum_arg(
+                arguments, "weaponization_classification", WEAPONIZATION_FIRST_CLASSIFICATION
+            )
             return self.controller.start(**arguments)
         if name == "debate_reply":
             return self.controller.reply(**arguments)
