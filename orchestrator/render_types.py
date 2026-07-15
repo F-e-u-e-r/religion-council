@@ -35,6 +35,10 @@ TRACE_REPRESENTATION_MISMATCH = "trace-representation-mismatch"
 TRACE_MARKER_MISSING = "trace-marker-missing"
 TRACE_RIGHTS_BLOCKED = "trace-rights-blocked"
 TRACE_NOT_FROM_BUILDER = "trace-not-from-builder"
+# A seed the curator flagged interpretation_only (a cross-locus thematic cue / paraphrase, not a
+# source-bound quotation) can never yield a Surface-A authority unit; an admitted [Text] citing it
+# is a bypass, so finalization fails atomically (ADR 0004 §5).
+TRACE_INTERPRETATION_ONLY = "trace-interpretation-only"
 RENDERER_BYPASS_REASONS = frozenset(
     {
         TRACE_UNKNOWN_CLAIM,
@@ -45,6 +49,7 @@ RENDERER_BYPASS_REASONS = frozenset(
         TRACE_MARKER_MISSING,
         TRACE_RIGHTS_BLOCKED,
         TRACE_NOT_FROM_BUILDER,
+        TRACE_INTERPRETATION_ONLY,
     }
 )
 

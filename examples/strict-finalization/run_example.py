@@ -71,7 +71,9 @@ def main():
         temporary_path = Path(temporary)
         panelists_file = temporary_path / "panelists.json"
         panelists_file.write_text(json.dumps(panelists), encoding="utf-8")
-        controller = DebateController(project_root=ROOT, state_dir=temporary_path / "runs")
+        # The tempdir is this run's project root, so the panelists fixture written under it
+        # stays inside the path fence (_assert_within_project_root).
+        controller = DebateController(project_root=temporary_path, state_dir=temporary_path / "runs")
         controller._client = OfflineCodexFixture()
         try:
             # Public MCP API: debate_start(profile="strict", evidence_envelope=...).

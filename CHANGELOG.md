@@ -42,7 +42,39 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   Claude↔GPT κ = 0.8998 vs model↔human κ ≈ 0.39–0.44 is correlated-model agreement, not independent
   corroboration, so the model-panel κ is **not** accepted as gate evidence and the BM25 default flip
   stays gated on a human blind judge. Metadata only: no ranking/metric change.
-- **ADR 0008 Phase 2 — Islam `corpus_family` (Qur'an).** Groups the five 馬堅《古蘭經》(Qur'an)
+- **Interpretation-only classification for the《古蘭經》thematic cue (follow-up to the ADR 0008
+  Phase 1 backfill — Islam).** The sixth《古蘭經》record — a **cross-locus thematic paraphrase** (`多處(如 2:25、103
+  章)`; 信道而行善者必得回報之意), not a 馬堅 verbatim excerpt — is now curated `interpretation_only:
+  true` via the A1 `presentation.json` sidecar. A new **carried-not-trusted** `interpretation_only`
+  flag (whitelisted + type-checked only in the portable retriever) is threaded through the evidence
+  seed → catalog to the renderer, where the finalizer **refuses to mint a Surface-A `[Text]` authority
+  unit** from such a seed (new `trace-interpretation-only` bypass reason; fail-closed, ADR 0004 §5) —
+  so the cue routes to Surface B `[Interpretation]` and can **never** be presented as an authoritative
+  Qur'an quotation. Deliberately **not** `published-translation` (no exact published wording/edition
+  supplied) and **not** `generated-rendering` (it is not a rendering of specific source verses); no
+  new evidence record, no `representation_kind`, no edition-backed assurance, no BM25 default flip. The
+  **reference corpus file is left untouched on purpose**: `occurrence_id` is minted from
+  `source_file+source_line` (ADR 0005) and `source_line` is a ranking tie-breaker, so editing the
+  bullet would shift occurrence-ids / ranking — the classification therefore lives entirely in the
+  sidecar + code, and retrieval ranking / occurrence-identity are unchanged (the record stays
+  retrievable). Splitting it into concrete `2:25` / `Sūrah 103` evidence records (with exact text +
+  provenance + rights) is deferred (option 2). Both `presentation.json` copies stay byte-identical.
+- **ADR 0008 Phase 1 backfill — Hinduism canon-scope metadata.** Adds conservative `canon_scope` +
+  `corpus_family` to the three existing Hinduism generated-rendering records: `廣林奧義書 1.4.10` →
+  `sruti` / `upanishads`; `薄伽梵歌 2:48` & `4:7` → `smriti` / `bhagavad_gita`. No new records, no
+  textual-witness / edition claim; the existing `generated-rendering` / `meaning-rendering` /
+  provenance / rights notes are untouched. Metadata only — `representation_kind` / `rights` were
+  already present, so **no report metadata count changes and no report regeneration**; rankings and
+  metrics are unchanged. Both `presentation.json` copies stay byte-identical.
+- **ADR 0008 Phase 1 backfill — Christianity translation/canon metadata.** Discloses the two 和合本
+  (Chinese Union Version, 1919) records (`約翰福音 1:1`, `希伯來書 11:1`) as a Protestant **published
+  translation**: `representation_kind: published-translation`, `rendering_mode: direct-translation`,
+  `canon_scope: protestant`, `corpus_family: bible`. Honestly marked as a translation of the
+  Greek/Hebrew originals — never `original-text`, no `textual_witness`, no edition-backed assurance;
+  the existing 和合本 provenance + rights are kept. Metadata only: the reports move only the
+  `representation_metadata_records` count (`約翰福音 1:1` gains it); rankings/metrics unchanged. Both
+  `presentation.json` copies stay byte-identical.
+- **ADR 0008 Phase 1 backfill — Islam `corpus_family` (Qur'an).** Groups the five 馬堅《古蘭經》(Qur'an)
   records — `51:56`, `112:1-4(忠誠章)`, `2:156`, `1:1(開端章)`, `2:256` — under
   `corpus_family: quran`, the **only** field added. They already disclosed
   `representation_kind: published-translation` + `rendering_mode: meaning-rendering`; per ADR 0008
@@ -52,10 +84,11 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   edition-backed assurance; the existing 馬堅 provenance (`source_language: ar`) + rights are
   untouched. Metadata only: `corpus_family` is not a counted contract field and these records already
   carried `representation_kind`, so the reproducible report view is **unchanged**
-  (`representation_metadata_records` stays 12) — reports are **not** regenerated. The 6th《古蘭經》
-  entry (a thematic 釋義 at `多處(如 2:25、103 章)`, with no sidecar disclosure) is intentionally
-  left untagged pending its own representation/provenance decision. Both `presentation.json` copies
-  stay byte-identical.
+  (`representation_metadata_records` stays 12 lexical / 13 bm25, as set by the Christianity
+  backfill) — reports are **not** regenerated. The 6th《古蘭經》entry (the cross-locus thematic 釋義
+  at `多處(如 2:25、103 章)`) is deliberately **not** given a `corpus_family` here: it is the
+  `interpretation_only` cue (see the entry above), not a quotable 馬堅 excerpt, and it stays free of
+  report-counted metadata. Both `presentation.json` copies stay byte-identical.
 
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to

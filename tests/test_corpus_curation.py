@@ -156,12 +156,102 @@ class CorpusCurationTest(unittest.TestCase):
         self.assertIn("wang_bi", corpus_metadata_enums.TEXTUAL_WITNESSES)
         self.assertNotIn("edition-backed", corpus_metadata_enums.WITNESS_KINDS)
 
+    def test_adr0008_islam_interpretation_only_thematic_cue(self):
+        # The cross-locus《古蘭經》thematic paraphrase (locator 多處 — 信道而行善者必得回報之意) is a
+        # thematic CUE, not a verbatim excerpt: it carries interpretation_only=True so the renderer can
+        # never mint it as a Surface-A [Text] quote (ADR 0004). It is NOT a 馬堅 published translation —
+        # no representation_kind / textual_witness / canon_scope, and no new evidence record was added.
+        index = {(r["work"], r["locator"]): r for r in self.by_tradition["islam"]}
+        cue = index[("古蘭經", "多處(如 2:25、103 章)")]
+        self.assertIs(cue.get("interpretation_only"), True)
+        self.assertNotIn("representation_kind", cue)
+        self.assertNotIn("textual_witness", cue)
+        self.assertNotIn("canon_scope", cue)
+        # A thematic cue is not a quotable excerpt: it carries NO report-counted metadata (no
+        # representation_kind, no rights), so the retrieval reports stay byte-reproducible.
+        self.assertNotIn("rights", cue)
+        self.assertNotIn("provenance", cue)
+        # The concrete 馬堅 published translations stay quotable — never mislabeled interpretation-only.
+        for key in (("古蘭經", "51:56"), ("古蘭經", "2:256"), ("古蘭經", "1:1(開端章)")):
+            self.assertIsNone(index[key].get("interpretation_only"), key)
+            self.assertEqual(index[key]["representation_kind"], "published-translation", key)
+
+    def test_adr0008_hinduism_canon_scope(self):
+        # ADR 0008 Phase 1 backfill (Hinduism): conservative canon-scope + corpus-family only, on the existing
+        # generated-rendering records — no textual-witness / edition claim, no new records. sruti =
+        # revealed (Upaniṣad); smriti = remembered (Gītā). Enum membership comes from the corpus-metadata
+        # policy, never from admissibility.
+        index = {(r["work"], r["locator"]): r for r in self.by_tradition["hinduism"]}
+        expected = {
+            ("廣林奧義書", "1.4.10"): ("sruti", "upanishads"),
+            ("薄伽梵歌", "2:48"): ("smriti", "bhagavad_gita"),
+            ("薄伽梵歌", "4:7"): ("smriti", "bhagavad_gita"),
+        }
+        for key, (canon, family) in expected.items():
+            record = index[key]
+            self.assertEqual(record["canon_scope"], canon, key)
+            self.assertEqual(record["corpus_family"], family, key)
+            self.assertIn(record["canon_scope"], corpus_metadata_enums.CANON_SCOPES, key)
+            self.assertIn(record["corpus_family"], corpus_metadata_enums.CORPUS_FAMILIES, key)
+            # Existing rendering classification is kept; no witness/edition claim is added.
+            self.assertEqual(record["representation_kind"], "generated-rendering", key)
+            self.assertEqual(record["rendering_mode"], "meaning-rendering", key)
+            self.assertNotIn("textual_witness", record)
+            self.assertNotIn("witness_kind", record)
+            # no sidecar source-edition override for a rendering — the base placeholder stays.
+            self.assertEqual(record["version"], "curated-reference-v0.1", key)
+            self.assertNotIn("span_assurance_tier", record)
+
+    def test_raw_sidecars_never_carry_span_assurance_tier(self):
+        # span_assurance_tier is deliberately absent from the portable retriever's
+        # PRESENTATION_FIELD_TYPES allowlist, so a smuggled sidecar claim would be silently dropped
+        # from parsed records — which also makes the parsed-record assertNotIn checks above vacuous
+        # for THIS field (they still bind for allowlisted fields like textual_witness/canon_scope).
+        # Pin both layers: the allowlist stays closed to the field, and the raw sidecar files stay
+        # clean, so the tier can only ever be minted by the B2 verifier, never by curation.
+        self.assertNotIn("span_assurance_tier", self.retriever.PRESENTATION_FIELD_TYPES)
+        for base in (PORTABLE_DIR, CLAUDE_DIR):
+            raw = json.loads(
+                (base / "references" / "presentation.json").read_text(encoding="utf-8")
+            )
+            for tradition, entries in raw.items():
+                if not isinstance(entries, list):
+                    continue  # the top-level "_note" string
+                for entry in entries:
+                    if isinstance(entry, dict):
+                        self.assertNotIn(
+                            "span_assurance_tier",
+                            entry,
+                            (tradition, entry.get("work"), entry.get("locator")),
+                        )
+
+    def test_adr0008_christianity_canon_scope(self):
+        # ADR 0008 Phase 1 backfill (Christianity): the 和合本 (Chinese Union Version) records are
+        # disclosed as a Protestant *published translation* of the Greek/Hebrew originals —
+        # representation + canon, no original-text or edition-backed claim, no new records.
+        # canon_scope is the edition's canon (和合本 = Protestant), not a claim that the book is
+        # Protestant-only.
+        index = {(r["work"], r["locator"]): r for r in self.by_tradition["christianity"]}
+        for key in (("約翰福音", "1:1"), ("希伯來書", "11:1")):
+            record = index[key]
+            self.assertEqual(record["representation_kind"], "published-translation", key)
+            self.assertEqual(record["rendering_mode"], "direct-translation", key)
+            self.assertEqual(record["canon_scope"], "protestant", key)
+            self.assertEqual(record["corpus_family"], "bible", key)
+            self.assertIn(record["canon_scope"], corpus_metadata_enums.CANON_SCOPES, key)
+            self.assertIn(record["corpus_family"], corpus_metadata_enums.CORPUS_FAMILIES, key)
+            # Honest wording: a translation, never the original-language text, never edition-backed.
+            self.assertNotEqual(record["representation_kind"], "original-text")
+            self.assertNotIn("textual_witness", record)
+            self.assertNotIn("span_assurance_tier", record)
+            self.assertIn("和合本", record["provenance"].get("translator", ""), key)
+
     def test_adr0008_islam_corpus_family(self):
-        # Phase 2 (Islam): the five 馬堅《古蘭經》(Qur'an) records are grouped by corpus_family=quran —
-        # the only field added. The Qur'an stays a meaning-rendering *published translation*, never a
-        # textual "version" (ADR 0008 §7-A). Deliberately NO canon_scope: the Qur'anic text is agreed
-        # across Sunni/Shia; the sectarian split is the ḥadīth layer, deferred. No original-text /
-        # textual_witness / edition-backed claim, no new records.
+        # ADR 0008 Phase 1 backfill (Islam): the five 馬堅《古蘭經》(Qur'an) records are grouped by
+        # corpus_family=quran — the only field added. The Qur'an stays a meaning-rendering *published
+        # translation*, never a textual "version" (ADR 0008 §7-A). Deliberately NO canon_scope: the
+        # Qur'anic text is agreed across Sunni/Shia; the sectarian split is the ḥadīth layer, deferred.
+        # No original-text / textual_witness / edition-backed claim, no new records.
         index = {(r["work"], r["locator"]): r for r in self.by_tradition["islam"]}
         quran_keys = (
             ("古蘭經", "51:56"),
@@ -183,13 +273,15 @@ class CorpusCurationTest(unittest.TestCase):
             self.assertNotIn("canon_scope", record, key)
             self.assertNotIn("span_assurance_tier", record, key)
             self.assertIn("馬堅", record["provenance"].get("translator", ""), key)
-        # The remaining《古蘭經》record is a thematic 釋義 (no 馬堅 translation, no sidecar disclosure);
-        # it is deliberately left untagged by this metadata pass — not silently tagged as a witness.
+        # The remaining《古蘭經》record is the interpretation_only thematic cue (see the test above) —
+        # not a 馬堅 excerpt. This corpus_family pass deliberately leaves it untagged: no corpus_family,
+        # no representation_kind, so it stays free of report-counted metadata.
         untagged = [
             r for r in self.by_tradition["islam"]
             if r["work"] == "古蘭經" and (r["work"], r["locator"]) not in set(quran_keys)
         ]
         self.assertEqual(len(untagged), 1)
+        self.assertIs(untagged[0].get("interpretation_only"), True)
         self.assertNotIn("corpus_family", untagged[0])
         self.assertNotIn("representation_kind", untagged[0])
 
