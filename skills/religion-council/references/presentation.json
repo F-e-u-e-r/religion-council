@@ -6,6 +6,7 @@
       "locator": "51:56",
       "representation_kind": "published-translation",
       "rendering_mode": "meaning-rendering",
+      "corpus_family": "quran",
       "provenance": {
         "translator": "馬堅",
         "source_language": "ar",
@@ -18,6 +19,7 @@
       "locator": "112:1-4(忠誠章)",
       "representation_kind": "published-translation",
       "rendering_mode": "meaning-rendering",
+      "corpus_family": "quran",
       "provenance": {
         "translator": "馬堅",
         "source_language": "ar",
@@ -30,6 +32,7 @@
       "locator": "2:156",
       "representation_kind": "published-translation",
       "rendering_mode": "meaning-rendering",
+      "corpus_family": "quran",
       "provenance": {
         "translator": "馬堅",
         "source_language": "ar",
@@ -42,6 +45,7 @@
       "locator": "1:1(開端章)",
       "representation_kind": "published-translation",
       "rendering_mode": "meaning-rendering",
+      "corpus_family": "quran",
       "provenance": {
         "translator": "馬堅",
         "source_language": "ar",
@@ -54,6 +58,7 @@
       "locator": "2:256",
       "representation_kind": "published-translation",
       "rendering_mode": "meaning-rendering",
+      "corpus_family": "quran",
       "provenance": {
         "translator": "馬堅",
         "source_language": "ar",
