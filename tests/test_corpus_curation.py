@@ -177,7 +177,7 @@ class CorpusCurationTest(unittest.TestCase):
             self.assertEqual(index[key]["representation_kind"], "published-translation", key)
 
     def test_adr0008_hinduism_canon_scope(self):
-        # Phase 2 (Hinduism): conservative canon-scope + corpus-family only, on the existing
+        # ADR 0008 Phase 1 backfill (Hinduism): conservative canon-scope + corpus-family only, on the existing
         # generated-rendering records — no textual-witness / edition claim, no new records. sruti =
         # revealed (Upaniṣad); smriti = remembered (Gītā). Enum membership comes from the corpus-metadata
         # policy, never from admissibility.

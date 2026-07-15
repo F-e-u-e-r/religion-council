@@ -42,8 +42,8 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   Claude↔GPT κ = 0.8998 vs model↔human κ ≈ 0.39–0.44 is correlated-model agreement, not independent
   corroboration, so the model-panel κ is **not** accepted as gate evidence and the BM25 default flip
   stays gated on a human blind judge. Metadata only: no ranking/metric change.
-- **Interpretation-only classification for the《古蘭經》thematic cue (follow-up to ADR 0008 Phase 2 —
-  Islam).** The sixth《古蘭經》record — a **cross-locus thematic paraphrase** (`多處(如 2:25、103
+- **Interpretation-only classification for the《古蘭經》thematic cue (follow-up to the ADR 0008
+  Phase 1 backfill — Islam).** The sixth《古蘭經》record — a **cross-locus thematic paraphrase** (`多處(如 2:25、103
   章)`; 信道而行善者必得回報之意), not a 馬堅 verbatim excerpt — is now curated `interpretation_only:
   true` via the A1 `presentation.json` sidecar. A new **carried-not-trusted** `interpretation_only`
   flag (whitelisted + type-checked only in the portable retriever) is threaded through the evidence
@@ -59,7 +59,7 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   sidecar + code, and retrieval ranking / occurrence-identity are unchanged (the record stays
   retrievable). Splitting it into concrete `2:25` / `Sūrah 103` evidence records (with exact text +
   provenance + rights) is deferred (option 2). Both `presentation.json` copies stay byte-identical.
-- **ADR 0008 Phase 2 — Hinduism canon-scope metadata.** Adds conservative `canon_scope` +
+- **ADR 0008 Phase 1 backfill — Hinduism canon-scope metadata.** Adds conservative `canon_scope` +
   `corpus_family` to the three existing Hinduism generated-rendering records: `廣林奧義書 1.4.10` →
   `sruti` / `upanishads`; `薄伽梵歌 2:48` & `4:7` → `smriti` / `bhagavad_gita`. No new records, no
   textual-witness / edition claim; the existing `generated-rendering` / `meaning-rendering` /
