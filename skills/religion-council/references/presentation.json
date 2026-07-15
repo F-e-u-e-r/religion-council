@@ -74,6 +74,8 @@
       "locator": "1.4.10",
       "representation_kind": "generated-rendering",
       "rendering_mode": "meaning-rendering",
+      "canon_scope": "sruti",
+      "corpus_family": "upanishads",
       "provenance": {
         "source_language": "sa",
         "basis": "public-domain-original (ancient Sanskrit)",
@@ -87,6 +89,8 @@
       "locator": "2:48",
       "representation_kind": "generated-rendering",
       "rendering_mode": "meaning-rendering",
+      "canon_scope": "smriti",
+      "corpus_family": "bhagavad_gita",
       "provenance": {
         "source_language": "sa",
         "basis": "public-domain-original (ancient Sanskrit)",
@@ -100,6 +104,8 @@
       "locator": "4:7",
       "representation_kind": "generated-rendering",
       "rendering_mode": "meaning-rendering",
+      "canon_scope": "smriti",
+      "corpus_family": "bhagavad_gita",
       "provenance": {
         "source_language": "sa",
         "basis": "public-domain-original (ancient Sanskrit)",
