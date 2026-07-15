@@ -20,6 +20,7 @@ from render_types import (  # noqa: F401  (re-exported reasons used by callers/t
     RENDER_AS_QUOTATION,
     RENDER_AS_SOURCE_BOUND_SUMMARY,
     TRACE_CLAIM_NOT_ADMITTED,
+    TRACE_INTERPRETATION_ONLY,
     TRACE_MARKER_MISSING,
     TRACE_NOT_FROM_BUILDER,
     TRACE_RENDER_AS_DISALLOWED,
@@ -159,6 +160,11 @@ def _build_authority_unit(claim, catalog, read_snapshot):
     if edge.get("verification_state") != "runtime-validated":
         return None, TRACE_CLAIM_NOT_ADMITTED
     seed = _seed_for(edge, catalog)
+    if seed is not None and getattr(seed, "interpretation_only", False):
+        # Curator-flagged interpretation-only (a cross-locus thematic cue / paraphrase, not a
+        # source-bound quotation): it can never mint Surface-A authority. An admitted [Text] citing
+        # it is a bypass — refuse here so finalization fails atomically (ADR 0004 §5).
+        return None, TRACE_INTERPRETATION_ONLY
     if not _rights_ok(seed):
         return None, TRACE_RIGHTS_BLOCKED
     representation_kind, marker, reason = _resolve_representation(claim, seed)

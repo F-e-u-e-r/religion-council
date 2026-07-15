@@ -210,6 +210,57 @@ class RepresentationRuleTest(unittest.TestCase):
         self.assertEqual(ctx.exception.reason, "trace-rights-blocked")
 
 
+class InterpretationOnlySeedTest(unittest.TestCase):
+    """A curator ``interpretation_only`` seed (a cross-locus thematic cue / paraphrase, not a
+    source-bound quotation) can never mint a Surface-A [Text] unit — the structural guarantee for the
+    《古蘭經》多處 record. The guard is on the seed, so it holds for a quotation or a summary edge."""
+
+    def _catalog(self, artifact_id, *, interpretation_only):
+        seed = cb.CatalogSeed(
+            seed_id="S1", occurrence_id="occ", artifact_id=artifact_id,
+            source_assurance="artifact-backed", artifact_kind="reference-summary",
+            work="古蘭經", locator="多處(如 2:25、103 章)",
+            interpretation_only=interpretation_only,
+        )
+        return cb.EvidenceCatalog([seed])
+
+    def _summary_text_claim(self, artifact_id):
+        # a source-bound-summary [Text] claim (a paraphrase; B2 runtime-validates it without a span)
+        return make_result(
+            artifact_id=artifact_id, evidence_type="source-bound-summary",
+            claim_text="信道而行善者必得回報",
+        )
+
+    def test_text_claim_citing_interpretation_only_seed_fails_atomically(self):
+        # An admitted [Text] citing the cue is a bypass -> finalization fails atomically, no Surface A.
+        store = EvidenceStore(tempfile.mkdtemp())
+        artifact_id, _ = store.put_snapshot("信道而行善者必得回報之意")
+        catalog = self._catalog(artifact_id, interpretation_only=True)
+        with self.assertRaises(FinalizationError) as ctx:
+            rf.finalize(self._summary_text_claim(artifact_id), catalog, store.read_snapshot)
+        self.assertEqual(ctx.exception.reason, "trace-interpretation-only")
+
+    def test_same_cue_as_interpretation_goes_to_surface_b(self):
+        # Cited correctly as [Interpretation], the cue flows to Surface B — no authority, no error.
+        store = EvidenceStore(tempfile.mkdtemp())
+        artifact_id, _ = store.put_snapshot("信道而行善者必得回報之意")
+        catalog = self._catalog(artifact_id, interpretation_only=True)
+        result = make_result(claim_type="interpretation", verification_state="unverified")
+        finalized = rf.finalize(result, catalog, store.read_snapshot)
+        self.assertEqual(finalized.answer.authority_units, ())
+        self.assertEqual(len(finalized.answer.interpretation_units), 1)
+        self.assertEqual(finalized.surface_a, "")
+
+    def test_control_unflagged_summary_still_mints_authority(self):
+        # The guard is targeted: the SAME shape WITHOUT the flag still mints a Surface-A summary.
+        store = EvidenceStore(tempfile.mkdtemp())
+        artifact_id, _ = store.put_snapshot("信道而行善者必得回報之意")
+        catalog = self._catalog(artifact_id, interpretation_only=None)
+        finalized = rf.finalize(self._summary_text_claim(artifact_id), catalog, store.read_snapshot)
+        self.assertEqual(len(finalized.answer.authority_units), 1)
+        self.assertEqual(finalized.answer.authority_units[0].render_as, "source-bound-summary")
+
+
 class DenyAndAtomicityTest(unittest.TestCase):
     def test_denied_claim_goes_to_audit_not_surface_a(self):
         store, artifact_id, span, catalog = make_env()

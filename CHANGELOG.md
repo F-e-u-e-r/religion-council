@@ -42,8 +42,32 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   Claude↔GPT κ = 0.8998 vs model↔human κ ≈ 0.39–0.44 is correlated-model agreement, not independent
   corroboration, so the model-panel κ is **not** accepted as gate evidence and the BM25 default flip
   stays gated on a human blind judge. Metadata only: no ranking/metric change.
-- **ADR 0008 Phase 2 — Christianity translation/canon metadata.** Discloses the two 和合本 (Chinese
-  Union Version, 1919) records (`約翰福音 1:1`, `希伯來書 11:1`) as a Protestant **published
+- **Interpretation-only classification for the《古蘭經》thematic cue (follow-up to the ADR 0008
+  Phase 1 backfill — Islam).** The sixth《古蘭經》record — a **cross-locus thematic paraphrase** (`多處(如 2:25、103
+  章)`; 信道而行善者必得回報之意), not a 馬堅 verbatim excerpt — is now curated `interpretation_only:
+  true` via the A1 `presentation.json` sidecar. A new **carried-not-trusted** `interpretation_only`
+  flag (whitelisted + type-checked only in the portable retriever) is threaded through the evidence
+  seed → catalog to the renderer, where the finalizer **refuses to mint a Surface-A `[Text]` authority
+  unit** from such a seed (new `trace-interpretation-only` bypass reason; fail-closed, ADR 0004 §5) —
+  so the cue routes to Surface B `[Interpretation]` and can **never** be presented as an authoritative
+  Qur'an quotation. Deliberately **not** `published-translation` (no exact published wording/edition
+  supplied) and **not** `generated-rendering` (it is not a rendering of specific source verses); no
+  new evidence record, no `representation_kind`, no edition-backed assurance, no BM25 default flip. The
+  **reference corpus file is left untouched on purpose**: `occurrence_id` is minted from
+  `source_file+source_line` (ADR 0005) and `source_line` is a ranking tie-breaker, so editing the
+  bullet would shift occurrence-ids / ranking — the classification therefore lives entirely in the
+  sidecar + code, and retrieval ranking / occurrence-identity are unchanged (the record stays
+  retrievable). Splitting it into concrete `2:25` / `Sūrah 103` evidence records (with exact text +
+  provenance + rights) is deferred (option 2). Both `presentation.json` copies stay byte-identical.
+- **ADR 0008 Phase 1 backfill — Hinduism canon-scope metadata.** Adds conservative `canon_scope` +
+  `corpus_family` to the three existing Hinduism generated-rendering records: `廣林奧義書 1.4.10` →
+  `sruti` / `upanishads`; `薄伽梵歌 2:48` & `4:7` → `smriti` / `bhagavad_gita`. No new records, no
+  textual-witness / edition claim; the existing `generated-rendering` / `meaning-rendering` /
+  provenance / rights notes are untouched. Metadata only — `representation_kind` / `rights` were
+  already present, so **no report metadata count changes and no report regeneration**; rankings and
+  metrics are unchanged. Both `presentation.json` copies stay byte-identical.
+- **ADR 0008 Phase 1 backfill — Christianity translation/canon metadata.** Discloses the two 和合本
+  (Chinese Union Version, 1919) records (`約翰福音 1:1`, `希伯來書 11:1`) as a Protestant **published
   translation**: `representation_kind: published-translation`, `rendering_mode: direct-translation`,
   `canon_scope: protestant`, `corpus_family: bible`. Honestly marked as a translation of the
   Greek/Hebrew originals — never `original-text`, no `textual_witness`, no edition-backed assurance;

@@ -109,6 +109,11 @@ PRESENTATION_FIELD_TYPES = {
     "textual_witness": str,
     "commentarial_lineage": str,
     "corpus_family": str,
+    # ADR 0004 renderer boundary: an interpretation-only classification flag for a cross-locus
+    # thematic cue / paraphrase that is NOT a source-bound quotation (e.g. a《古蘭經》theme cited at
+    # 多處/multiple loci). Carried-not-trusted and type-checked only here; the orchestrator honors it
+    # so the record can never mint a Surface-A [Text] authority unit (routed to Surface B).
+    "interpretation_only": bool,
 }
 PRESENTATION_FIELDS = tuple(PRESENTATION_FIELD_TYPES)
 
