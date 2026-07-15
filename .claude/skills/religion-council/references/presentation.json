@@ -119,6 +119,10 @@
     {
       "work": "約翰福音",
       "locator": "1:1",
+      "representation_kind": "published-translation",
+      "rendering_mode": "direct-translation",
+      "canon_scope": "protestant",
+      "corpus_family": "bible",
       "provenance": {
         "translator": "和合本 (Chinese Union Version)",
         "year": "1919",
@@ -131,6 +135,10 @@
     {
       "work": "希伯來書",
       "locator": "11:1",
+      "representation_kind": "published-translation",
+      "rendering_mode": "direct-translation",
+      "canon_scope": "protestant",
+      "corpus_family": "bible",
       "provenance": {
         "translator": "和合本 (Chinese Union Version)",
         "year": "1919",
