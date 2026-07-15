@@ -202,6 +202,29 @@ class CorpusCurationTest(unittest.TestCase):
             self.assertEqual(record["version"], "curated-reference-v0.1", key)
             self.assertNotIn("span_assurance_tier", record)
 
+    def test_raw_sidecars_never_carry_span_assurance_tier(self):
+        # span_assurance_tier is deliberately absent from the portable retriever's
+        # PRESENTATION_FIELD_TYPES allowlist, so a smuggled sidecar claim would be silently dropped
+        # from parsed records — which also makes the parsed-record assertNotIn checks above vacuous
+        # for THIS field (they still bind for allowlisted fields like textual_witness/canon_scope).
+        # Pin both layers: the allowlist stays closed to the field, and the raw sidecar files stay
+        # clean, so the tier can only ever be minted by the B2 verifier, never by curation.
+        self.assertNotIn("span_assurance_tier", self.retriever.PRESENTATION_FIELD_TYPES)
+        for base in (PORTABLE_DIR, CLAUDE_DIR):
+            raw = json.loads(
+                (base / "references" / "presentation.json").read_text(encoding="utf-8")
+            )
+            for tradition, entries in raw.items():
+                if not isinstance(entries, list):
+                    continue  # the top-level "_note" string
+                for entry in entries:
+                    if isinstance(entry, dict):
+                        self.assertNotIn(
+                            "span_assurance_tier",
+                            entry,
+                            (tradition, entry.get("work"), entry.get("locator")),
+                        )
+
     # ---- span integrity + snapshot reproducibility ----------------------------------------
     def test_snapshot_roundtrip_and_full_span_integrity(self):
         with tempfile.TemporaryDirectory() as tmp:
