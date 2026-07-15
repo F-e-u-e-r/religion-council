@@ -60,6 +60,12 @@
         "note": "Chinese rendering per 馬堅 translation; the Qur'an canon is Arabic. Confirm edition/script before relying on verbatim fidelity."
       },
       "rights": "Short excerpt of a 20th-century published Chinese translation (馬堅). Modern translations are typically in copyright; confirm licensing before redistribution (see DISCLAIMER.md)."
+    },
+    {
+      "_note": "Cross-locus thematic paraphrase (信道而行善者必得回報之意), cited at 多處 (2:25、103 章) — not a 馬堅 verbatim excerpt and not bound to a single locus. interpretation_only routes it to Surface B; it is never admissible as a《古蘭經》[Text] quotation (ADR 0004). No representation_kind/rights: a thematic cue is not a quotable excerpt, so no report-counted metadata changes.",
+      "work": "古蘭經",
+      "locator": "多處(如 2:25、103 章)",
+      "interpretation_only": true
     }
   ],
   "hinduism": [

@@ -75,6 +75,10 @@ class EvidenceSeed:
     declared_rendering_mode: Optional[str] = None
     provenance: Optional[dict] = None
     rights: Optional[str] = None
+    # ADR 0004: a curated interpretation-only flag — a cross-locus thematic cue / paraphrase that is
+    # not a source-bound quotation. Carried-not-trusted; the finalizer refuses to mint a Surface-A
+    # authority unit from a seed carrying it, so the record can never be presented as [Text].
+    interpretation_only: Optional[bool] = None
 
 
 def artifact_kind_of(record):
@@ -244,6 +248,7 @@ def adapt(envelope, store, *, acquisition_origin="bundled", retrieval_path="retr
                 declared_rendering_mode=record.get("rendering_mode"),
                 provenance=record.get("provenance"),
                 rights=record.get("rights"),
+                interpretation_only=record.get("interpretation_only"),
             )
         )
         store.append_origin(

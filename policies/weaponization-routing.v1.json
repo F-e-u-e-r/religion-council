@@ -1,0 +1,61 @@
+{
+  "policy_id": "weaponization-routing",
+  "policy_version": "v1",
+  "status": "instruction-enforced-surfaces + boundary-enforced-routing",
+  "summary": {
+    "en": "Weaponization-first safety routing. Defined once here and required, consistently, across every operational surface. The council examines doctrines and claims at the level of propositions (attack ideas, never people or communities); once a request is classified weaponization-first — its evident purpose being to use the council to produce targeted attack, dehumanization, harassment, or incitement material against a religious or belief group or individual — it must not be run as a council debate. This refuses weaponization of the council, NOT critical, academic, historical, or comparative discussion of religions and their claims.",
+    "zh-Hant": "武器化優先(weaponization-first)安全路由。於此單一來源定義一次,並要求一致地存在於每個操作面。議會在命題層次檢視教義與主張(對事不對人,絕不攻擊人或群體);一旦請求被判定為 weaponization-first——其明顯目的是利用議會產出針對某信仰群體或個人的攻擊、去人性化、騷擾,或煽動仇恨/暴力的材料——即不得當作議會辯論進行。此為拒絕把議會武器化,並非拒絕對宗教及其主張的批判、學術、歷史或比較性討論。"
+  },
+  "weaponization_first_classification": "weaponization-first",
+  "weaponization_first_contract": {
+    "en": [
+      "do not start the religion council",
+      "do not produce material that attacks, dehumanizes, harasses, or incites hatred or violence against a religious or belief group or individual",
+      "offer instead to examine the underlying doctrinal or ethical question at the level of propositions — attack ideas, not people or communities",
+      "this refuses weaponization of the council, not critical, academic, historical, or comparative discussion of religions and their claims"
+    ],
+    "zh-Hant": [
+      "不啟動議會",
+      "不產出針對信仰群體或個人的攻擊、去人性化、騷擾,或煽動仇恨/暴力的材料",
+      "改為在命題層次檢視背後的教義或倫理問題——對事不對人,不攻擊人或群體",
+      "此為拒絕把議會武器化,而非拒絕對宗教及其主張的批判、學術、歷史或比較性討論"
+    ]
+  },
+  "canonical_rule": {
+    "en": "When a request has already been classified as weaponization-first, do not start the council or frame it as a debate; its evident purpose is to produce targeted attack, dehumanization, harassment, or incitement material against a religious or belief group or individual. Offer instead to examine the underlying doctrinal or ethical question at the level of propositions — attacking ideas, never people or communities. This does not refuse critical, academic, historical, or comparative discussion of religions and their claims.",
+    "zh-Hant": "當請求已被判定為 weaponization-first(武器化優先)時,不啟動議會、不把它當作辯論進行;其明顯目的是產出針對某信仰群體或個人的攻擊、去人性化、騷擾,或煽動仇恨/暴力的材料。改為在命題層次檢視背後的教義或倫理問題——對事不對人,絕不攻擊人或群體。此不拒絕對宗教及其主張的批判、學術、歷史或比較性討論。"
+  },
+  "guarantee_boundary": {
+    "machine_guarantees": [
+      "Once a request is classified as weaponization-first, it cannot enter the council pipeline."
+    ],
+    "not_claimed": [
+      "The system deterministically detects every weaponization attempt from keywords."
+    ],
+    "classification_nature": "Natural-language safety classification is a distinct, fallible boundary. Critical, academic, historical, and comparative discussion of religions and their doctrines is NOT weaponization; the boundary targets only a request whose evident purpose is to produce targeting, harassment, or incitement material against a group or individual. The controller enforces only the routing invariant over a classification supplied to it; it performs no weaponization detection of its own. Runtime detection / automatic routing remains out of scope until a later architecture explicitly addresses it (would require its own ADR; see deferrals).",
+    "enforced_by": "orchestrator/debate_controller.py:guard_weaponization_routing (DebateController.start refuses a weaponization-first classification before any run dir, snapshot, or panelist job). Exposed on the public debate_start tool surface as the optional single-value enum weaponization_classification, enforced at the ControllerMcpServer._dispatch_tool boundary (approved in docs/adr/0010-weaponization-first-safety-routing.md)."
+  },
+  "required_surfaces": [
+    {
+      "path": "skills/religion-council/SKILL.md",
+      "role": "portable skill",
+      "locales": ["en"],
+      "must_contain": ["weaponization-first", "attack ideas, not people"]
+    },
+    {
+      "path": ".claude/skills/religion-council/SKILL.md",
+      "role": "Claude project skill",
+      "locales": ["zh-Hant"],
+      "must_contain": ["weaponization-first", "武器化", "對事不對人"]
+    },
+    {
+      "path": ".claude/agents/council-moderator.md",
+      "role": "moderator/controller instructions",
+      "locales": ["zh-Hant"],
+      "must_contain": ["weaponization-first", "武器化", "對事不對人"]
+    }
+  ],
+  "deferrals": [
+    "Semantic / keyword weaponization detection and any automatic runtime routing decision (would require a dedicated ADR and a separate fallibility review)."
+  ]
+}

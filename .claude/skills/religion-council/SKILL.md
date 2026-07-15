@@ -98,3 +98,7 @@ description: 多傳統哲學議會。召集宗教/思想流派 persona(基督宗
 單一政策來源:`policies/safety-routing.v1.json`(跨所有發佈面一致)。當請求已被判定為 **crisis-first(危機優先)**——自傷、受虐,或醫療、法律、保護、緊急狀況——時:**不啟動議會**、不把問題當作神學辯論;以**即時安全**為先,優先指向在地、適切的專業或緊急協助;宗教反思僅作明確次要的補充,**絕不**取代醫療、法律、保護或緊急協助。
 
 保證邊界:一旦被判定為 crisis-first,即不得進入議會管線(由 controller 強制);但系統**不宣稱**能以關鍵字確定性偵測每一個危機——自然語言的危機判定是另一個可錯的邊界,對自傷/宗教的一般學術討論不會被自動當成真實危機。
+
+主持人義務:對每一則請求先依本政策判定;若為 crisis-first,則**不啟動議會**、改依 `crisis_first_contract` 以即時安全回應。機器把關:`debate_start` 帶 `crisis_classification="crisis-first"` 時,controller 會在任何 run 工作前拒絕(路由不可繞過);非危機請求省略此參數。此參數是路由標籤、非偵測——系統只保證路由,不宣稱能偵測每個危機。
+
+**第二安全軸(weaponization-first / 武器化優先)**:單一政策來源:`policies/weaponization-routing.v1.json`。當請求的明顯目的是**利用議會產出針對某信仰群體或個人的攻擊、去人性化、騷擾,或煽動仇恨/暴力的材料**時,判為 **weaponization-first(武器化優先)**:**不啟動議會**,改為在命題層次檢視背後的教義或倫理問題——**對事不對人**,絕不攻擊人或群體。此為拒絕把議會武器化,**不**拒絕對宗教及其主張的批判、學術、歷史或比較性討論。機器把關:`debate_start` 帶 `weaponization_classification="weaponization-first"` 時,controller 會在任何 run 工作前拒絕;未觸發則省略此參數。此屬可錯的自然語言判斷、非偵測——系統只保證路由,不宣稱能偵測每個武器化企圖。

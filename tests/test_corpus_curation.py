@@ -156,6 +156,26 @@ class CorpusCurationTest(unittest.TestCase):
         self.assertIn("wang_bi", corpus_metadata_enums.TEXTUAL_WITNESSES)
         self.assertNotIn("edition-backed", corpus_metadata_enums.WITNESS_KINDS)
 
+    def test_adr0008_islam_interpretation_only_thematic_cue(self):
+        # The cross-locus《古蘭經》thematic paraphrase (locator 多處 — 信道而行善者必得回報之意) is a
+        # thematic CUE, not a verbatim excerpt: it carries interpretation_only=True so the renderer can
+        # never mint it as a Surface-A [Text] quote (ADR 0004). It is NOT a 馬堅 published translation —
+        # no representation_kind / textual_witness / canon_scope, and no new evidence record was added.
+        index = {(r["work"], r["locator"]): r for r in self.by_tradition["islam"]}
+        cue = index[("古蘭經", "多處(如 2:25、103 章)")]
+        self.assertIs(cue.get("interpretation_only"), True)
+        self.assertNotIn("representation_kind", cue)
+        self.assertNotIn("textual_witness", cue)
+        self.assertNotIn("canon_scope", cue)
+        # A thematic cue is not a quotable excerpt: it carries NO report-counted metadata (no
+        # representation_kind, no rights), so the retrieval reports stay byte-reproducible.
+        self.assertNotIn("rights", cue)
+        self.assertNotIn("provenance", cue)
+        # The concrete 馬堅 published translations stay quotable — never mislabeled interpretation-only.
+        for key in (("古蘭經", "51:56"), ("古蘭經", "2:256"), ("古蘭經", "1:1(開端章)")):
+            self.assertIsNone(index[key].get("interpretation_only"), key)
+            self.assertEqual(index[key]["representation_kind"], "published-translation", key)
+
     def test_adr0008_hinduism_canon_scope(self):
         # Phase 2 (Hinduism): conservative canon-scope + corpus-family only, on the existing
         # generated-rendering records — no textual-witness / edition claim, no new records. sruti =

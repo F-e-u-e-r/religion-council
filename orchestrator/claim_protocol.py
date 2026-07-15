@@ -274,8 +274,14 @@ def _sanitize_reason(reason):
     length — the same defense as :func:`sanitize_contrast_proposition`.
     """
     text = reason if isinstance(reason, str) else str(reason)
-    for marker in (CLAIM_BLOCK_BEGIN, CLAIM_BLOCK_END):
-        text = text.replace(marker, "")
+    # Strip the whole marker set to a fixpoint: a single replace() is not idempotent, so
+    # nested sentinels (an inner marker whose removal reassembles an outer one, in either
+    # direction) would otherwise survive. Each firing pass removes at least one marker and
+    # strictly shortens the text, so the loop terminates with neither marker remaining.
+    markers = (CLAIM_BLOCK_BEGIN, CLAIM_BLOCK_END)
+    while any(marker in text for marker in markers):
+        for marker in markers:
+            text = text.replace(marker, "")
     text = _CONTROL_CHARS_RE.sub(" ", text)
     text = " ".join(text.split())
     return text[:_REASON_MAX_CHARS]

@@ -51,6 +51,9 @@ class CatalogSeed:
     rendering_mode: Optional[str] = None
     provenance: Optional[dict] = None
     rights: Optional[str] = None
+    # ADR 0004: interpretation-only classification (a cross-locus thematic cue / paraphrase, not a
+    # source-bound quotation). The finalizer refuses to mint Surface-A authority from such a seed.
+    interpretation_only: Optional[bool] = None
 
 
 class EvidenceCatalog:
@@ -97,6 +100,7 @@ class EvidenceCatalog:
                     rendering_mode=getattr(seed, "declared_rendering_mode", None),
                     provenance=getattr(seed, "provenance", None),
                     rights=getattr(seed, "rights", None),
+                    interpretation_only=getattr(seed, "interpretation_only", None),
                 )
             )
         return cls(catalog)
