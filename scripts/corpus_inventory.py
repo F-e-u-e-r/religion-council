@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reproducible inventory of the curated Religion Council corpus.
+"""Reproducible inventory of the curated Worldview Council corpus.
 
 Replaces hand-quoted corpus counts with a deterministic report generated from the
 same records the portable retriever returns. The script imports the portable
@@ -231,7 +231,7 @@ def _format_stats_line(name, stats):
 
 def format_text(inventory):
     lines = []
-    lines.append("Religion Council corpus inventory")
+    lines.append("Worldview Council corpus inventory")
     lines.append("Source: {}".format(inventory["corpus_source"]))
     lines.append("")
     lines.append("Per tradition:")
@@ -271,7 +271,7 @@ def format_text(inventory):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Reproducible Religion Council corpus inventory.")
+    parser = argparse.ArgumentParser(description="Reproducible Worldview Council corpus inventory.")
     parser.add_argument("--format", choices=("text", "json"), default="text")
     parser.add_argument(
         "--check",

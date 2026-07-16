@@ -91,6 +91,16 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   report-counted metadata. Both `presentation.json` copies stay byte-identical.
 
 ### Changed
+- **Display name rebranded to "Worldview Council" (identifiers unchanged).** Every user-facing
+  display surface — README (title, tagline, attribution line), INSTALL, DISCLAIMER, both `SKILL.md`
+  descriptions/titles (now also naming secular humanism and J. S. Mill and the 世界觀議會 trigger),
+  `agents/openai.yaml` `display_name`, the MCP serverInfo **title**, both retrievers' CLI
+  descriptions, the corpus-inventory heading, and the `religion-8` roster display name — now says
+  **Worldview Council**, reflecting that the council includes non-religious worldviews. All
+  machine identifiers deliberately stay `religion-council` for compatibility (repo, skill name, MCP
+  server/tool names, policy ids, occurrence ids, roster filename); README carries a "Formerly
+  Religion Council" note. Historical documents (CHANGELOG history, ADRs, committed benchmark
+  reports, review records) are left as written.
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
   deprecation window.

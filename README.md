@@ -443,7 +443,7 @@ Dual-licensed, by purpose:
 
 Quoted primary scriptures are public-domain source texts in their original languages; CC BY
 4.0 covers this project's curation, summaries, and renderings. Attribute to
-"Religion Council contributors."
+"Worldview Council contributors."
 
 ---
 ---
@@ -738,4 +738,4 @@ operational redistribution clearance(`redistributable = true`、jurisdiction not
 | **書面內容** | [CC BY 4.0](LICENSE-CONTENT) | `references/`、`01–08` 語料、`docs/CORPUS.md` |
 
 所引原典在其原文中多屬公有領域;CC BY 4.0 涵蓋的是本專案的選編、摘要與釋義。請標註出處
-「Religion Council contributors」。
+「Worldview Council contributors」。
