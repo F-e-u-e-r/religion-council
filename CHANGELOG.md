@@ -59,6 +59,55 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   sidecar + code, and retrieval ranking / occurrence-identity are unchanged (the record stays
   retrievable). Splitting it into concrete `2:25` / `Sūrah 103` evidence records (with exact text +
   provenance + rights) is deferred (option 2). Both `presentation.json` copies stay byte-identical.
+- **Prompt-injection sanitizers strip nested sentinels to a fixpoint (#52).** Both sanitizers
+  (`sanitize_contrast_proposition` in `debate_controller.py`, `_sanitize_reason` in
+  `claim_protocol.py`) previously removed fence markers with a single `str.replace()` per marker —
+  not idempotent, so a depth-3 nested sentinel survived into the prompt actually sent to a panelist
+  (early `DATA`-fence closure, the exact breakout these sanitizers exist to prevent). The whole
+  marker set is now stripped to a **fixpoint** (each firing pass strictly shortens the string, so it
+  terminates), which also catches an `END` removal reassembling a `BEGIN` and vice versa. Legitimate
+  marker-free input is byte-for-byte unchanged.
+- **`panelists_file` and `reference` paths fenced to the project root (#53).** Both were
+  moderator-supplied strings resolved and `read_text()`'d with no boundary — an absolute path or
+  `../` escape was an arbitrary local file **read** flowing into the Codex prompt and persisted run
+  state. `_assert_within_project_root` resolves the path (normalizing `../` and symlinks) and
+  requires the project root or a descendant, applied to **both** resolutions; tests cover
+  absolute-outside / parent-traversal / reference-outside rejection and legitimate in-root reads.
+- **`crisis_classification` wired onto the `debate_start` tool surface (ADR 0009, #54).** The
+  safety-routing policy's one machine guarantee — a crisis-first request cannot enter the council
+  pipeline — was dead on the real MCP path: the tool's `inputSchema` (`additionalProperties: false`)
+  never declared the field, so every schema-conformant call arrived `None` and the guard always
+  passed. Now an **optional single-value enum** single-sourced to `CRISIS_FIRST_CLASSIFICATION`,
+  enforced at the `_dispatch_tool` boundary keyed on **presence** (explicit `null`, typo, or
+  non-string is rejected — no fail-open on a malformed safety label) with `start()` re-checking as
+  defense in depth. Routing-only, never detection: `machine_guarantees` / `not_claimed` unchanged.
+- **ADR 0009 rollout completed — deferral flip + moderator obligation (#55).** Removes the
+  now-satisfied MCP-schema-wiring deferral from `policies/safety-routing.v1.json` (the separate
+  semantic-detection deferral stays), and adds the explicit moderator obligation — classify every
+  request per the policy **first**; when crisis-first, do not start the council and respond with the
+  `crisis_first_contract` — to `council-moderator.md` and both `SKILL.md` surfaces. Framed as
+  fallible human/NL judgment, never detection; `must_contain` markers preserved by appending.
+- **Weaponization-first safety-routing axis (ADR 0010, #56).** A second, distinct routing axis
+  mirroring ADR 0009's enforced-on-the-tool-surface mechanism, giving the council a machine backstop
+  for "attack propositions, never people or communities": sibling policy
+  `policies/weaponization-routing.v1.json`, `guard_weaponization_routing` + an optional
+  `weaponization_classification` on `start()` and `debate_start` (enum enforcement factored into
+  shared helpers used by both axes — key-presence at the boundary, `start()` defense in depth), and
+  the moderator/SKILL obligation to decline weaponization-first requests, offering
+  proposition-level examination instead. Deliberately **narrow**: critical, academic, historical,
+  and comparative discussion of religions and their claims is not blocked. Routing-only, never
+  detection; axes stay semantically distinct (separate classification, guard, error, contract,
+  policy).
+- **Cross-run run-state summary aggregator (R5, #57).** `scripts/run_state_summary.py`, a
+  **read-only** diagnostic over `.religion-council/runs/*/state.json`: run counts by profile +
+  opt-in mode, enforcement-mode distribution (reusing the canonical
+  `DebateController._enforcement_mode` so it cannot drift), round + finalization status, per-result
+  `schema_status` distribution and panelist errors, B2 `verification_summary` sums (incl.
+  **downgraded**), the B3 boundary at **both** levels (response admitted/denied + reasons AND
+  claim-level admitted/denied + reasons), and persisted B2/B3 stage crashes (`verification_error` /
+  `boundary_error`) so a crashed gate is surfaced rather than reading as zero activity. Tolerant by
+  design (unreadable / partial / older state is counted, never fatal); `--json` for machines. It
+  never mutates a run, asserts no assurance, and computes no new verdict.
 - **ADR 0008 Phase 1 backfill — Hinduism canon-scope metadata.** Adds conservative `canon_scope` +
   `corpus_family` to the three existing Hinduism generated-rendering records: `廣林奧義書 1.4.10` →
   `sruti` / `upanishads`; `薄伽梵歌 2:48` & `4:7` → `smriti` / `bhagavad_gita`. No new records, no
@@ -91,6 +140,12 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   report-counted metadata. Both `presentation.json` copies stay byte-identical.
 
 ### Fixed
+- **Christianity provenance `source_language` corrected to `grc` (Koine Greek).** The two 和合本 NT
+  records (`約翰福音 1:1`, `希伯來書 11:1`) carried `"el, he"` — the modern-Greek ISO code plus a
+  whole-edition Hebrew leak (an NT excerpt's source is not Hebrew). Cross-model review finding
+  (pre-existing, introduced with the records in v0.8.0-era curation). Metadata only: `provenance`
+  content is not report-counted, so rankings/counts/reports are unchanged; the curation test now
+  pins `grc` per record. Both `presentation.json` copies stay byte-identical.
 - **Committed-report reproducibility tests now fail loud on a missing result file.** The
   threshold-t2 / bm25 / bm25-threshold reproducibility tests silently `skipTest`ed when the
   committed JSON was absent — so a deleted or renamed report read as "reproducibility verified"
