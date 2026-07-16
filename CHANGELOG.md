@@ -146,6 +146,12 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   (pre-existing, introduced with the records in v0.8.0-era curation). Metadata only: `provenance`
   content is not report-counted, so rankings/counts/reports are unchanged; the curation test now
   pins `grc` per record. Both `presentation.json` copies stay byte-identical.
+- **Committed-report reproducibility tests now fail loud on a missing result file.** The
+  threshold-t2 / bm25 / bm25-threshold reproducibility tests silently `skipTest`ed when the
+  committed JSON was absent — so a deleted or renamed report read as "reproducibility verified"
+  when nothing ran (cross-model review finding on #48). A missing committed report is a broken
+  contract pin and now fails with the exact regenerate command, matching the baseline test's
+  behavior. No scoring, metric, or report change.
 
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
