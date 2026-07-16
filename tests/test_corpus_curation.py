@@ -245,6 +245,10 @@ class CorpusCurationTest(unittest.TestCase):
             self.assertNotIn("textual_witness", record)
             self.assertNotIn("span_assurance_tier", record)
             self.assertIn("和合本", record["provenance"].get("translator", ""), key)
+            # Per-record source language: these two excerpts are NT, so Koine Greek (ISO 639-3
+            # `grc`) — not modern-Greek `el`, and no `he` (the OT source language belongs to the
+            # whole-edition description, not to an NT excerpt's provenance).
+            self.assertEqual(record["provenance"].get("source_language"), "grc", key)
 
     def test_adr0008_islam_corpus_family(self):
         # ADR 0008 Phase 1 backfill (Islam): the five 馬堅《古蘭經》(Qur'an) records are grouped by
