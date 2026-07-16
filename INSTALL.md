@@ -6,7 +6,7 @@
 
 ## English
 
-Religion Council supports three execution modes:
+Worldview Council supports three execution modes:
 
 | Mode | Moderator | Panelists | Best for |
 |---|---|---|---|
@@ -102,7 +102,7 @@ This repository includes a project-level `.mcp.json` that starts:
 Claude moderator
        |
        v
-Religion Council controller (Python MCP server)
+Worldview Council controller (Python MCP server)
        |
        v
 codex mcp-server
@@ -263,7 +263,7 @@ Valid codes: `christianity`, `islam`, `hinduism`, `buddhism`, `taoism`, `legalis
 
 ## 繁體中文
 
-Religion Council 支援三種執行方式:
+Worldview Council 支援三種執行方式:
 
 | 模式 | 主持人 | 議員 | 適合 |
 |---|---|---|---|
@@ -350,7 +350,7 @@ Repo 內的 `.mcp.json` 會啟動 Python controller,再由 controller 管理 `co
 
 ```text
 Claude 主持人
-    → Religion Council controller
+    → Worldview Council controller
     → codex mcp-server
     → 多條持久 Codex thread
 ```

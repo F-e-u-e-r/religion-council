@@ -8,7 +8,7 @@
 
 ### What this project is — and is not
 
-Religion Council stages a **reconstructed, source-grounded dialogue** for study, comparison,
+Worldview Council stages a **reconstructed, source-grounded dialogue** for study, comparison,
 and reflection. It is **not**:
 
 - a religious authority, a substitute for scripture, clergy, or a teacher within any tradition;
