@@ -90,6 +90,14 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   `interpretation_only` cue (see the entry above), not a quotable 馬堅 excerpt, and it stays free of
   report-counted metadata. Both `presentation.json` copies stay byte-identical.
 
+### Fixed
+- **Committed-report reproducibility tests now fail loud on a missing result file.** The
+  threshold-t2 / bm25 / bm25-threshold reproducibility tests silently `skipTest`ed when the
+  committed JSON was absent — so a deleted or renamed report read as "reproducibility verified"
+  when nothing ran (cross-model review finding on #48). A missing committed report is a broken
+  contract pin and now fails with the exact regenerate command, matching the baseline test's
+  behavior. No scoring, metric, or report change.
+
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a

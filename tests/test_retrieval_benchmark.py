@@ -280,7 +280,14 @@ class RetrievalBenchmarkTest(unittest.TestCase):
     def test_committed_threshold_t2_is_reproducible(self):
         t2_path = ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-threshold-t2.json"
         if not t2_path.exists():
-            self.skipTest("threshold t=2 result not yet committed")
+            # Committed reports are a contract — a missing file is a broken pin, not a skip
+            # (a silent skip here once read as "reproducibility verified" when nothing ran).
+            self.fail(
+                "committed threshold t=2 result is missing — regenerate with:\n"
+                "  python scripts/run_retrieval_benchmark.py --candidate lexical-threshold"
+                " --threshold 2 \\\n"
+                "    --json-out docs/benchmarks/results/retrieval-v1-lexical-threshold-t2.json"
+            )
         committed = json.loads(t2_path.read_text(encoding="utf-8"))
         fresh = self.bm.reproducible_view(self.bm.run_benchmark(
             "project", self.bm.DEFAULT_KS,
@@ -394,7 +401,12 @@ class RetrievalBenchmarkTest(unittest.TestCase):
     def test_committed_bm25_is_reproducible(self):
         path = ROOT / "docs" / "benchmarks" / "results" / "retrieval-v1-lexical-bm25.json"
         if not path.exists():
-            self.skipTest("bm25 result not yet committed")
+            # Committed reports are a contract — a missing file is a broken pin, not a skip.
+            self.fail(
+                "committed bm25 result is missing — regenerate with:\n"
+                "  python scripts/run_retrieval_benchmark.py --candidate lexical-bm25 \\\n"
+                "    --json-out docs/benchmarks/results/retrieval-v1-lexical-bm25.json"
+            )
         committed = json.loads(path.read_text(encoding="utf-8"))
         fresh = self.bm.reproducible_view(self.bm.run_benchmark(
             "project", self.bm.DEFAULT_KS, candidate=dict(self.BM25)))
@@ -470,7 +482,16 @@ class RetrievalBenchmarkTest(unittest.TestCase):
             path = ROOT / "docs" / "benchmarks" / "results" / (
                 "retrieval-v1-lexical-bm25-threshold-t{}.json".format(threshold))
             if not path.exists():
-                self.skipTest("bm25 threshold t={} result not yet committed".format(threshold))
+                # Committed reports are a contract — a missing file is a broken pin, not a skip.
+                self.fail(
+                    "committed bm25 threshold t={} result is missing — regenerate with:\n"
+                    "  python scripts/run_retrieval_benchmark.py --candidate"
+                    " lexical-bm25-threshold --threshold {} \\\n"
+                    "    --json-out docs/benchmarks/results/"
+                    "retrieval-v1-lexical-bm25-threshold-t{}.json".format(
+                        threshold, threshold, threshold
+                    )
+                )
             committed = json.loads(path.read_text(encoding="utf-8"))
             fresh = self.bm.reproducible_view(self.bm.run_benchmark(
                 "project", self.bm.DEFAULT_KS, candidate=dict(candidate)))
