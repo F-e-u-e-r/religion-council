@@ -139,6 +139,14 @@ The format is adapted from [Keep a Changelog](https://keepachangelog.com/); vers
   `interpretation_only` cue (see the entry above), not a quotable 馬堅 excerpt, and it stays free of
   report-counted metadata. Both `presentation.json` copies stay byte-identical.
 
+### Fixed
+- **Christianity provenance `source_language` corrected to `grc` (Koine Greek).** The two 和合本 NT
+  records (`約翰福音 1:1`, `希伯來書 11:1`) carried `"el, he"` — the modern-Greek ISO code plus a
+  whole-edition Hebrew leak (an NT excerpt's source is not Hebrew). Cross-model review finding
+  (pre-existing, introduced with the records in v0.8.0-era curation). Metadata only: `provenance`
+  content is not report-counted, so rankings/counts/reports are unchanged; the curation test now
+  pins `grc` per record. Both `presentation.json` copies stay byte-identical.
+
 ### Changed
 - Deferred follow-up: rename the older controller `renderer-bypass` boundary reason to
   `verification-artifact-missing`. The reason-code string may be a public contract, so this needs a
