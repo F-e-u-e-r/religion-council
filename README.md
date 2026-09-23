@@ -9,6 +9,7 @@
 ![content: CC BY 4.0](https://img.shields.io/badge/content-CC%20BY%204.0-lightgrey.svg)
 ![runs on: Codex · Claude Code · any agent](https://img.shields.io/badge/runs%20on-Codex%20·%20Claude%20Code%20·%20any%20agent-green.svg)
 ![version: v0.13.1](https://img.shields.io/badge/version-v0.13.1-orange.svg)
+![status](https://img.shields.io/badge/status-ACTIVE-7aa2ff)
 
 **English** · [繁體中文](#繁體中文)
 
