@@ -118,61 +118,6 @@ misread as authorizing a default-ranking change. This is provisional model-judge
 BM25 default ranking stays gated on owner acceptance or a human blind judge, and no retrieval behavior
 or benchmark metric changes.
 
-### Strict finalization: the guarantee boundary
-
-For a strict run, the lifecycle is:
-
-```text
-debate_start(profile="strict", evidence_envelope=…)
-→ collect
-→ finalization_required=true / finalized=false
-→ debate_finalize
-→ finalized=true
-```
-
-`debate_finalize` produces two deliberately different answer surfaces:
-
-- **Surface A — textual authority.** `AuthorityRenderUnit` values are minted only by the
-  canonical builder, independently trace-validated, then deterministically serialized. Quotation
-  text comes from the canonical snapshot span; representation metadata is system-authoritative.
-- **Surface B — interpretation.** Panelist analysis and inference are framed as
-  non-authoritative interpretation. Rejected claims are separated into audit input and are never
-  passed to the ordinary answer render input.
-
-> Strict-finalized responses provide end-to-end machine-enforced construction and traceability of
-> the textual-authority surface (Surface A). Interpretation prose (Surface B) remains explicitly
-> non-authoritative and instruction-bounded.
-
-This does **not** mean every word is machine-verified. Interpretation prose can still be
-misleading; the complete answer is not semantically fail-closed; the default hybrid path without
-`debate_finalize` is unchanged and not finalized; and the capability-token mint guard is not a
-Python sandbox. Strict mode is opt-in and does not change the default hybrid workflow.
-### Strict mode quick start
-
-Run the offline deterministic example from the repository root:
-
-```bash
-python3 examples/strict-finalization/run_example.py
-```
-
-Expected lifecycle:
-
-```text
-debate_start(profile="strict", evidence_envelope=…)
-→ debate_collect
-→ finalization_required=true / finalized=false
-→ debate_finalize
-→ finalized=true
-```
-
-This example demonstrates the strict finalization lifecycle and the separation between the textual-authority surface (Surface A) and the interpretation surface (Surface B). Strict mode is opt-in and does not change the default workflow.
-
-
-Run the offline, deterministic [strict end-to-end example](examples/strict-finalization/README.md)
-to inspect the complete path and its assertions.
-
-
-
 ## Why it's different
 
 - **Grounding discipline comes first.** `[Text]` vs `[Interpretation]` labels on every
@@ -265,6 +210,62 @@ al-Ghazali vs Ibn Rushd on faith and reason.
 Must life's meaning come from religion or an afterlife? Secular humanism vs Christianity and Buddhism.
 在不傷害他人、不違法並承擔後果下,個人是否仍有義務按宗教或傳統美德生活?請彌爾與儒家、天主教辯論。
 ```
+
+## Strict mode (opt-in)
+
+### Strict finalization: the guarantee boundary
+
+For a strict run, the lifecycle is:
+
+```text
+debate_start(profile="strict", evidence_envelope=…)
+→ collect
+→ finalization_required=true / finalized=false
+→ debate_finalize
+→ finalized=true
+```
+
+`debate_finalize` produces two deliberately different answer surfaces:
+
+- **Surface A — textual authority.** `AuthorityRenderUnit` values are minted only by the
+  canonical builder, independently trace-validated, then deterministically serialized. Quotation
+  text comes from the canonical snapshot span; representation metadata is system-authoritative.
+- **Surface B — interpretation.** Panelist analysis and inference are framed as
+  non-authoritative interpretation. Rejected claims are separated into audit input and are never
+  passed to the ordinary answer render input.
+
+> Strict-finalized responses provide end-to-end machine-enforced construction and traceability of
+> the textual-authority surface (Surface A). Interpretation prose (Surface B) remains explicitly
+> non-authoritative and instruction-bounded.
+
+This does **not** mean every word is machine-verified. Interpretation prose can still be
+misleading; the complete answer is not semantically fail-closed; the default hybrid path without
+`debate_finalize` is unchanged and not finalized; and the capability-token mint guard is not a
+Python sandbox. Strict mode is opt-in and does not change the default hybrid workflow.
+
+### Strict mode quick start
+
+Run the offline deterministic example from the repository root:
+
+```bash
+python3 examples/strict-finalization/run_example.py
+```
+
+Expected lifecycle:
+
+```text
+debate_start(profile="strict", evidence_envelope=…)
+→ debate_collect
+→ finalization_required=true / finalized=false
+→ debate_finalize
+→ finalized=true
+```
+
+This example demonstrates the strict finalization lifecycle and the separation between the textual-authority surface (Surface A) and the interpretation surface (Surface B). Strict mode is opt-in and does not change the default workflow.
+
+
+Run the offline, deterministic [strict end-to-end example](examples/strict-finalization/README.md)
+to inspect the complete path and its assertions.
 
 ## How it works
 
@@ -540,57 +541,6 @@ v0.13.1 發布 retrieval-v1 的第二位 judge κ 證據與其 machine-readable 
 provisional model-judge 證據;BM25 default ranking 仍 gate 在 owner 接受或 human blind judge 之前,
 且不更動任何 retrieval 行為或 benchmark metric。
 
-### Strict finalization：保證邊界
-
-strict run 的生命週期如下：
-
-```text
-debate_start(profile="strict", evidence_envelope=…)
-→ collect
-→ finalization_required=true / finalized=false
-→ debate_finalize
-→ finalized=true
-```
-
-`debate_finalize` 產生兩個刻意分離的 answer surface：
-
-- **Surface A — textual authority。** `AuthorityRenderUnit` 只能由 canonical builder mint，
-  經獨立 trace validation 後才 deterministic serialization。quotation 文字取自 canonical snapshot
-  span；representation metadata 以系統資料為準。
-- **Surface B — interpretation。** 議員的分析與推論會被框定為 non-authoritative interpretation。
-  被拒絕的 claim 留在 audit input，絕不傳入一般 answer render input。
-
-> Strict-finalized responses provide end-to-end machine-enforced construction and traceability of
-> the textual-authority surface (Surface A). Interpretation prose (Surface B) remains explicitly
-> non-authoritative and instruction-bounded.
-
-這不代表所有文字都已由機器驗證。Surface B 仍可能誤導；完整答案不是 semantic fail-closed；沒有
-`debate_finalize` 的預設 hybrid 路徑不變且未 finalized；capability-token mint guard 也不是 Python
-sandbox。strict mode 是 opt-in，不會改變預設 hybrid workflow。
-### Strict mode quick start
-
-第一次使用 strict finalization 時，可直接在專案根目錄執行：
-
-```bash
-python3 examples/strict-finalization/run_example.py
-```
-
-預期流程：
-
-```text
-debate_start(profile="strict", evidence_envelope=…)
-→ debate_collect
-→ finalization_required=true / finalized=false
-→ debate_finalize
-→ finalized=true
-```
-
-此範例展示 strict finalization 的完整流程，以及 textual-authority surface（Surface A）與 interpretation surface（Surface B）的分離。Strict mode 為 opt-in，不會改變預設 workflow.
-
-
-可執行且離線、deterministic 的完整路徑見
-[strict end-to-end example](examples/strict-finalization/README.md)。
-
 ## 有何不同?
 
 - **引用紀律優先。** 每句標〔據典〕或〔詮釋〕;不杜撰章/節/經/聖訓出處;《古蘭經》中文一律標為
@@ -649,6 +599,60 @@ claude            # 在專案根目錄開啟 Claude Code
 會跨輪保存同一批 Codex `threadId`,並在全員完成前阻止進入下一輪。
 
 → 各平台完整設定:**[INSTALL.md](INSTALL.md)**
+
+## 嚴格模式 (opt-in)
+
+### Strict finalization：保證邊界
+
+strict run 的生命週期如下：
+
+```text
+debate_start(profile="strict", evidence_envelope=…)
+→ collect
+→ finalization_required=true / finalized=false
+→ debate_finalize
+→ finalized=true
+```
+
+`debate_finalize` 產生兩個刻意分離的 answer surface：
+
+- **Surface A — textual authority。** `AuthorityRenderUnit` 只能由 canonical builder mint，
+  經獨立 trace validation 後才 deterministic serialization。quotation 文字取自 canonical snapshot
+  span；representation metadata 以系統資料為準。
+- **Surface B — interpretation。** 議員的分析與推論會被框定為 non-authoritative interpretation。
+  被拒絕的 claim 留在 audit input，絕不傳入一般 answer render input。
+
+> Strict-finalized responses provide end-to-end machine-enforced construction and traceability of
+> the textual-authority surface (Surface A). Interpretation prose (Surface B) remains explicitly
+> non-authoritative and instruction-bounded.
+
+這不代表所有文字都已由機器驗證。Surface B 仍可能誤導；完整答案不是 semantic fail-closed；沒有
+`debate_finalize` 的預設 hybrid 路徑不變且未 finalized；capability-token mint guard 也不是 Python
+sandbox。strict mode 是 opt-in，不會改變預設 hybrid workflow。
+
+### Strict mode quick start
+
+第一次使用 strict finalization 時，可直接在專案根目錄執行：
+
+```bash
+python3 examples/strict-finalization/run_example.py
+```
+
+預期流程：
+
+```text
+debate_start(profile="strict", evidence_envelope=…)
+→ debate_collect
+→ finalization_required=true / finalized=false
+→ debate_finalize
+→ finalized=true
+```
+
+此範例展示 strict finalization 的完整流程，以及 textual-authority surface（Surface A）與 interpretation surface（Surface B）的分離。Strict mode 為 opt-in，不會改變預設 workflow.
+
+
+可執行且離線、deterministic 的完整路徑見
+[strict end-to-end example](examples/strict-finalization/README.md)。
 
 ## 運作原理
 
