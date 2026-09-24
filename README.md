@@ -28,121 +28,48 @@ argue from **its own texts**. Every claim is tagged as either a **[Text]** quota
 (with a real locator) or an **[Interpretation]**, and the moderator surfaces the
 genuine tensions instead of forcing agreement.
 
-Version **v0.13.1** supports three execution modes:
+It runs in three execution modes:
 
 1. **Claude Code only** — 37 specialized Claude agents (1 moderator + 36 voices).
 2. **Codex only** — a portable Codex skill, with native Codex subagents when requested.
 3. **Claude moderator + Codex panelists** — a deterministic Python MCP controller manages
    persistent Codex threads, barriers, retries, and audit records.
 
-All three modes share one quote-admissibility policy (`quote-admissibility/v2`). In the
-hybrid controller, v0.5.0 added opt-in B1b structured claims: `debate_start` can accept a
-retrieval `evidence_envelope`, ask panelists for a `religion-council/claim/v1` payload,
-schema-check it, repair or drop malformed payloads, and bind valid claims to B1a evidence
-seeds. Version v0.6.0 adds opt-in B2 validation for that same structured path: with
-`verify_claims=true`, quotation claims are checked against curated evidence snapshots and
-stored with per-claim `runtime-validated` or `failed` outcomes. Version v0.7.0 adds opt-in
-B3 fail-closed boundary enforcement with `fail_closed=true`: only affirmatively admitted
-claims may pass the response boundary, while unknown claim types, unverified `[Text]`,
-renderer bypasses, and unsupported protocols are default-denied. Claude-only and portable
-modes stay instruction-enforced. See the
-[assurance matrix](docs/ORCHESTRATION.md#quote-admissibility-assurance) and
-[ADR 0002](docs/adr/0002-roadmap-stage-nomenclature.md).
+All three modes follow the same citation rules. In the hybrid mode, an opt-in **strict** path
+goes further: panelists' claims are submitted in a structured form and checked against the
+curated sources, and a quotation that cannot be verified is refused rather than presented as
+textual authority — the council fails closed instead of guessing. See
+[Strict mode](#strict-mode-opt-in).
 
-Version v0.8.0 added the A1 corpus-enrichment metadata foundation: `retrieve.py` can merge
-curated `representation_kind`, `rendering_mode`, `provenance`, and `rights` from a portable
-`presentation.json` sidecar, with seed curation for the existing Chinese Qur'an
-meaning-renderings. Bulk public-domain excerpt expansion remains source- and rights-reviewed
-content work.
+Retrieval sits behind one versioned, conformance-tested contract, so the voices, moderation
+and citation rules do not change when the retriever does. Today the default retriever is
+lightweight and file-based, and no vector or network RAG backend has been adopted. See
+[How it works](#how-it-works).
 
-v0.9.0 adds the strict-finalization capstone for the hybrid controller. `profile="strict"`
-requires the structured → verify → fail-closed graph and an evidence envelope, then makes
-finalization a separate, explicit step. See [ADR 0004](docs/adr/0004-renderer-trust-boundary.md)
-and the [v0.9.0 changelog](CHANGELOG.md#v090--2026-06-21--strict-finalization--traceable-authority).
-
-v0.11.0 adds stable occurrence identity and a rights-scoped corpus baseline as **A2/A3
-readiness only**. It does not add an index, vector store, or RAG backend; that work remains gated
-on the retriever-fork contract and benchmark decisions.
-
-v0.12.0 establishes the retriever fork for that next stage: the portable retriever remains
-stdlib-only and file-based, while the project retriever has the same versioned retrieval envelope
-and shared conformance suite. It does not select an index, vector store, RAG backend, or
-edition-backed assurance; those remain gated on benchmark evidence. See
-[ADR 0006](docs/adr/0006-retriever-fork-contract.md).
-
-v0.12.1 defines that benchmark and its adoption gates: a candidate must both beat the lexical
-baseline and preserve stable occurrence identity, the retrieval contract, artifact lifecycle,
-rights boundaries, and assurance honesty. See
-[Retrieval Benchmark v1](docs/benchmarks/retrieval-v1.md).
-
-v0.12.2 runs the first retrieval-v1 lexical baseline. The benchmark now has a frozen 18-query
-fixture set, graded relevance judgments, a deterministic offline runner, and committed
-JSON/Markdown baseline reports. The baseline identifies two main weaknesses of the current lexical
-retriever: broad thematic recall and no-answer discrimination. No backend is selected.
-
-v0.12.3 evaluates an experiment-only lexical confidence threshold and adds GitHub issue templates
-for public feedback intake. Thresholds 2 and 3 eliminate the benchmark's no-answer false-support
-cases without answerable-query regression, while threshold 5 regresses q007 and q010. No threshold
-or backend is adopted yet.
-
-v0.12.4 evaluates an experiment-only BM25-style lexical ranking candidate. BM25 improves some
-ranking metrics, including MRR and nDCG@5, while preserving exact-span hit rate, but it does not
-improve no-answer discrimination or broad thematic recall. No backend is selected and default
-retrieval remains unchanged.
-
-v0.12.5 evaluates an experiment-only BM25 + lexical confidence threshold candidate. BM25 supplies
-ranking gains while the threshold supplies no-answer discrimination: MRR improves from 0.938 to
-0.969, nDCG@5 from 0.902 to 0.919, exact-span hit remains 1.000, no-answer correctness reaches
-1.000, and false-support falls to 0.000. Broad thematic recall remains weak on q010, so no backend
-is selected and default retrieval remains unchanged.
-
-v0.12.6 publishes ADR 0007, the retrieval backend decision from the retrieval-v1 evidence. It selects
-BM25 + lexical-confidence threshold (t2/t3) as the project retriever's ranking + no-answer policy,
-while gating the default BM25 ranking flip on the ≥2-judge + κ step. It still selects no RAG, vector,
-hybrid, built-index, or network backend, and default retrieval remains unchanged until a follow-up
-implementation.
-
-v0.13.0 ships ADR 0007 Step 1 as a release: the project retriever now exposes an explicit, opt-in
-no-answer-gated retrieval API (`retrieve_gated()` / `retrieve_envelope_gated()`, default threshold
-t3), built on the validated lexical confidence threshold. The raw `retrieve()` / `retrieve_envelope()`
-surface, the portable retriever, and the retrieval envelope contract are all unchanged, so default
-behavior and the retrieval-v1 lexical baseline are untouched. The default BM25 ranking flip stays
-deferred to the independent-judge / κ gate, and no RAG, vector, index, network backend, or
-edition-backed assurance is adopted.
-
-v0.13.1 publishes the retrieval-v1 second-judge κ evidence and its machine-readable gate guardrail
-(from #39/#40). A disclosed model judge (`claude-opus-4-8`) blind-labeled the benchmark pool —
-Cohen's κ vs the curator = 0.4436 (moderate) — and every benchmark report now carries a
-`judging.gate_evidence` guardrail (`bm25_default_flip_authorized: false`) so the κ figure cannot be
-misread as authorizing a default-ranking change. This is provisional model-judge evidence only; the
-BM25 default ranking stays gated on owner acceptance or a human blind judge, and no retrieval behavior
-or benchmark metric changes.
+The release-by-release history lives in [CHANGELOG.md](CHANGELOG.md).
 
 ## Why it's different
 
+- **Distinct voices, not a blended answer.** Each tradition, denomination or historical
+  thinker speaks as its own panelist — three zoom levels, from whole traditions down to
+  Nāgārjuna vs Vasubandhu — and secular voices sit at the table as full panelists that can
+  challenge and rebut.
+- **Neutral moderation, no forced winner.** Set the question → opening positions →
+  cross-examination → synthesis. Rebuttals target a concrete claim, premise, or
+  counterexample; the moderator separates shared concerns from irreducible differences and
+  never crowns a "winner" unless *you* give an explicit criterion.
 - **Grounding discipline comes first.** `[Text]` vs `[Interpretation]` labels on every
   line; no invented chapter / verse / sūtra / hadith locators; the Chinese Qur'an is
   always marked as a *rendering of meaning*, never the Arabic original; the skill never
   claims to *channel* a prophet, deity, or thinker.
-- **Three zoom levels.** Compare whole **traditions**, branch into
-  **denominations / schools**, or stage **historical-thinker** debates.
-- **Neutral moderation, no forced winner.** Set the question → opening positions →
-  cross-examination → synthesis. It separates shared concerns from irreducible
-  differences and never crowns a "winner" unless *you* give an explicit criterion.
-- **Claim-level pressure, not performative hostility.** Openings commit to a thesis;
-  rebuttals target a concrete claim, premise, or counterexample and return a
-  cross-examination question. Practical overlap is not mislabeled as consensus.
-- **A real secular-liberal voice, with a safe foil as fallback.** Religious rosters lean one
-  way, so the council ships `council-secular-humanist` and `council-mill` (grounded in *On
-  Liberty* / *Utilitarianism*) as full panelists that can actually rebut. Only when a roster
-  still leans one way does the moderator fall back to a controller-routed contrast proposition
-  — debate framing only: not source evidence, not a participant claim, never an instruction to
-  execute.
-- **Three execution modes, one corpus.** Claude-only, Codex-only, or Claude moderating
-  persistent Codex MCP panelists, all using the same curated references.
-- **Built for a RAG future.** Retrieval lives behind one stable contract
-  (`scripts/retrieve.py`), so the corpus can grow from curated snippets to a full,
-  vector-backed 典籍 store **without touching the personas**. See the [Roadmap](#roadmap).
+- **Fail-closed strict mode (opt-in).** In the hybrid controller, panelists' claims are
+  submitted in a structured form and checked against the curated sources; only verified
+  quotations reach the textual-authority surface, anything unverified is refused rather than
+  rendered as authority, and interpretation stays framed as interpretation. See
+  [Strict mode](#strict-mode-opt-in).
+- **One retrieval contract, multiple implementations.** Retrieval behaviour is kept behind a
+  conformance-tested interface while the default remains lightweight and file-based; no
+  vector or network RAG backend has been adopted. See [How it works](#how-it-works).
 
 ## Coverage
 
@@ -212,6 +139,19 @@ Must life's meaning come from religion or an afterlife? Secular humanism vs Chri
 ```
 
 ## Strict mode (opt-in)
+
+Strict mode lives in the hybrid controller (Claude moderator + Codex panelists) and is opt-in;
+Claude-only and portable modes stay instruction-enforced. It is layered: `debate_start` can accept a
+retrieval `evidence_envelope`, ask panelists for a `religion-council/claim/v1` payload, schema-check
+it, repair or drop malformed payloads, and bind valid claims to evidence seeds. With
+`verify_claims=true`, quotation claims are checked against curated evidence snapshots and stored with
+per-claim `runtime-validated` or `failed` outcomes. With `fail_closed=true`, only affirmatively
+admitted claims may pass the response boundary, while unknown claim types, unverified `[Text]`,
+renderer bypasses, and unsupported protocols are default-denied. `profile="strict"` requires that
+structured → verify → fail-closed graph and an evidence envelope, then makes finalization a separate,
+explicit step. See the [assurance matrix](docs/ORCHESTRATION.md#quote-admissibility-assurance),
+[ADR 0002](docs/adr/0002-roadmap-stage-nomenclature.md) and
+[ADR 0004](docs/adr/0004-renderer-trust-boundary.md).
 
 ### Strict finalization: the guarantee boundary
 
@@ -306,6 +246,20 @@ to inspect the complete path and its assertions.
 The **personas, moderation, and citation rules sit above the retrieval seam and are
 already stable.** Everything below it — curated snippets today, a vector store tomorrow —
 can evolve without rewriting a single voice.
+
+**Retrieval today.** The portable retriever (`skills/religion-council/scripts/retrieve.py`) is
+stdlib-only and file-based; the project retriever shares the same versioned retrieval envelope and a
+conformance suite (`tests/retrieval_contract/`, [ADR 0006](docs/adr/0006-retriever-fork-contract.md)).
+`retrieve.py` can merge curated `representation_kind`, `rendering_mode`, `provenance` and `rights`
+metadata from a portable `presentation.json` sidecar, and the corpus carries stable occurrence identity
+and a rights-scoped baseline as A2/A3 readiness only. The project retriever also exposes an opt-in
+no-answer-gated API (`retrieve_gated()` / `retrieve_envelope_gated()`, default threshold t3), built on
+the lexical confidence threshold validated by [Retrieval Benchmark v1](docs/benchmarks/retrieval-v1.md);
+[ADR 0007](docs/adr/0007-retrieval-backend-decision.md) selects BM25 + that threshold as the ranking and
+no-answer policy but keeps the default BM25 ranking flip gated on owner acceptance or a human blind
+judge (every benchmark report carries `bm25_default_flip_authorized: false`). The raw `retrieve()` /
+`retrieve_envelope()` surface and default retrieval are unchanged, and no RAG, vector, index or network
+backend is adopted.
 
 ## Repository layout
 
@@ -467,96 +421,35 @@ _前稱「Religion Council」;為相容,repo / skill / MCP 識別碼仍維持 `r
 標注為**〔據典〕**(引文+真實出處)或**〔詮釋〕**;主持人負責把真正的張力點攤開,而非強行
 調和。
 
-目前 **v0.13.1** 支援三種執行方式:
+它支援三種執行方式:
 
 1. **純 Claude Code**——附 37 個專屬 agent(1 位主持人 + 36 個聲音)。
 2. **純 Codex**——可攜 Codex skill;明確要求時可用 Codex 原生 subagent。
 3. **Claude 主持 + Codex 議員**——Python MCP controller 保存 Codex threadId、執行
    barrier、重試及紀錄。
 
-三種模式共用同一份引用可採性政策(`quote-admissibility/v2`)。混合 controller 在 v0.5.0
-加入 opt-in B1b 結構化 claim;v0.6.0 進一步加入 opt-in B2 `verify_claims=true`,可把 quotation
-claim 對 curated evidence snapshot 做執行期驗證,並以每個 claim 的 `runtime-validated` 或
-`failed` 結果寫入 state。v0.7.0 加入 opt-in B3 `fail_closed=true`:只有明確 admit 的 claim 可通過
-response boundary;unknown claim type、未 runtime-validated 的〔據典〕、renderer bypass 與不支援
-protocol 會預設拒絕。純 Claude 與可攜模式仍維持 instruction-enforced。
+三種模式遵循同一套引用紀律。在混合模式中,可選用的 **strict** 路徑更進一步:議員的主張以結構化形式
+提交,並對照精選來源核對;無法核實的引文會被拒絕,而不是被當成原典權威呈現——議會寧可 fail closed,
+也不猜測。見[嚴格模式](#嚴格模式-opt-in)。
 
-v0.8.0 已新增 A1 語料加厚的 metadata 基礎建設:`retrieve.py` 可從可攜的
-`presentation.json` sidecar 合併 curated `representation_kind`、`rendering_mode`、
-`provenance` 與 `rights`,並為既有古蘭經中文釋義片段建立種子標註。大量新增公有領域摘錄仍屬
-需來源與 rights review 的人工 curation 工作。
+檢索位於單一份有版本、經一致性測試的契約之後,因此更換檢索器時,各個聲音、主持流程與引用紀律都不必
+改動。目前預設檢索器是輕量的檔案式實作,尚未採用任何向量或網路 RAG 後端。見[運作原理](#運作原理)。
 
-v0.9.0 加入混合 controller 的 strict-finalization capstone。`profile="strict"` 要求完整的
-structured → verify → fail-closed 圖與 evidence envelope，並把 finalization 設成獨立、明確的
-步驟。詳見 [ADR 0004](docs/adr/0004-renderer-trust-boundary.md) 與
-[v0.9.0 變更紀錄](CHANGELOG.md#v090--2026-06-21--strict-finalization--traceable-authority)。
-
-v0.11.0 新增 stable occurrence identity 與附權利範圍說明的語料基線,僅為 **A2/A3 readiness**;並未
-加入 index、vector store 或 RAG backend。後續工作仍受 retriever-fork contract 與 benchmark 決策把關。
-
-v0.12.0 建立下一階段所需的 retriever fork：portable retriever 仍是 stdlib-only、file-based；
-project retriever 則以同一份 versioned retrieval envelope 與 shared conformance suite 為約束。這並未
-選定 index、vector store、RAG backend 或 edition-backed assurance；它們仍須先有 benchmark evidence。
-詳見 [ADR 0006](docs/adr/0006-retriever-fork-contract.md)。
-
-v0.12.1 定義該 benchmark 與採用門檻：候選後端必須同時勝過 lexical baseline，並保住 stable
-occurrence identity、retrieval contract、artifact lifecycle、rights 邊界與 assurance honesty。詳見
-[Retrieval Benchmark v1](docs/benchmarks/retrieval-v1.md)。
-
-v0.12.2 執行第一次 retrieval-v1 lexical baseline。benchmark 現有凍結 18-query fixture set、graded
-relevance judgments、deterministic offline runner，以及已 commit 的 JSON/Markdown baseline reports。
-baseline 識別出 lexical retriever 的兩大弱點：broad thematic recall 與 no-answer discrimination。
-未選定任何後端。
-
-v0.12.3 評估 experiment-only lexical confidence threshold，並加入 GitHub issue templates 以承接公開
-feedback。threshold 2 與 3 消除了 benchmark 的 no-answer false-support cases，且未造成 answerable-query
-regression；threshold 5 則使 q007 與 q010 regression。目前仍未採用 threshold 或任何 backend。
-
-v0.12.4 評估 experiment-only BM25-style lexical ranking candidate。BM25 改善部分 ranking metrics，
-包含 MRR 與 nDCG@5，並保住 exact-span hit rate；但它沒有改善 no-answer discrimination 或 broad
-thematic recall。未選定任何 backend，default retrieval 也維持不變。
-
-v0.12.5 評估 experiment-only BM25 + lexical confidence threshold candidate。BM25 提供 ranking
-改善，threshold 提供 no-answer discrimination：MRR 從 0.938 提升到 0.969，nDCG@5 從 0.902
-提升到 0.919，exact-span hit 維持 1.000，no-answer correctness 達到 1.000，false-support
-降到 0.000。q010 的 broad thematic recall 仍然偏弱，因此未選定任何 backend，default retrieval
-也維持不變。
-
-v0.12.6 發布 ADR 0007，也就是根據 retrieval-v1 evidence 作出的 retrieval backend decision。
-它選擇 BM25 + lexical-confidence threshold (t2/t3) 作為 project retriever 的 ranking +
-no-answer policy，但把 default BM25 ranking flip 仍然 gate 在 ≥2-judge + κ 步驟之後。它仍未選定
-RAG、vector、hybrid、built-index 或 network backend；default retrieval 會等後續實作才改變。
-
-v0.13.0 以 release 形式發布 ADR 0007 的第一步：project retriever 現在提供明確、opt-in 的
-no-answer gated retrieval API(`retrieve_gated()` / `retrieve_envelope_gated()`，預設門檻 t3)，
-建立在已驗證的 lexical confidence threshold 之上。原始 `retrieve()` / `retrieve_envelope()` 介面、
-portable retriever 與 retrieval envelope contract 皆維持不變，因此 default behavior 與 retrieval-v1
-lexical baseline 不受影響。default BM25 ranking flip 仍延後至 independent-judge / κ gate；未採用任何
-RAG、vector、index、network backend 或 edition-backed assurance。
-
-v0.13.1 發布 retrieval-v1 的第二位 judge κ 證據與其 machine-readable gate guardrail(來自 #39/#40)。
-一位揭露的 model judge(`claude-opus-4-8`)對 benchmark pool 做 blind 標註——對 curator 的 Cohen's κ =
-0.4436(moderate)——且每份 benchmark 報告現在都帶 `judging.gate_evidence` guardrail
-(`bm25_default_flip_authorized: false`),使該 κ 數字無法被誤讀為授權 default-ranking 變更。這僅為
-provisional model-judge 證據;BM25 default ranking 仍 gate 在 owner 接受或 human blind judge 之前,
-且不更動任何 retrieval 行為或 benchmark metric。
+逐版變更紀錄見 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 有何不同?
 
+- **各自發聲,而非混成一味。** 每個傳統、教派或歷史人物都是獨立的議員——三層縮放,從整個傳統到
+  龍樹對世親——而世俗聲音亦以正式議員身分入席,能提出質疑與反駁。
+- **中立主持,不強分勝負。** 立題 → 首輪陳述 → 交叉詰問 → 收斂;反駁須針對具體 claim、前提或反例;
+  主持人區分「共識」與「真實分歧」,除非你給出明確評判標準,否則不宣布「贏家」。
 - **引用紀律優先。** 每句標〔據典〕或〔詮釋〕;不杜撰章/節/經/聖訓出處;《古蘭經》中文一律標為
   「釋義」,絕不冒充阿拉伯原文;絕不宣稱「附身」或代言任何先知、神祇或思想家。
-- **三層縮放。** 可比較整個**傳統**、深入**教派/學派**,或上演**歷史人物**辯論。
-- **中立主持,不強分勝負。** 立題 → 首輪陳述 → 交叉詰問 → 收斂;區分「共識/真實分歧」,
-  除非你給出明確評判標準,否則不宣布「贏家」。
-- **提高命題張力,而非表演式敵意。** 開場必須承諾明確主張;反駁須針對具體 claim、前提或反例,
-  並提出可回應的交叉詰問。實務上的重疊不會被誤標為共識。
-- **真正的世俗自由派聲音,對照命題只作後備。** 名單多半偏宗教,故議會新增 `council-secular-humanist`
-  與 `council-mill`(彌爾,據《論自由》《效益主義》)作能真正反詰的正式成員;只有名單仍偏向同一邊時,
-  主持人才退而加入由 controller 路由的對照命題,且它只作 debate framing:不是 source evidence、
-  不是成員主張,也不是可執行指令。
-- **三種執行方式,共用一套語料。** 純 Claude、純 Codex,或 Claude 主持持久 Codex MCP 議員。
-- **為 RAG 而設計。** 檢索藏在單一穩定介面(`scripts/retrieve.py`)之後,語料可從精選片段
-  成長為向量化的完整典籍庫,而**無需改動任何 persona**。見 [發展藍圖](#發展藍圖)。
+- **Fail-closed 的嚴格模式(opt-in)。** 在混合 controller 中,議員的主張以結構化形式提交並對照精選來源
+  核對;只有通過核實的引文才會進入原典權威 surface,未經核實者會被拒絕而非以權威呈現,詮釋則始終標示為
+  詮釋。見[嚴格模式](#嚴格模式-opt-in)。
+- **一份檢索契約,多種實作。** 檢索行為藏在經一致性測試的介面之後,預設實作維持輕量、檔案式;尚未採用
+  任何向量或網路 RAG 後端。見[運作原理](#運作原理)。
 
 ## 收錄範圍
 
@@ -601,6 +494,16 @@ claude            # 在專案根目錄開啟 Claude Code
 → 各平台完整設定:**[INSTALL.md](INSTALL.md)**
 
 ## 嚴格模式 (opt-in)
+
+嚴格模式位於混合 controller(Claude 主持 + Codex 議員)且為 opt-in;純 Claude 與可攜模式仍維持
+instruction-enforced。它是分層的:`debate_start` 可接受 retrieval `evidence_envelope`、要求議員回傳
+`religion-council/claim/v1` payload、做 schema 檢查、修復或丟棄格式錯誤的 payload,並把有效 claim 綁定到
+evidence seeds。`verify_claims=true` 可把 quotation claim 對 curated evidence snapshot 做執行期驗證,並以每個
+claim 的 `runtime-validated` 或 `failed` 結果寫入 state。`fail_closed=true`:只有明確 admit 的 claim 可通過
+response boundary;unknown claim type、未 runtime-validated 的〔據典〕、renderer bypass 與不支援 protocol 會
+預設拒絕。`profile="strict"` 要求完整的 structured → verify → fail-closed 圖與 evidence envelope,並把
+finalization 設成獨立、明確的步驟。詳見 [assurance matrix](docs/ORCHESTRATION.md#quote-admissibility-assurance)、
+[ADR 0002](docs/adr/0002-roadmap-stage-nomenclature.md) 與 [ADR 0004](docs/adr/0004-renderer-trust-boundary.md)。
 
 ### Strict finalization：保證邊界
 
@@ -662,6 +565,18 @@ debate_start(profile="strict", evidence_envelope=…)
 `scripts/retrieve.py` 的穩定介面(輸出 `text` + `tradition/school/work/locator/language/
 version/category` metadata):**v0.1** 解析並以詞彙比對排序 references 片段,**未來**換成向量檢索,而上層的
 persona 與引用紀律不必更動。
+
+**目前的檢索。** portable retriever(`skills/religion-council/scripts/retrieve.py`)仍是 stdlib-only、
+file-based;project retriever 則以同一份 versioned retrieval envelope 與 shared conformance suite
+(`tests/retrieval_contract/`、[ADR 0006](docs/adr/0006-retriever-fork-contract.md))為約束。`retrieve.py`
+可從可攜的 `presentation.json` sidecar 合併 curated `representation_kind`、`rendering_mode`、`provenance` 與
+`rights`;語料具備 stable occurrence identity 與附權利範圍說明的基線,僅為 A2/A3 readiness。project retriever
+另提供 opt-in 的 no-answer gated retrieval API(`retrieve_gated()` / `retrieve_envelope_gated()`,預設門檻 t3),
+建立在 [Retrieval Benchmark v1](docs/benchmarks/retrieval-v1.md) 驗證過的 lexical confidence threshold 之上;
+[ADR 0007](docs/adr/0007-retrieval-backend-decision.md) 選擇 BM25 + 該 threshold 作為 ranking 與 no-answer
+policy,但 default BM25 ranking flip 仍 gate 在 owner 接受或 human blind judge 之前(每份 benchmark 報告都帶
+`bm25_default_flip_authorized: false`)。原始 `retrieve()` / `retrieve_envelope()` 介面與 default retrieval 維持
+不變;未採用任何 RAG、vector、index 或 network backend。
 
 ## 發展藍圖
 
